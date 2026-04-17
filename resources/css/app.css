@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ────────────────────────────────────────────────
+   Global Dark Mode: Form Inputs, Selects, Textareas
+   Applied automatically to ALL inputs across the app
+──────────────────────────────────────────────── */
+@layer base {
+    /* Input & Textarea */
+    .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    .dark textarea {
+        @apply bg-slate-900 border-slate-700 text-slate-200 placeholder-slate-500;
+    }
+    .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+    .dark textarea:focus {
+        @apply border-blue-500 ring-blue-500;
+    }
+
+    /* Select */
+    .dark select {
+        @apply bg-slate-900 border-slate-700 text-slate-200;
+    }
+    .dark select:focus {
+        @apply border-blue-500 ring-blue-500;
+    }
+
+    /* Readonly inputs */
+    .dark input[readonly] {
+        @apply bg-slate-800 border-slate-700 text-slate-400;
+    }
+
+    /* Labels */
+    .dark label {
+        @apply text-slate-300;
+    }
+
+    /* Modal card backdrop */
+    .dark .modal-card {
+        @apply bg-slate-800 border-slate-700;
+    }
+
+    /* Global Pagination Dark Mode */
+    .dark nav[role="navigation"] {
+        @apply text-slate-400;
+    }
+    .dark nav[role="navigation"] button, 
+    .dark nav[role="navigation"] a, 
+    .dark nav[role="navigation"] span {
+        @apply bg-slate-800 border-slate-700 text-slate-300 !important;
+    }
+    .dark nav[role="navigation"] a:hover,
+    .dark nav[role="navigation"] button:hover {
+        @apply bg-slate-700 !important;
+    }
+    .dark nav[role="navigation"] span[aria-current="page"] span {
+        @apply bg-blue-600 border-blue-600 text-white !important;
+    }
+    .dark nav[role="navigation"] .cursor-default {
+        @apply bg-slate-800/50 text-slate-500 border-slate-700 !important;
+    }
+}
+
+/* ────────────────────────────────────────────────
+   Custom scrollbar (hidden)
+──────────────────────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
