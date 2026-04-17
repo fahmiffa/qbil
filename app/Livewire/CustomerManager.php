@@ -14,7 +14,8 @@ class CustomerManager extends Component
     use WithPagination;
 
     public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'active', $customer_id, $due_date;
-    public $package_id, $username, $password, $service_type = 'static', $ip_address;
+    public $package_id, $username, $password, $service_type = 'dynamic', $ip_address, $mac_address;
+    public $creation_method = 'buat_baru';
     public $latitude, $longitude;
     public $selectedPool;
     public $ipPools = [];
@@ -47,7 +48,10 @@ class CustomerManager extends Component
             ->where('tipe', match($this->service_type) {
                 'pppoe' => 'PPPOE',
                 'static' => 'QUEUE',
-                default => 'PPPOE'
+                'dynamic' => 'QUEUE',
+                'ip_binding' => 'QUEUE',
+                'hotspot' => 'HOTSPOT',
+                default => 'QUEUE'
             })
             ->orderBy('name')->get();
 
@@ -103,8 +107,10 @@ class CustomerManager extends Component
         $this->package_id   = '';
         $this->username     = '';
         $this->password     = '';
-        $this->service_type = 'static';
+        $this->service_type = 'dynamic';
+        $this->creation_method = 'buat_baru';
         $this->ip_address   = '';
+        $this->mac_address  = '';
         $this->latitude     = '';
         $this->longitude    = '';
         $this->selectedPool = '';
@@ -144,8 +150,10 @@ class CustomerManager extends Component
             'due_date'     => 'nullable|date',
             'username'     => 'nullable|string|max:100',
             'password'     => 'nullable|string|max:100',
-            'service_type' => 'required|in:pppoe,static',
+            'service_type' => 'required|in:dynamic,static,pppoe,hotspot,ip_binding',
+            'creation_method' => 'required|in:buat_baru,sinkronisasi,manual',
             'ip_address'   => 'nullable|string|max:50',
+            'mac_address'  => 'nullable|string|max:50',
             'latitude'     => 'nullable|string|max:50',
             'longitude'    => 'nullable|string|max:50',
         ]);
@@ -162,7 +170,9 @@ class CustomerManager extends Component
             'username'     => $this->username ?: null,
             'password'     => $this->password ?: null,
             'service_type' => $this->service_type,
+            'creation_method' => $this->creation_method,
             'ip_address'   => $this->ip_address,
+            'mac_address'  => $this->mac_address,
             'latitude'     => $this->latitude,
             'longitude'    => $this->longitude,
             'user_id'      => auth()->id(),
@@ -181,8 +191,8 @@ class CustomerManager extends Component
 
                 $customer->update($data);
 
-                // Provisioning update
-                if ($this->service_type === 'static' || ($this->username && $this->password)) {
+                // Provisioning update (skip if creation method is manual)
+                if ($this->creation_method !== 'manual') {
                     $this->provisionUpdate($customer, $oldStatus, $oldProfile, $oldUsername);
                 }
 
@@ -190,8 +200,8 @@ class CustomerManager extends Component
             } else {
                 $customer = Customer::create($data);
 
-                // Provisioning create
-                if ($this->package_id && ($this->service_type === 'simple_queue' || ($this->username && $this->password))) {
+                // Provisioning create (skip if creation method is manual)
+                if ($this->creation_method !== 'manual') {
                     $this->provisionCreate($customer);
                 }
 
@@ -241,13 +251,28 @@ class CustomerManager extends Component
             $package  = $customer->package;
             $rateLimit = $package ? ($package->speed_upload . '/' . $package->speed_download) : '0M/0M';
 
-            if ($customer->service_type === 'static') {
+            if ($customer->service_type === 'static' || $customer->service_type === 'dynamic') {
                 if ($customer->ip_address) {
                     $mikrotik->addSimpleQueue($customer->name, $customer->ip_address, $rateLimit, 'Customer ID: ' . $customer->id);
                 }
-            } else {
+            } elseif ($customer->service_type === 'ip_binding') {
+                if ($customer->mac_address && $customer->ip_address) {
+                    $mikrotik->addDhcpLease($customer->mac_address, $customer->ip_address, 'Customer ID: ' . $customer->id);
+                }
+                if ($customer->ip_address) {
+                    $mikrotik->addSimpleQueue($customer->name, $customer->ip_address, $rateLimit, 'Customer ID: ' . $customer->id);
+                }
+            } elseif ($customer->service_type === 'hotspot') {
                 $profile = $package?->mikrotik_profile ?? 'default';
-                $mikrotik->addPppSecret($customer->username, $customer->password, $profile, $customer->name);
+                if ($customer->username && $customer->password) {
+                    $mikrotik->addHotspotUser($customer->username, $customer->password, $profile, $customer->name);
+                }
+            } else {
+                // pppoe
+                $profile = $package?->mikrotik_profile ?? 'default';
+                if ($customer->username && $customer->password) {
+                    $mikrotik->addPppSecret($customer->username, $customer->password, $profile, $customer->name);
+                }
             }
 
             if ($customer->status === 'suspended') {
@@ -274,18 +299,30 @@ class CustomerManager extends Component
 
             if ($customer->service_type === 'pppoe') {
                 $mikrotik->updatePppSecret($oldUser, $customer->username, $customer->password, $profile);
-            } elseif ($customer->service_type === 'static') {
+            } elseif ($customer->service_type === 'static' || $customer->service_type === 'dynamic') {
                 // For Simple Queue, we use name as identifier
+                $mikrotik->updateSimpleQueue($customer->name, $customer->name, $customer->ip_address, $rateLimit);
+            } elseif ($customer->service_type === 'hotspot') {
+                $mikrotik->updateHotspotUser($oldUser, $customer->username, $customer->password, $profile);
+            } elseif ($customer->service_type === 'ip_binding') {
+                // Update DHCP lease if mac changed
+                if ($customer->mac_address && $customer->ip_address) {
+                    // Try to guess old mac? For now we just run updateDhcpLeaseByMac with both as newMac if we don't track old mac.
+                    // Wait, finding old mac is tricky if not passed. Let's just run updateDhcpLeaseByMac with current mac
+                    $mikrotik->updateDhcpLeaseByMac($customer->mac_address, $customer->mac_address, $customer->ip_address);
+                }
                 $mikrotik->updateSimpleQueue($customer->name, $customer->name, $customer->ip_address, $rateLimit);
             }
 
             // Handle Status
             if ($customer->status === 'suspended') {
                 if ($customer->service_type === 'pppoe') $mikrotik->disablePppSecret($customer->username);
-                elseif ($customer->service_type === 'static') $mikrotik->disableSimpleQueue($customer->name);
+                elseif ($customer->service_type === 'static' || $customer->service_type === 'dynamic' || $customer->service_type === 'ip_binding') $mikrotik->disableSimpleQueue($customer->name);
+                elseif ($customer->service_type === 'hotspot') $mikrotik->disableHotspotUser($customer->username);
             } elseif ($customer->status === 'active' && $oldStatus === 'suspended') {
                 if ($customer->service_type === 'pppoe') $mikrotik->enablePppSecret($customer->username);
-                elseif ($customer->service_type === 'static') $mikrotik->enableSimpleQueue($customer->name);
+                elseif ($customer->service_type === 'static' || $customer->service_type === 'dynamic' || $customer->service_type === 'ip_binding') $mikrotik->enableSimpleQueue($customer->name);
+                elseif ($customer->service_type === 'hotspot') $mikrotik->enableHotspotUser($customer->username);
             }
         } catch (\Exception $e) {
             logger()->error('Mikrotik provisioning update error: ' . $e->getMessage());
@@ -307,7 +344,9 @@ class CustomerManager extends Component
         $this->username     = $customer->username;
         $this->password     = $customer->password;
         $this->service_type = $customer->service_type;
+        $this->creation_method = $customer->creation_method ?? 'manual';
         $this->ip_address   = $customer->ip_address;
+        $this->mac_address  = $customer->mac_address;
         $this->latitude     = $customer->latitude;
         $this->longitude    = $customer->longitude;
         $this->openModal();

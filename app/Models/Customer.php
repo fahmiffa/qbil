@@ -11,8 +11,8 @@ class Customer extends Model
 
     protected $fillable = [
         'id_pelanggan', 'name', 'phone', 'address', 'keterangan', 'status', 'due_date', 'user_id',
-        'package_id', 'username', 'password', 'service_type', 'ip_address', 'activated_at',
-        'latitude', 'longitude'
+        'package_id', 'username', 'password', 'service_type', 'ip_address', 'mac_address', 'creation_method', 
+        'activated_at', 'latitude', 'longitude'
     ];
 
     protected $casts = [

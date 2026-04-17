@@ -164,13 +164,40 @@
                                             <p class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Konfigurasi MikroTik</p>
                                         </div>
 
-                                        <!-- Tipe Layanan -->
+                                        <!-- Metode Pembuatan -->
                                         <div class="sm:col-span-2">
-                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Tipe Layanan</label>
-                                            <select wire:model.live="service_type" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                <option value="pppoe">PPPOE</option>
-                                                <option value="static">STATIC / SIMPLE QUEUE</option>
+                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Metode Pembuatan</label>
+                                            <select wire:model.live="creation_method" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                                                <option value="buat_baru">Buat Baru</option>
+                                                <option value="sinkronisasi">Sinkronisasi</option>
+                                                <option value="manual">Manual</option>
                                             </select>
+                                            <p class="text-xs text-gray-400 mt-1 italic leading-relaxed">
+                                                @if($creation_method === 'buat_baru') 👉 Input pelanggan dari awal di sistem billing. Akan digenerate otomatis ke Router.
+                                                @elseif($creation_method === 'sinkronisasi') 👉 Ambil data yang sudah ada dari perangkat (seperti OLT / MikroTik) ke billing. Cocok kalau sebelumnya sudah disetting di Router.
+                                                @elseif($creation_method === 'manual') 👉 Input sendiri satu-satu tanpa ada auto generate ke Router. Biasanya untuk kasus khusus.
+                                                @endif
+                                            </p>
+                                        </div>
+
+                                        <!-- Tipe Layanan -->
+                                        <div class="sm:col-span-2 mt-2">
+                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Tipe Layanan</label>
+                                            <select wire:model.live="service_type" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                                                <option value="dynamic">Dynamic</option>
+                                                <option value="static">Static</option>
+                                                <option value="pppoe">PPPoE</option>
+                                                <option value="hotspot">Hotspot</option>
+                                                <option value="ip_binding">IP Bindings</option>
+                                            </select>
+                                            <p class="text-xs text-gray-400 mt-1 italic leading-relaxed">
+                                                @if($service_type === 'dynamic') 👉 IP pelanggan otomatis (DHCP). Umum dipakai, simpel, tidak perlu login.
+                                                @elseif($service_type === 'static') 👉 IP tetap (tidak berubah). Biasanya untuk kantor / pelanggan khusus.
+                                                @elseif($service_type === 'pppoe') 👉 Pakai username & password. Paling sering dipakai ISP karena bisa kontrol user.
+                                                @elseif($service_type === 'hotspot') 👉 Login lewat halaman web (voucher/user). Cocok untuk wifi publik.
+                                                @elseif($service_type === 'ip_binding') 👉 Mengikat IP ke MAC address tertentu. Lebih ke kontrol keamanan / bypass hotspot.
+                                                @endif
+                                            </p>
                                             @error('service_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                         </div>
 
@@ -186,7 +213,7 @@
                                             @error('package_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                         </div>
 
-                                        @if($service_type !== 'static')
+                                        @if($service_type === 'pppoe' || $service_type === 'hotspot')
                                             <!-- Username MikroTik -->
                                             <div>
                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Username MikroTik</label>
@@ -229,12 +256,22 @@
                                                 </div>
                                                 @error('ip_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                             </div>
+
+                                            @if($service_type === 'ip_binding')
+                                            <!-- MAC Address -->
+                                            <div class="sm:col-span-2">
+                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">MAC Address <span class="text-xs text-gray-400 font-normal">(Wajib untuk IP Binding)</span></label>
+                                                <input type="text" wire:model="mac_address" placeholder="Contoh: 00:1A:2B:3C:4D:5E"
+                                                    class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors uppercase">
+                                                @error('mac_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                            </div>
+                                            @endif
                                         @endif
 
-                                        @if(!$customer_id)
+                                        @if(!$customer_id && ($creation_method === 'buat_baru' || $creation_method === 'sinkronisasi'))
                                         <div class="sm:col-span-2">
                                             <p class="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2">
-                                                💡 Jika username & password diisi dan paket dipilih, akun akan otomatis dibuat di MikroTik saat disimpan.
+                                                💡 Jika paket dipilih dan metode Sinkronisasi/Buat Baru, profil akun akan diprovisi otomatis ke MikroTik saat disimpan.
                                             </p>
                                         </div>
                                         @endif

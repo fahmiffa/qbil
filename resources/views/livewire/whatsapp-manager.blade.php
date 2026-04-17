@@ -33,14 +33,14 @@
 
             try {
                 this.socket = io('https://broadcast.qlabcode.com', {
-                    query: { id: this.deviceId },
+                    query: { id: this.deviceId, deviceId: this.deviceId, session: this.deviceId },
                     transports: ['websocket', 'polling'] 
                 });
 
                 this.socket.on('connect', () => {
                     console.log('Connected to socket server. ID:', this.deviceId);
                     this.status = 'Menunggu QR Code...';
-                    this.socket.emit('create-session', { id: this.deviceId });
+                    this.socket.emit('create-session', { id: this.deviceId, deviceId: this.deviceId, session: this.deviceId });
                 });
 
                 this.socket.on('qr', (data) => {
@@ -77,9 +77,17 @@
                     this.status = 'Koneksi Berhasil!';
                 });
 
+                this.socket.on('authenticated', () => {
+                    console.log('Session authenticated!');
+                    this.qr = null;
+                    this.isReady = true;
+                    this.status = 'Koneksi Authenticated!';
+                });
+
                 this.socket.on('disconnect', () => {
                     this.status = 'Terputus dari server.';
-                    this.qr = null;
+                    // Jangan hapus qr atau ubah isReady di sini jika disconnect hanya untuk reconecting socketio, 
+                    // namun karena ini panel status, sebaiknya kita reset isReady
                     this.isReady = false;
                 });
                 
