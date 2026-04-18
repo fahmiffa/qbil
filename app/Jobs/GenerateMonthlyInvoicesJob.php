@@ -75,72 +75,38 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
             }
 
             foreach ($customers as $customer) {
-                // Skip jika invoice untuk periode ini sudah ada
-                $exists = Invoice::where('customer_id', $customer->id)
-                    ->where('billing_period', $this->period)
-                    ->exists();
-
-                if ($exists) {
-                    continue;
-                }
 
                 try {
-                    DB::transaction(function () use ($customer, $user, $whatsappService, &$totalGenerated) {
-                        $amount  = $customer->package->price ?? 0;
+                    DB::transaction(function () use ($customer, $user, &$totalGenerated) {
 
-                        // Due date invoice = due_date dari data customer (fallback +7 hari jika kosong)
-                        $dueDate = $customer->due_date
-                            ? $customer->due_date->format('Y-m-d')
-                            : now()->addDays(7)->format('Y-m-d');
+                        $amount = $customer->package->price ?? 0;
+                        $dueDate = $customer->due_date;
 
-                        // -----------------------------------------------------------
-                        // LOCK: Exclude kode yang sudah dipakai jika:
-                        //   1. Invoice masih unpaid (lintas periode) — cegah ambiguitas transfer
-                        //   2. Invoice dalam periode yang sama (apapun statusnya) — cegah
-                        //      duplikat dalam 1 bulan meski invoice sudah paid/canceled
-                        // -----------------------------------------------------------
-                        $usedCodes = Invoice::whereHas('customer', function ($q) use ($user) {
-                                $q->where('user_id', $user->id);
-                            })
-                            ->where(function ($q) {
-                                $q->where('status', 'unpaid')
-                                  ->orWhere('billing_period', $this->period);
-                            })
-                            ->lockForUpdate()  // <-- Pessimistic lock
-                            ->pluck('unique_code')
-                            ->toArray();
+                        // =========================
+                        // 1. UNIQUE CODE GENERATION
+                        // =========================
+                        $base = $customer->id . $this->period;
 
-                        $availableCodes = array_values(
-                            array_diff(range(1, 999), $usedCodes)
-                        );
+                        $uniqueCode = hexdec(substr(md5($base), 0, 8)) % 1000;
 
-                        if (empty($availableCodes)) {
-                            Log::warning("[GenerateMonthlyInvoicesJob] Kode unik penuh untuk user {$user->name}");
-                            return;
-                        }
+                        // safety format 3 digit
+                        $uniqueCode = str_pad($uniqueCode, 3, '0', STR_PAD_LEFT);
 
-                        // Pilih kode unik secara random dari yang tersedia
-                        $uniqueCode  = $availableCodes[array_rand($availableCodes)];
-                        $totalAmount = $amount + $uniqueCode;
+                        // =========================
+                        // 2. INVOICE NUMBER SAFE SEQUENCE
+                        // =========================
+                        $periodSlug = str_replace('-', '', $this->period);
 
-                        // -----------------------------------------------------------
-                        // LOCK: Kunci baris invoice_number terakhir untuk periode ini
-                        // agar tidak ada 2 worker yang mengambil sequence yang sama
-                        // -----------------------------------------------------------
-                        $periodSlug  = str_replace('-', '', $this->period);
-                        $lastInvoice = Invoice::where('invoice_number', 'like', "INV-{$periodSlug}-%")
-                            ->orderBy('invoice_number', 'desc')
-                            ->lockForUpdate()  // <-- Pessimistic lock
-                            ->first();
-
-                        $seq = 1;
-                        if ($lastInvoice) {
-                            $parts = explode('-', $lastInvoice->invoice_number);
-                            $seq   = ((int) end($parts)) + 1;
-                        }
+                        $seq = Invoice::where('tenant_id', $user->id)
+                            ->where('billing_period', $this->period)
+                            ->lockForUpdate()
+                            ->count() + 1;
 
                         $invoiceNumber = 'INV-' . $periodSlug . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
+                        // =========================
+                        // 3. CREATE (DB IS GUARDIAN)
+                        // =========================
                         Invoice::create([
                             'id'             => (string) Str::uuid(),
                             'customer_id'    => $customer->id,
@@ -148,41 +114,25 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                             'invoice_number' => $invoiceNumber,
                             'amount'         => $amount,
                             'unique_code'    => $uniqueCode,
-                            'total_amount'   => $totalAmount,
+                            'total_amount'   => $amount + (int)$uniqueCode,
                             'billing_period' => $this->period,
                             'status'         => 'unpaid',
                             'due_date'       => $dueDate,
                         ]);
 
                         $totalGenerated++;
-
-                        // Kirim notifikasi WhatsApp awal
-                        $appSetting = $user->appSetting;
-                        // if ($appSetting && $appSetting->template) {
-                        //     $message = $whatsappService->formatMessage($appSetting->template, [
-                        //         'name'           => $customer->name,
-                        //         'invoice_number' => $invoiceNumber,
-                        //         'amount'         => $amount,
-                        //         'unique_code'    => $uniqueCode,
-                        //         'total_amount'   => $totalAmount,
-                        //         'period'         => $this->period,
-                        //         'due_date'       => $customer->due_date?->format('d-m-Y') ?? now()->addDays(7)->format('d-m-Y'),
-                        //         'package'        => $customer->package->name ?? '-',
-                        //     ]);
-
-                        //     $whatsappService->sendMessage(
-                        //         $user->phone ?? '',
-                        //         $customer->phone,
-                        //         $message
-                        //     );
-                        // }
                     });
-                } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-                    // Safety net: jika unique constraint di DB menangkap duplikat
-                    // (misalnya unique_code atau invoice_number), log dan skip
-                    Log::warning("[GenerateMonthlyInvoicesJob] Duplikat terdeteksi untuk {$customer->name}, skip. Detail: " . $e->getMessage());
-                } catch (\Exception $e) {
-                    Log::error("[GenerateMonthlyInvoicesJob] Error pelanggan {$customer->name}: " . $e->getMessage());
+                } catch (\Illuminate\Database\QueryException $e) {
+
+                    // =========================
+                    // DUPLICATE SAFE HANDLING
+                    // =========================
+                    if ($e->getCode() == 23000) {
+                        // duplicate → skip silently
+                        continue;
+                    }
+
+                    Log::error($e->getMessage());
                 }
             }
         }
