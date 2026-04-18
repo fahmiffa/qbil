@@ -80,7 +80,6 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                     DB::transaction(function () use ($customer, $user, &$totalGenerated) {
 
                         $amount = $customer->package->price ?? 0;
-                        $dueDate = $customer->due_date;
 
                         // =========================
                         // 1. UNIQUE CODE GENERATION
@@ -117,7 +116,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                             'total_amount'   => $amount + (int)$uniqueCode,
                             'billing_period' => $this->period,
                             'status'         => 'unpaid',
-                            'due_date'       => $dueDate,
+                            'due_date'       => $customer->due_date,
                         ]);
 
                         $totalGenerated++;
