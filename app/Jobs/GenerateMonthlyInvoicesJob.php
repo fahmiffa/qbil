@@ -131,26 +131,26 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue
                         $totalGenerated++;
 
                         // Kirim notifikasi WhatsApp awal
-                        $appSetting = $user->appSetting;
-                        if ($appSetting && $appSetting->template) {
-                            $message = $whatsappService->formatMessage($appSetting->template, [
-                                'name'           => $customer->name,
-                                'invoice_number' => $invoiceNumber,
-                                'amount'         => $amount,
-                                'unique_code'    => $uniqueCode,
-                                'total_amount'   => $totalAmount,
-                                'period'         => $this->period,
-                                'due_date'       => now()->addDays(7)->format('d-m-Y'),
-                                'package'        => $customer->package->name ?? '-',
-                            ]);
+                    //     $appSetting = $user->appSetting;
+                    //     if ($appSetting && $appSetting->template) {
+                    //         $message = $whatsappService->formatMessage($appSetting->template, [
+                    //             'name'           => $customer->name,
+                    //             'invoice_number' => $invoiceNumber,
+                    //             'amount'         => $amount,
+                    //             'unique_code'    => $uniqueCode,
+                    //             'total_amount'   => $totalAmount,
+                    //             'period'         => $this->period,
+                    //             'due_date'       => now()->addDays(7)->format('d-m-Y'),
+                    //             'package'        => $customer->package->name ?? '-',
+                    //         ]);
 
-                            $whatsappService->sendMessage(
-                                $user->phone ?? '',
-                                $customer->phone,
-                                $message
-                            );
-                        }
-                    });
+                    //         $whatsappService->sendMessage(
+                    //             $user->phone ?? '',
+                    //             $customer->phone,
+                    //             $message
+                    //         );
+                    //     }
+                    // });
                 } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
                     // Safety net: jika unique constraint di DB menangkap duplikat
                     // (misalnya unique_code atau invoice_number), log dan skip
