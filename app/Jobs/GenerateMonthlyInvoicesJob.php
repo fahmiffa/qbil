@@ -65,7 +65,12 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue
 
                 try {
                     DB::transaction(function () use ($customer, $user, $whatsappService, &$totalGenerated) {
-                        $amount = $customer->package->price ?? 0;
+                        $amount  = $customer->package->price ?? 0;
+
+                        // Due date invoice = due_date dari data customer (fallback +7 hari jika kosong)
+                        $dueDate = $customer->due_date
+                            ? $customer->due_date->format('Y-m-d')
+                            : now()->addDays(7)->format('Y-m-d');
 
                         // -----------------------------------------------------------
                         // LOCK: Exclude kode yang sudah dipakai jika:
@@ -125,7 +130,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue
                             'total_amount'   => $totalAmount,
                             'billing_period' => $this->period,
                             'status'         => 'unpaid',
-                            'due_date'       => now()->addDays(7)->format('Y-m-d'),
+                            'due_date'       => $dueDate,
                         ]);
 
                         $totalGenerated++;
@@ -140,7 +145,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue
                         //         'unique_code'    => $uniqueCode,
                         //         'total_amount'   => $totalAmount,
                         //         'period'         => $this->period,
-                        //         'due_date'       => now()->addDays(7)->format('d-m-Y'),
+                        //         'due_date'       => $customer->due_date?->format('d-m-Y') ?? now()->addDays(7)->format('d-m-Y'),
                         //         'package'        => $customer->package->name ?? '-',
                         //     ]);
 
