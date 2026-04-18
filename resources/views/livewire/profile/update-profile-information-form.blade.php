@@ -115,7 +115,7 @@ new class extends Component
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+            <x-primary-button class="dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100">{{ __('Save') }}</x-primary-button>
 
             <x-action-message class="me-3" on="profile-updated">
                 {{ __('Saved.') }}

@@ -93,13 +93,84 @@
                                             <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 uppercase tracking-wider">Canceled</span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
+                                    <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
                                         @if($invoice->status == 'unpaid')
-                                            <button wire:click="markAsPaid('{{ $invoice->id }}')" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold text-xs" wire:confirm="Yakin tandai LUNAS?">Lunas</button>
-                                            <button wire:click="cancelInvoice('{{ $invoice->id }}')" class="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 font-bold text-xs" wire:confirm="Yakin batalkan invoice?">Batal</button>
+                                            <button @click="
+                                                Swal.fire({
+                                                    title: 'Tandai Lunas?',
+                                                    text: 'Pastikan Anda telah menerima pembayaran untuk invoice {{ $invoice->invoice_number }}.',
+                                                    icon: 'question',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#10b981',
+                                                    cancelButtonColor: '#64748b',
+                                                    confirmButtonText: 'Ya, Tandai Lunas',
+                                                    cancelButtonText: 'Kembali',
+                                                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                                                    color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) {
+                                                        $wire.markAsPaid('{{ $invoice->id }}')
+                                                    }
+                                                })
+                                            " class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold text-xs">Lunas</button>
+                                            
+                                            <button @click="
+                                                Swal.fire({
+                                                    title: 'Batalkan Invoice?',
+                                                    text: 'Invoice {{ $invoice->invoice_number }} akan ditandai sebagai dibatalkan.',
+                                                    icon: 'warning',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#f59e0b',
+                                                    cancelButtonColor: '#64748b',
+                                                    confirmButtonText: 'Ya, Batalkan',
+                                                    cancelButtonText: 'Kembali',
+                                                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                                                    color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) {
+                                                        $wire.cancelInvoice('{{ $invoice->id }}')
+                                                    }
+                                                })
+                                            " class="text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-400 font-bold text-xs">Batal</button>
                                         @elseif($invoice->status == 'canceled')
-                                            <button wire:click="regenerateInvoice('{{ $invoice->id }}')" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold text-xs" wire:confirm="Generate ulang invoice ini dengan kode unik baru?">Generate Lagi</button>
+                                            <button @click="
+                                                Swal.fire({
+                                                    title: 'Re-generate Invoice?',
+                                                    text: 'Buat ulang invoice ini dengan kode unik yang baru?',
+                                                    icon: 'info',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#3b82f6',
+                                                    cancelButtonColor: '#64748b',
+                                                    confirmButtonText: 'Ya, Generate Ulang',
+                                                    cancelButtonText: 'Kembali',
+                                                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                                                    color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) {
+                                                        $wire.regenerateInvoice('{{ $invoice->id }}')
+                                                    }
+                                                })
+                                            " class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold text-xs">Generate Lagi</button>
                                         @endif
+
+                                        <button @click="
+                                            Swal.fire({
+                                                title: 'Hapus Permanen?',
+                                                text: 'Data invoice {{ $invoice->invoice_number }} akan dihapus selamanya dari database.',
+                                                icon: 'error',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#ef4444',
+                                                cancelButtonColor: '#64748b',
+                                                confirmButtonText: 'Ya, Hapus Permanen',
+                                                cancelButtonText: 'Batal',
+                                                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                                                color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    $wire.deleteInvoice('{{ $invoice->id }}')
+                                                }
+                                            })
+                                        " class="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 font-bold text-xs">Hapus</button>
                                     </td>
                                 </tr>
                             @empty

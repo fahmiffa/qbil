@@ -135,6 +135,13 @@ class InvoiceManager extends Component
         $this->dispatch('toast', type: 'warning', message: "Invoice {$invoice->invoice_number} telah dibatalkan.");
     }
 
+    public function deleteInvoice($invoiceId)
+    {
+        $invoice = Invoice::findOrFail($invoiceId);
+        $invoice->delete();
+        $this->dispatch('toast', type: 'error', message: "Invoice telah dihapus permanen.");
+    }
+
     public function regenerateInvoice($invoiceId)
     {
         $invoice = Invoice::findOrFail($invoiceId);
