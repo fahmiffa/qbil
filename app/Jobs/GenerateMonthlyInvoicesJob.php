@@ -9,6 +9,7 @@ use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -16,14 +17,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class GenerateMonthlyInvoicesJob implements ShouldQueue
+class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Jumlah percobaan ulang jika job gagal.
+     * Set 1 karena job bersifat idempotent — jika gagal investigasi dari log,
+     * daripada retry otomatis yang bisa menyebabkan efek samping ganda.
      */
-    public int $tries = 3;
+    public int $tries = 1;
 
     /**
      * Timeout job dalam detik.
@@ -31,6 +34,24 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue
     public int $timeout = 300;
 
     public function __construct(public readonly string $period) {}
+
+    /**
+     * Unique key — job dengan periode yang sama tidak bisa masuk queue dua kali
+     * selama job pertama masih pending/running.
+     */
+    public function uniqueId(): string
+    {
+        return 'generate-invoices-' . $this->period;
+    }
+
+    /**
+     * Durasi lock unique dalam detik (10 menit).
+     * Setelah job selesai atau timeout, lock dilepas otomatis.
+     */
+    public function uniqueFor(): int
+    {
+        return 600;
+    }
 
     /**
      * Execute the job.
