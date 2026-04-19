@@ -27,13 +27,6 @@
                         <p class="text-sm text-gray-500 dark:text-slate-400">Profil Hotspot langsung dari <code class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-1 rounded">/ip hotspot user profile</code></p>
                     </div>
                     <div class="flex gap-2">
-                        <button wire:click="loadProfiles()" wire:loading.attr="disabled" wire:target="loadProfiles"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm">
-                            <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="loadProfiles" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                            Refresh
-                        </button>
                         <button wire:click="openCreate()" class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Tambah Profile
@@ -94,10 +87,29 @@
                                             Rp {{ number_format($p['price'] ?? 0, 0, ',', '.') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right space-x-1">
-                                            <button wire:click="openEdit('{{ $p['id'] }}')" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all">Edit</button>
-                                            <button wire:click="delete('{{ $p['id'] }}')" wire:confirm="Yakin hapus paket '{{ $p['name'] }}'?"
-                                                class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all">Hapus</button>
-                                        </td>
+                                             <button wire:click="openEdit('{{ $p['id'] }}')" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all">Edit</button>
+                                             <button type="button" 
+                                                 @click="Swal.fire({
+                                                     title: 'Yakin ingin menghapus?',
+                                                     text: 'Profil Hotspot \'{{ $p['name'] }}\' akan dihapus dari sistem dan MikroTik!',
+                                                     icon: 'warning',
+                                                     showCancelButton: true,
+                                                     confirmButtonColor: '#ef4444',
+                                                     cancelButtonColor: '#64748b',
+                                                     confirmButtonText: 'Ya, Hapus!',
+                                                     cancelButtonText: 'Batal',
+                                                     reverseButtons: true
+                                                 }).then((result) => {
+                                                     if (result.isConfirmed) {
+                                                         @this.delete('{{ $p['id'] }}')
+                                                     }
+                                                 })"
+                                                 wire:loading.attr="disabled" wire:target="delete('{{ $p['id'] }}')"
+                                                 class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all disabled:opacity-50">
+                                                 <span wire:loading.remove wire:target="delete('{{ $p['id'] }}')">Hapus</span>
+                                                 <span wire:loading wire:target="delete('{{ $p['id'] }}')">Menghapus...</span>
+                                             </button>
+                                         </td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="6" class="px-6 py-16 text-center text-gray-400 dark:text-slate-500 italic">Tidak ada Daftar Paket ditemukan.</td></tr>
@@ -120,46 +132,116 @@
                                     </div>
                                 </div>
                                 <form wire:submit.prevent="save">
-                                    <div class="px-6 py-4 space-y-4">
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Nama Paket</label>
-                                            <input type="text" wire:model="name" placeholder="Contoh: Paket 1 Jam" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none">
-                                            @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih MikroTik Profile</label>
-                                            <select wire:model="mikrotik_profile" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none">
-                                                <option value="">-- Pilih Profile dari MikroTik --</option>
-                                                @foreach($mikrotik_profiles_list as $mp)
-                                                    <option value="{{ $mp }}">{{ $mp }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('mikrotik_profile') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Harga (Rp)</label>
-                                            <div x-data="{
-                                                rawPrice: @entangle('price'),
-                                                displayPrice: '',
-                                                format(val) {
-                                                    if (!val) return '';
-                                                    return new Intl.NumberFormat('id-ID').format(String(val).replace(/[^0-9]/g, ''));
-                                                }
-                                            }" x-init="displayPrice = format(rawPrice); $watch('rawPrice', val => displayPrice = format(val))">
-                                                <input type="text" x-model="displayPrice" 
-                                                    @input="
-                                                        let raw = $event.target.value.replace(/[^0-9]/g, '');
-                                                        rawPrice = raw;
-                                                        displayPrice = format(raw);
-                                                    "
-                                                    placeholder="Contoh: 150.000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none">
+                                    <div class="px-6 py-4">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <!-- Mode Selector -->
+                                            <div class="col-span-2 flex gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl mb-4 border border-slate-200 dark:border-slate-700">
+                                                <button type="button" wire:click="$set('sync_mode', 'new')" 
+                                                    class="flex-1 py-2 px-4 rounded-lg text-[10px] uppercase tracking-tighter font-bold transition-all {{ $sync_mode === 'new' ? 'bg-white dark:bg-slate-800 text-orange-600 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-700' }}">
+                                                    Buat Baru
+                                                </button>
+                                                <button type="button" wire:click="$set('sync_mode', 'sync')" 
+                                                    class="flex-1 py-2 px-4 rounded-lg text-[10px] uppercase tracking-tighter font-bold transition-all {{ $sync_mode === 'sync' ? 'bg-white dark:bg-slate-800 text-orange-600 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-700' }}">
+                                                    Sinkronisasi
+                                                </button>
                                             </div>
-                                            @error('price') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+
+                                            <div class="col-span-2">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Nama Paket</label>
+                                                <input type="text" wire:model="name" placeholder="Contoh: Paket 1 Jam" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
+                                                @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                            </div>
+
+                                            @if($sync_mode === 'sync')
+                                                <div class="col-span-2">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Profile MikroTik</label>
+                                                    <select wire:model="selected_mikrotik_profile" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
+                                                        <option value="">-- Pilih Profile MikroTik --</option>
+                                                        @foreach($mikrotik_profiles_list as $mp)
+                                                            <option value="{{ $mp['name'] }}">{{ $mp['name'] }} ({{ $mp['rate-limit'] ?? 'No Limit' }})</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('selected_mikrotik_profile') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                    <p class="text-[10px] text-slate-400 mt-2 italic px-1">Kecepatan dan Shared Users akan mengikuti settingan yang ada di profil MikroTik tersebut.</p>
+                                                </div>
+                                            @else
+                                                <div class="col-span-1">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Shared Users</label>
+                                                    <input type="number" wire:model="shared_users" placeholder="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
+                                                    @error('shared_users') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                </div>
+
+                                                <div class="col-span-1">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Address Pool</label>
+                                                    <select wire:model="address_pool" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
+                                                        <option value="none">none</option>
+                                                        @foreach($ip_pools as $p)
+                                                            <option value="{{ $p['name'] }}">{{ $p['name'] }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('address_pool') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                </div>
+
+                                                <div class="col-span-1">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Waktu (Timeout)</label>
+                                                    <input type="text" wire:model="session_timeout" placeholder="8h" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
+                                                    @error('session_timeout') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Contoh: 8h, 30m, 1d</p>
+                                                </div>
+
+                                                <div class="col-span-1">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Download Speed</label>
+                                                    <div class="flex">
+                                                        <input type="number" wire:model="download_value" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-l-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none" placeholder="10">
+                                                        <select wire:model="download_unit" class="bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl px-3 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                                                            <option value="M">M</option>
+                                                            <option value="K">K</option>
+                                                        </select>
+                                                    </div>
+                                                    @error('download_value') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                </div>
+
+                                                <div class="col-span-1">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Upload Speed</label>
+                                                    <div class="flex">
+                                                        <input type="number" wire:model="upload_value" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-l-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none" placeholder="10">
+                                                        <select wire:model="upload_unit" class="bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl px-3 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                                                            <option value="M">M</option>
+                                                            <option value="K">K</option>
+                                                        </select>
+                                                    </div>
+                                                    @error('upload_value') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                </div>
+                                            @endif
+
+                                            <div class="col-span-2">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Harga Bulanan (Rp)</label>
+                                                <input type="text" 
+                                                    class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors" 
+                                                    placeholder="150.000"
+                                                    x-data="{
+                                                        formatCurrency(val) {
+                                                            if (!val) return '';
+                                                            let num = val.toString().replace(/\D/g, '');
+                                                            return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                                        }
+                                                    }"
+                                                    x-on:input="$event.target.value = formatCurrency($event.target.value); $wire.set('price', $event.target.value.replace(/\D/g, ''))"
+                                                    x-init="$el.value = formatCurrency($wire.get('price') || '')">
+                                                @error('price') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex gap-3">
                                         <button type="button" wire:click="closeModal()" class="flex-1 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">Batal</button>
-                                        <button type="submit" class="flex-1 px-4 py-3 text-sm font-bold text-white bg-orange-500 rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/30 transition-all">{{ $isEditing ? 'Simpan' : 'Buat Profile' }}</button>
+                                        <button type="submit" wire:loading.attr="disabled" wire:target="save"
+                                            class="flex-1 px-4 py-3 text-sm font-bold text-white bg-orange-500 rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/30 transition-all disabled:bg-orange-400 disabled:shadow-none flex items-center justify-center gap-2">
+                                            <svg wire:loading wire:target="save" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>{{ $isEditing ? 'Simpan' : 'Buat Profile' }}</span>
+                                        </button>
                                     </div>
                                 </form>
                             </div>

@@ -26,12 +26,6 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Tambah Pelanggan
                         </button>
-
-                        <!-- <button wire:click="importExcel" wire:loading.attr="disabled" class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all shadow-sm">
-                            <svg wire:loading.remove wire:target="importExcel" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            <svg wire:loading wire:target="importExcel" class="animate-spin h-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Sync Excel
-                        </button> -->
                     </div>
 
                     <div class="flex flex-wrap gap-3 w-full sm:w-auto">
@@ -49,12 +43,24 @@
                         </div>
 
                         <!-- Filter Paket -->
-                        <div class="relative w-full sm:w-48">
+                        <div class="relative w-full sm:w-44">
                             <select wire:model.live="filterPackage" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
                                 <option value="">Semua Paket</option>
                                 @foreach($allPackages as $pkg)
                                     <option value="{{ $pkg->id }}">{{ $pkg->name }}</option>
                                 @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+
+                        <!-- Filter Layanan -->
+                        <div class="relative w-full sm:w-40">
+                            <select wire:model.live="filterService" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
+                                <option value="">Semua Layanan</option>
+                                <option value="static">STATIC</option>
+                                <option value="pppoe">PPPoE</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -74,218 +80,219 @@
 
                 @if($isOpen)
                     <div class="fixed z-50 inset-0 overflow-y-auto">
-                        <div class="flex items-center justify-center min-h-screen px-4">
-                            <div class="fixed inset-0 bg-black opacity-40"></div>
-                            <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl z-10 border border-transparent dark:border-slate-700 transition-colors">
+                        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+                            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" wire:click="closeModal()"></div>
+                            
+                            <div class="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl z-10 border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all"
+                                 wire:click.stop>
                                 <!-- Modal Header -->
-                                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
-                                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">
-                                        {{ $customer_id ? 'Edit Pelanggan' : 'Tambah Pelanggan' }}
-                                    </h3>
-                                    <button wire:click="closeModal()" class="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+                                <div class="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            </div>
+                                            {{ $customer_id ? 'Detail Pelanggan' : 'Registrasi Pelanggan Baru' }}
+                                        </h3>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider font-semibold">Manajemen Konektivitas & Billing</p>
+                                    </div>
+                                    <button wire:click="closeModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 transition-all duration-300">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
 
                                 <!-- Modal Body -->
                                 <form wire:submit.prevent="store">
-                                    <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-slate-800 transition-colors">
-                                        <!-- ID Pelanggan -->
-                                        <div>
-                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">ID Pelanggan</label>
-                                            <input type="text" wire:model="id_pelanggan" placeholder="Contoh: EB-001"
-                                                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            @error('id_pelanggan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                        </div>
-
-                                        <!-- Nama -->
-                                        <div>
-                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Nama Pelanggan <span class="text-red-500">*</span></label>
-                                            <input type="text" wire:model="name" placeholder="Masukkan nama lengkap"
-                                                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 @error('name') border-red-400 @enderror">
-                                            @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                        </div>
-
-                                        <!-- No HP -->
-                                            <!-- No HP -->
+                                    <div class="px-8 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            <!-- ID Pelanggan -->
                                             <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">No. HP / WhatsApp</label>
-                                                <input type="text" wire:model="phone" placeholder="6281234567890"
-                                                    class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                                                @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">ID Pelanggan</label>
+                                                <div class="relative">
+                                                    <input type="text" wire:model="id_pelanggan" placeholder="EB-XXXX"
+                                                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors border-l-4 border-l-blue-500">
+                                                </div>
+                                                @error('id_pelanggan') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>
 
-                                        <!-- Status -->
+                                            <!-- Nama -->
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Nama Pelanggan <span class="text-red-500">*</span></label>
+                                                <input type="text" wire:model="name" placeholder="Nama Lengkap"
+                                                    class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors @error('name') border-red-400 @enderror">
+                                                @error('name') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                            </div>
+
+                                            <!-- No HP -->
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">WhatsApp</label>
+                                                <input type="text" wire:model="phone" placeholder="628..."
+                                                    class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
+                                                @error('phone') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                            </div>
+
                                             <!-- Status -->
                                             <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Status <span class="text-red-500">*</span></label>
-                                                <select wire:model="status" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Status <span class="text-red-500">*</span></label>
+                                                <select wire:model="status" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
                                                     <option value="active">Active</option>
                                                     <option value="suspended">Suspended</option>
                                                 </select>
-                                                @error('status') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                @error('status') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>
 
-                                        <!-- Jatuh Tempo -->
-                                            <!-- Jatuh Tempo -->
+                                            <!-- Tgl Jatuh Tempo -->
                                             <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Tgl. Jatuh Tempo</label>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Tgl. Jatuh Tempo</label>
                                                 <input type="date" wire:model="due_date"
-                                                    class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                                                @error('due_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                    class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
                                             </div>
 
-                                        <!-- Alamat -->
                                             <!-- Alamat -->
                                             <div class="sm:col-span-2">
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Alamat</label>
-                                                <textarea wire:model="address" placeholder="Masukkan alamat lengkap" rows="2"
-                                                    class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"></textarea>
-                                                @error('address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Alamat Lengkap</label>
+                                                <textarea wire:model="address" placeholder="Masukkan alamat..." rows="2"
+                                                    class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors"></textarea>
                                             </div>
 
-                                        <!-- Keterangan -->
-                                            <!-- Keterangan -->
+                                            <!-- Lokasi Map -->
                                             <div class="sm:col-span-2">
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Keterangan</label>
-                                                <input type="text" wire:model="keterangan" placeholder="Catatan tambahan"
-                                                    class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                                                @error('keterangan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Koordinat Lokasi</label>
+                                                <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
+                                                    <x-google-map lat="latitude" lng="longitude" />
+                                                </div>
                                             </div>
 
-                                        <!-- Koordinat Peta (Google Maps Component) -->
-                                        <div class="sm:col-span-2">
-                                            <x-google-map lat="latitude" lng="longitude" />
-                                        </div>
-
-                                        <!-- Divider: MikroTik Setup -->
-                                        <div class="sm:col-span-2">
-                                            <hr class="border-dashed border-gray-300 dark:border-slate-700 my-2">
-                                            <p class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Konfigurasi MikroTik</p>
-                                        </div>
-
-                                        <!-- Metode Pembuatan -->
-                                        <div class="sm:col-span-2">
-                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Metode Pembuatan</label>
-                                            <select wire:model.live="creation_method" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                                                <option value="buat_baru">Buat Baru</option>
-                                                <option value="sinkronisasi">Sinkronisasi</option>
-                                                <option value="manual">Manual</option>
-                                            </select>
-                                            <p class="text-xs text-gray-400 mt-1 italic leading-relaxed">
-                                                @if($creation_method === 'buat_baru') 👉 Input pelanggan dari awal di sistem billing. Akan digenerate otomatis ke Router.
-                                                @elseif($creation_method === 'sinkronisasi') 👉 Ambil data yang sudah ada dari perangkat (seperti OLT / MikroTik) ke billing. Cocok kalau sebelumnya sudah disetting di Router.
-                                                @elseif($creation_method === 'manual') 👉 Input sendiri satu-satu tanpa ada auto generate ke Router. Biasanya untuk kasus khusus.
-                                                @endif
-                                            </p>
-                                        </div>
-
-                                        <!-- Tipe Layanan -->
-                                        <div class="sm:col-span-2 mt-2">
-                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Tipe Layanan</label>
-                                            <select wire:model.live="service_type" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                                                <option value="dynamic">Dynamic</option>
-                                                <option value="static">Static</option>
-                                                <option value="pppoe">PPPoE</option>
-                                                <option value="hotspot">Hotspot</option>
-                                                <option value="ip_binding">IP Bindings</option>
-                                            </select>
-                                            <p class="text-xs text-gray-400 mt-1 italic leading-relaxed">
-                                                @if($service_type === 'dynamic') 👉 IP pelanggan otomatis (DHCP). Umum dipakai, simpel, tidak perlu login.
-                                                @elseif($service_type === 'static') 👉 IP tetap (tidak berubah). Biasanya untuk kantor / pelanggan khusus.
-                                                @elseif($service_type === 'pppoe') 👉 Pakai username & password. Paling sering dipakai ISP karena bisa kontrol user.
-                                                @elseif($service_type === 'hotspot') 👉 Login lewat halaman web (voucher/user). Cocok untuk wifi publik.
-                                                @elseif($service_type === 'ip_binding') 👉 Mengikat IP ke MAC address tertentu. Lebih ke kontrol keamanan / bypass hotspot.
-                                                @endif
-                                            </p>
-                                            @error('service_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                        </div>
-
-                                        <!-- Paket -->
-                                        <div>
-                                            <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Paket Internet</label>
-                                            <select wire:model="package_id" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                <option value="">-- Pilih Paket --</option>
-                                                @foreach($packages as $pkg)
-                                                    <option value="{{ $pkg->id }}">{{ $pkg->name }} ({{ $pkg->mikrotik_profile }}) — Rp {{ number_format($pkg->price, 0, ',', '.') }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('package_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                        </div>
-
-                                        @if($service_type === 'pppoe' || $service_type === 'hotspot')
-                                            <!-- Username MikroTik -->
-                                            <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Username MikroTik</label>
-                                                <input type="text" wire:model="username" placeholder="Contoh: pelanggan01"
-                                                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                @error('username') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                            <div class="sm:col-span-2">
+                                                <div class="flex items-center gap-4 my-2">
+                                                    <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+                                                    <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Parameter Layanan</span>
+                                                    <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+                                                </div>
                                             </div>
 
-                                            <!-- Password MikroTik -->
+                                            <!-- Tipe Layanan -->
                                             <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Password MikroTik</label>
-                                                <input type="text" wire:model="password" placeholder="Kosongkan jika tidak diubah"
-                                                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Layanan</label>
+                                                <select wire:model.live="service_type" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors border-l-4 border-l-orange-500">
+                                                    <option value="static">STATIC (IP Queue)</option>
+                                                    <option value="pppoe">PPPOE (User & PW)</option>
+                                                </select>
                                             </div>
-                                        @else
-                                            <!-- IP Pool Selection (Auto Assign) -->
+
+                                            <!-- Paket -->
                                             <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Pilih IP Pool</label>
-                                                <select wire:model="selectedPool" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                                                    <option value="">-- Pilih Pool MikroTik --</option>
-                                                    @foreach($ipPools as $pool)
-                                                        <option value="{{ $pool['name'] }}">{{ $pool['name'] }} ({{ $pool['ranges'] }})</option>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Paket Langganan</label>
+                                                <select wire:model="package_id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
+                                                    <option value="">-- Pilih Paket --</option>
+                                                    @foreach($packages as $pkg)
+                                                        <option value="{{ $pkg->id }}">{{ $pkg->name }} — Rp {{ number_format($pkg->price, 0, ',', '.') }}</option>
                                                     @endforeach
                                                 </select>
-                                                <p class="text-[10px] text-gray-400 mt-1 italic">Opsional: Pilih pool untuk mencari IP kosong.</p>
+                                                @error('package_id') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>
 
-                                            <!-- IP Address -->
-                                            <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">IP Address</label>
-                                                <div class="flex gap-2">
-                                                    <input type="text" wire:model="ip_address" placeholder="Contoh: 192.168.88.10"
-                                                        class="flex-1 border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                                                    <button type="button" wire:click="autoAssignIp" wire:loading.attr="disabled" 
-                                                        class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all whitespace-nowrap flex items-center justify-center min-w-[80px]">
-                                                        <span wire:loading.remove wire:target="autoAssignIp">Cari IP</span>
-                                                        <svg wire:loading wire:target="autoAssignIp" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                    </button>
+                                            @if($service_type === 'pppoe')
+                                                <!-- PPPOE Config -->
+                                                <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-3xl">
+                                                    <div class="sm:col-span-2">
+                                                        <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Konfigurasi PPPOE Secret</p>
+                                                    </div>
+
+                                                    <div class="sm:col-span-2">
+                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Pilih Profile Mikrotik</label>
+                                                        <select wire:model="ppp_profile" class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                                                            <option value="">-- Pilih Profile (Default dari Paket) --</option>
+                                                            @foreach($pppProfiles as $profile)
+                                                                <option value="{{ $profile['name'] }}">{{ $profile['name'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <p class="text-[10px] text-slate-500 mt-1 italic">* Jika dikosongkan, akan menggunakan profile dari Paket yang dipilih.</p>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Username PPPOE</label>
+                                                        <input type="text" wire:model="username" placeholder="user@ebilling"
+                                                            class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Password PPPOE</label>
+                                                        <div class="relative">
+                                                            <input type="{{ $showPassword ? 'text' : 'password' }}" wire:model="password" placeholder="Pass123"
+                                                                class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono pr-12">
+                                                            <button type="button" wire:click="togglePassword" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-indigo-500 transition-colors">
+                                                                @if($showPassword)
+                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
+                                                                @else
+                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                @endif
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                @error('ip_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                            </div>
+                                            @else
+                                                <!-- STATIC Config -->
+                                                <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-3xl">
+                                                    <div class="sm:col-span-2">
+                                                        <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Konfigurasi DHCP & MAC Binding</p>
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">MAC Address</label>
+                                                        <input type="text" wire:model="mac_address" placeholder="00:00:00:00:00:00"
+                                                            class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono uppercase">
+                                                    </div>
 
-                                            @if($service_type === 'ip_binding')
-                                            <!-- MAC Address -->
-                                            <div class="sm:col-span-2">
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">MAC Address <span class="text-xs text-gray-400 font-normal">(Wajib untuk IP Binding)</span></label>
-                                                <input type="text" wire:model="mac_address" placeholder="Contoh: 00:1A:2B:3C:4D:5E"
-                                                    class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors uppercase">
-                                                @error('mac_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                            </div>
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">DHCP Server</label>
+                                                        <select wire:model="dhcp_server" class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                                                            <option value="all">all</option>
+                                                            @foreach($dhcpServers as $srv)
+                                                                <option value="{{ $srv['name'] }}">{{ $srv['name'] }} ({{ $srv['interface'] }})</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">Pilih IP Pool</label>
+                                                        <select wire:model="selectedPool" class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                                                            <option value="">-- Pilih Pool --</option>
+                                                            @foreach($ipPools as $pool)
+                                                                <option value="{{ $pool['name'] }}">{{ $pool['name'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">IP Address</label>
+                                                        <div class="flex gap-2">
+                                                            <input type="text" wire:model="ip_address" placeholder="192.168.x.x"
+                                                                class="flex-1 bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono">
+                                                            <button type="button" wire:click="autoAssignIp" wire:loading.attr="disabled" 
+                                                                class="px-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50">
+                                                                <svg wire:loading.remove wire:target="autoAssignIp" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                                                <svg wire:loading wire:target="autoAssignIp" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             @endif
-                                        @endif
-
-                                        @if(!$customer_id && ($creation_method === 'buat_baru' || $creation_method === 'sinkronisasi'))
-                                        <div class="sm:col-span-2">
-                                            <p class="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2">
-                                                💡 Jika paket dipilih dan metode Sinkronisasi/Buat Baru, profil akun akan diprovisi otomatis ke MikroTik saat disimpan.
-                                            </p>
                                         </div>
-                                        @endif
                                     </div>
 
                                     <!-- Modal Footer -->
-                                    <div class="px-6 py-4 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-end gap-3 rounded-b-2xl transition-colors">
+                                    <div class="px-8 py-5 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 rounded-b-3xl">
                                         <button type="button" wire:click="closeModal()"
-                                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-all">
+                                            class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-all uppercase tracking-widest">
                                             Batal
                                         </button>
-                                        <button type="submit"
-                                            class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all">
-                                            Simpan
+                                        <button type="submit" wire:loading.attr="disabled"
+                                            class="px-8 py-2.5 text-sm font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-[0_8px_20px_-4px_rgba(37,99,235,0.4)] hover:shadow-[0_12px_24px_-6px_rgba(37,99,235,0.5)] transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 min-w-[160px] flex items-center justify-center">
+                                            <span wire:loading.remove wire:target="store">Simpan Pelanggan</span>
+                                            <div wire:loading.flex wire:target="store" class="items-center justify-center gap-2 whitespace-nowrap">
+                                                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                <span>Memproses...</span>
+                                            </div>
                                         </button>
                                     </div>
                                 </form>

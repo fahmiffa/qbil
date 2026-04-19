@@ -8,6 +8,7 @@ use Livewire\Component;
 class MikrotikHotspotProfile extends Component
 {
     public array $profiles = [];
+    public array $ip_pools = [];
     public bool $loading = true;
     public string $error = '';
 
@@ -17,9 +18,15 @@ class MikrotikHotspotProfile extends Component
     public string $editId = '';
 
     // Form
+    public string $sync_mode = 'new'; // 'new' or 'sync'
     public string $name = '';
-    public string $mikrotik_profile = '';
     public string $price = '';
+    public string $download_value = '10', $download_unit = 'M';
+    public string $upload_value = '10', $upload_unit = 'M';
+    public string $shared_users = '1';
+    public string $address_pool = 'none';
+    public string $session_timeout = '8h';
+    public string $selected_mikrotik_profile = '';
 
     public array $mikrotik_profiles_list = [];
 
@@ -43,13 +50,17 @@ class MikrotikHotspotProfile extends Component
             $this->loading = true;
             $this->error = '';
             $mikrotik = $this->getMikrotik();
-            $data = $mikrotik->getHotspotProfiles();
             
-            $this->mikrotik_profiles_list = collect($data)
+            // Get IP Pools
+            $this->ip_pools = $mikrotik->getIpPools();
+
+            // Get existing Mikrotik Profiles
+            $allM = $mikrotik->getHotspotProfiles();
+            $this->mikrotik_profiles_list = collect($allM)
                 ->filter(fn($p) => strtolower($p['name'] ?? '') !== 'default')
-                ->pluck('name')
                 ->toArray();
 
+            // Get packages from DB
             $this->profiles = \App\Models\Package::where('user_id', auth()->id())
                               ->where('tipe', 'hotspot')
                               ->get()->toArray();
@@ -63,22 +74,46 @@ class MikrotikHotspotProfile extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editId', 'name', 'mikrotik_profile', 'price']);
-        if (empty($this->mikrotik_profiles_list)) $this->loadProfiles();
+        $this->reset(['editId', 'name', 'price', 'shared_users', 'address_pool', 'session_timeout', 'download_value', 'download_unit', 'upload_value', 'upload_unit', 'selected_mikrotik_profile', 'sync_mode']);
+        $this->sync_mode = 'new';
+        $this->session_timeout = '8h';
         $this->isEditing = false;
         $this->showModal = true;
+        
+        $this->loadProfiles();
     }
 
     public function openEdit(string $id): void
     {
-        if (empty($this->profiles)) $this->loadProfiles();
-        $p = collect($this->profiles)->firstWhere('id', $id);
+        $p = \App\Models\Package::find($id);
         if ($p) {
             $this->editId = $id;
-            $this->name   = $p['name'] ?? '';
-            $this->mikrotik_profile = $p['mikrotik_profile'] ?? '';
-            $this->price  = rtrim(rtrim((string)($p['price'] ?? '0'), '0'), '.') ?: '0';
-            if ($this->price == '0') $this->price = '';
+            $this->name   = $p->name;
+            $this->price  = (string)$p->price;
+            $this->sync_mode = 'new';
+            
+            // Fetch current settings from Mikrotik since they aren't in our DB
+            try {
+                $mikrotik = $this->getMikrotik();
+                $allM = $mikrotik->getHotspotProfiles();
+                $mProfile = collect($allM)->firstWhere('name', $p->mikrotik_profile);
+                if ($mProfile) {
+                    $this->shared_users = $mProfile['shared-users'] ?? '1';
+                    $this->address_pool = $mProfile['address-pool'] ?? 'none';
+                    $this->session_timeout = $mProfile['session-timeout'] ?? '8h';
+                }
+            } catch (\Exception $e) {}
+            
+            // Split Speed
+            if (preg_match('/^(\d+)(K|M)$/i', $p->speed_download, $m)) {
+                $this->download_value = $m[1];
+                $this->download_unit = strtoupper($m[2]);
+            }
+            if (preg_match('/^(\d+)(K|M)$/i', $p->speed_upload, $m)) {
+                $this->upload_value = $m[1];
+                $this->upload_unit = strtoupper($m[2]);
+            }
+
             $this->isEditing = true;
             $this->showModal = true;
         }
@@ -92,52 +127,90 @@ class MikrotikHotspotProfile extends Component
 
     public function save(): void
     {
-        $this->validate([
-            'name'             => 'required|string|max:100',
-            'mikrotik_profile' => 'required|string',
-            'price'            => 'nullable|numeric|min:0',
-        ]);
+        // Clean price
+        if (isset($this->price) && !is_numeric($this->price)) {
+            $this->price = str_replace('.', '', $this->price);
+        }
+
+        if ($this->sync_mode === 'sync') {
+            $this->validate([
+                'selected_mikrotik_profile' => 'required',
+                'name' => 'required|string|max:100',
+                'price' => 'required|numeric|min:0',
+            ]);
+        } else {
+            $this->validate([
+                'name'           => 'required|string|max:100',
+                'price'          => 'required|numeric|min:0',
+                'download_value' => 'required|numeric|min:1',
+                'upload_value'   => 'required|numeric|min:1',
+                'shared_users'   => 'required|numeric|min:1',
+                'session_timeout' => 'required|string',
+            ]);
+        }
 
         try {
-            // Automatically grab the speed limits from MikroTik
             $mikrotik = $this->getMikrotik();
-            $mikrotikProfiles = collect($mikrotik->getHotspotProfiles());
-            $selectedProfile = $mikrotikProfiles->firstWhere('name', $this->mikrotik_profile);
+            
+            $profileName = $this->sync_mode === 'sync' ? $this->selected_mikrotik_profile : $this->name;
+            $upload = $this->upload_value . $this->upload_unit;
+            $download = $this->download_value . $this->download_unit;
+            $shusers = $this->shared_users;
+            $pool = $this->address_pool;
+            $stimeout = $this->session_timeout;
 
-            $upload = null;
-            $download = null;
-
-            if ($selectedProfile && !empty($selectedProfile['rate-limit'])) {
-                $rl = $selectedProfile['rate-limit'];
-                if (str_contains($rl, '/')) {
-                    [$upload, $download] = explode('/', $rl, 2);
+            if ($this->sync_mode === 'sync') {
+                $mProfile = collect($this->mikrotik_profiles_list)->firstWhere('name', $this->selected_mikrotik_profile);
+                if ($mProfile) {
+                    if (!empty($mProfile['rate-limit']) && str_contains($mProfile['rate-limit'], '/')) {
+                        [$upload, $download] = explode('/', $mProfile['rate-limit'], 2);
+                    }
+                    $shusers = $mProfile['shared-users'] ?? '1';
+                    $pool = $mProfile['address-pool'] ?? 'none';
+                    $stimeout = $mProfile['session-timeout'] ?? '8h';
                 }
             }
 
-            if ($this->isEditing) {
-                \App\Models\Package::where('id', $this->editId)
-                    ->where('user_id', auth()->id())
-                    ->update([
-                        'name' => $this->name,
-                        'mikrotik_profile' => $this->mikrotik_profile,
-                        'price' => $this->price ?: 0,
-                        'speed_upload' => $upload,
-                        'speed_download' => $download,
-                    ]);
+            $rateLimit = $upload . '/' . $download;
 
-                session()->flash('message', "Paket '{$this->name}' berhasil diperbarui.");
-            } else {
-                \App\Models\Package::create([
-                    'user_id' => auth()->id(),
-                    'tipe' => 'hotspot',
+            if ($this->isEditing) {
+                $package = \App\Models\Package::find($this->editId);
+                
+                if ($this->sync_mode === 'new') {
+                    $allM = $mikrotik->getHotspotProfiles();
+                    $mRecord = collect($allM)->firstWhere('name', $package->mikrotik_profile);
+                    if ($mRecord) {
+                        $mikrotik->updateHotspotProfileFull($mRecord['.id'], $this->name, $rateLimit, $shusers, $pool, $stimeout);
+                    } else {
+                        $mikrotik->addHotspotProfileFull($this->name, $rateLimit, $shusers, $pool, $stimeout);
+                    }
+                }
+
+                $package->update([
                     'name' => $this->name,
-                    'mikrotik_profile' => $this->mikrotik_profile,
+                    'mikrotik_profile' => $profileName,
                     'price' => $this->price ?: 0,
                     'speed_upload' => $upload,
                     'speed_download' => $download,
                 ]);
 
-                session()->flash('message', "Paket '{$this->name}' berhasil ditambahkan.");
+                session()->flash('message', "Profil Hotspot berhasil diperbarui.");
+            } else {
+                if ($this->sync_mode === 'new') {
+                    $mikrotik->addHotspotProfileFull($this->name, $rateLimit, $shusers, $pool, $stimeout);
+                }
+
+                \App\Models\Package::create([
+                    'user_id' => auth()->id(),
+                    'tipe' => 'hotspot',
+                    'name' => $this->name,
+                    'mikrotik_profile' => $profileName,
+                    'price' => $this->price ?: 0,
+                    'speed_upload' => $upload,
+                    'speed_download' => $download,
+                ]);
+
+                session()->flash('message', "Profil Hotspot berhasil ditambahkan.");
             }
             $this->closeModal();
             $this->loadProfiles();
@@ -154,9 +227,19 @@ class MikrotikHotspotProfile extends Component
                      ->first();
         if ($package) {
             try {
+                // Try delete from Mikrotik
+                try {
+                    $mikrotik = $this->getMikrotik();
+                    $allM = $mikrotik->getHotspotProfiles();
+                    $mRecord = collect($allM)->firstWhere('name', $package->mikrotik_profile);
+                    if ($mRecord) {
+                        $mikrotik->removeHotspotProfile($mRecord['.id']);
+                    }
+                } catch (\Exception $e) {}
+
                 $package->delete();
                 $this->loadProfiles();
-                session()->flash('message', 'Paket berhasil dihapus.');
+                session()->flash('message', 'Profil berhasil dihapus dari sistem dan MikroTik.');
             } catch (\Exception $e) {
                 session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
             }

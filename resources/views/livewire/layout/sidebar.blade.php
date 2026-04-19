@@ -75,7 +75,7 @@ new class extends Component
             Router
         </x-sidebar-link>
 
-        <x-sidebar-link :href="route('assets')" :active="request()->routeIs('assets')" icon="cube">
+        <x-sidebar-link :href="route('assets')" :active="request()->routeIs('assets')" icon="box">
             Asset
         </x-sidebar-link>
 
@@ -126,7 +126,7 @@ new class extends Component
 
     <!-- Sidebar Footer (Logout) -->
     <div class="p-4 border-t border-gray-100 dark:border-slate-800">
-        <button 
+        <button
             x-on:click="
                 Swal.fire({
                     title: 'Keluar?',

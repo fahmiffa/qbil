@@ -94,6 +94,13 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
+                                        <button @click="
+                                            navigator.clipboard.writeText('{{ route('public.invoice', $invoice->id) }}');
+                                            $dispatch('toast', { type: 'success', message: 'Link invoice berhasil disalin!' });
+                                        " class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold text-xs flex-shrink-0">
+                                            Link
+                                        </button>
+
                                         @if($invoice->status == 'unpaid')
                                             <button @click="
                                                 Swal.fire({

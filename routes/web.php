@@ -31,6 +31,9 @@ Route::get('router', \App\Livewire\RouterConfig::class)
     ->middleware(['auth'])
     ->name('router');
 
+// Public Invoice View
+Route::get('i/{invoice}', \App\Livewire\PublicInvoiceView::class)->name('public.invoice');
+
 
 
 

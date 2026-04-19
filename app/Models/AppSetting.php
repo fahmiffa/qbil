@@ -14,6 +14,8 @@ class AppSetting extends Model
         'notif',
         'template',
         'registration_template',
+        'payment_instruction',
+        'qr',
     ];
 
     public function user()

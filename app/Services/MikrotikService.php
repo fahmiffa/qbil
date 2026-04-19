@@ -33,20 +33,32 @@ class MikrotikService
         return $this->client->query($query)->read();
     }
 
-    public function addPppProfile(string $name, string $rateLimit): void
+    public function addPppProfile(string $name, string $rateLimit, ?string $localAddress = null, ?string $remoteAddress = null): void
     {
         $query = (new Query('/ppp/profile/add'))
             ->equal('name', $name)
-            ->equal('rate-limit', $rateLimit);
+            ->equal('rate-limit', $rateLimit)
+            ->equal('only-one', 'yes')
+            ->equal('dns-server', '8.8.8.8,8.8.4.4');
+        
+        if ($localAddress) $query->equal('local-address', $localAddress);
+        if ($remoteAddress) $query->equal('remote-address', $remoteAddress);
+
         $this->client->query($query)->read();
     }
 
-    public function updatePppProfile(string $id, string $name, string $rateLimit): void
+    public function updatePppProfileFull(string $id, string $name, string $rateLimit, ?string $localAddress = null, ?string $remoteAddress = null): void
     {
         $query = (new Query('/ppp/profile/set'))
             ->equal('.id', $id)
             ->equal('name', $name)
-            ->equal('rate-limit', $rateLimit);
+            ->equal('rate-limit', $rateLimit)
+            ->equal('only-one', 'yes')
+            ->equal('dns-server', '8.8.8.8,8.8.4.4');
+
+        if ($localAddress) $query->equal('local-address', $localAddress);
+        if ($remoteAddress) $query->equal('remote-address', $remoteAddress);
+
         $this->client->query($query)->read();
     }
 
@@ -70,32 +82,28 @@ class MikrotikService
         return $this->client->query($query)->read();
     }
 
-    public function addHotspotProfile(string $name, string $rateLimit = '', string $sharedUsers = '1', string $sessionTimeout = ''): void
+    public function addHotspotProfileFull(string $name, string $rateLimit, string $sharedUsers = '1', string $addressPool = 'none', string $sessionTimeout = '8h'): void
     {
         $query = (new Query('/ip/hotspot/user/profile/add'))
             ->equal('name', $name)
-            ->equal('shared-users', $sharedUsers);
-        if ($rateLimit !== '') {
-            $query->equal('rate-limit', $rateLimit);
-        }
-        if ($sessionTimeout !== '') {
-            $query->equal('session-timeout', $sessionTimeout);
-        }
+            ->equal('rate-limit', $rateLimit)
+            ->equal('shared-users', $sharedUsers)
+            ->equal('address-pool', $addressPool)
+            ->equal('session-timeout', $sessionTimeout);
+
         $this->client->query($query)->read();
     }
 
-    public function updateHotspotProfile(string $id, string $name, string $rateLimit = '', string $sharedUsers = '1', string $sessionTimeout = ''): void
+    public function updateHotspotProfileFull(string $id, string $name, string $rateLimit, string $sharedUsers = '1', string $addressPool = 'none', string $sessionTimeout = '8h'): void
     {
         $query = (new Query('/ip/hotspot/user/profile/set'))
             ->equal('.id', $id)
             ->equal('name', $name)
-            ->equal('shared-users', $sharedUsers);
-        if ($rateLimit !== '') {
-            $query->equal('rate-limit', $rateLimit);
-        }
-        if ($sessionTimeout !== '') {
-            $query->equal('session-timeout', $sessionTimeout);
-        }
+            ->equal('rate-limit', $rateLimit)
+            ->equal('shared-users', $sharedUsers)
+            ->equal('address-pool', $addressPool)
+            ->equal('session-timeout', $sessionTimeout);
+
         $this->client->query($query)->read();
     }
 
@@ -126,7 +134,7 @@ class MikrotikService
         $this->client->query($query)->read();
     }
 
-    public function updatePppSecret(string $oldUsername, string $newUsername, string $password, string $profile): void
+    public function updatePppSecret(string $oldUsername, string $newUsername, string $password, string $profile, string $comment = ''): void
     {
         $query = (new Query('/ppp/secret/print'))->where('name', $oldUsername);
         $secrets = $this->client->query($query)->read();
@@ -136,9 +144,12 @@ class MikrotikService
                 ->equal('name', $newUsername)
                 ->equal('password', $password)
                 ->equal('profile', $profile);
+            
+            if ($comment) $setQuery->equal('comment', $comment);
+
             $this->client->query($setQuery)->read();
         } else {
-            $this->addPppSecret($newUsername, $password, $profile);
+            $this->addPppSecret($newUsername, $password, $profile, $comment);
         }
     }
 
@@ -190,7 +201,7 @@ class MikrotikService
         $this->client->query($query)->read();
     }
 
-    public function updateHotspotUser(string $oldUsername, string $newUsername, string $password, string $profile): void
+    public function updateHotspotUser(string $oldUsername, string $newUsername, string $password, string $profile, string $comment = ''): void
     {
         $query = (new Query('/ip/hotspot/user/print'))->where('name', $oldUsername);
         $users = $this->client->query($query)->read();
@@ -200,9 +211,12 @@ class MikrotikService
                 ->equal('name', $newUsername)
                 ->equal('password', $password)
                 ->equal('profile', $profile);
+            
+            if ($comment) $setQuery->equal('comment', $comment);
+
             $this->client->query($setQuery)->read();
         } else {
-            $this->addHotspotUser($newUsername, $password, $profile);
+            $this->addHotspotUser($newUsername, $password, $profile, $comment);
         }
     }
 
@@ -416,7 +430,7 @@ class MikrotikService
         $this->client->query($query)->read();
     }
 
-    public function updateSimpleQueue(string $oldName, string $newName, string $target, string $maxLimit): void
+    public function updateSimpleQueue(string $oldName, string $newName, string $target, string $maxLimit, string $comment = ''): void
     {
         // 1. Try search by Name first (identifier in app)
         $query = (new Query('/queue/simple/print'))->where('name', $oldName);
@@ -436,6 +450,9 @@ class MikrotikService
                 ->equal('name', $newName)
                 ->equal('target', $target)
                 ->equal('max-limit', $maxLimit);
+            
+            if ($comment) $setQuery->equal('comment', $comment);
+
             $this->client->query($setQuery)->read();
         } else {
             // Check if name exists before adding to avoid "already has such name" error
@@ -447,9 +464,12 @@ class MikrotikService
                     ->equal('.id', $existsByName[0]['.id'])
                     ->equal('target', $target)
                     ->equal('max-limit', $maxLimit);
+                
+                if ($comment) $setQuery->equal('comment', $comment);
+
                 $this->client->query($setQuery)->read();
             } else {
-                $this->addSimpleQueue($newName, $target, $maxLimit);
+                $this->addSimpleQueue($newName, $target, $maxLimit, $comment);
             }
         }
     }
@@ -489,19 +509,27 @@ class MikrotikService
     }
 
     // -------------------------
+    // -------------------------
     // DHCP Server Leases
     // -------------------------
 
-    public function addDhcpLease(string $mac, string $ip, string $comment = ''): void
+    public function getDhcpServers(): array
+    {
+        $query = new Query('/ip/dhcp-server/print');
+        return $this->client->query($query)->read();
+    }
+
+    public function addDhcpLease(string $mac, string $ip, string $server = 'all', string $comment = ''): void
     {
         $query = (new Query('/ip/dhcp-server/lease/add'))
             ->equal('mac-address', $mac)
             ->equal('address', $ip)
+            ->equal('server', $server)
             ->equal('comment', $comment);
-        $this->client->query($query)->read();
+        $this->client->query($query)->read();   
     }
 
-    public function updateDhcpLeaseByMac(string $oldMac, string $newMac, string $newIp): void
+    public function updateDhcpLeaseByMac(string $oldMac, string $newMac, string $newIp, string $server = 'all', ?string $comment = null): void
     {
         $query = (new Query('/ip/dhcp-server/lease/print'))->where('mac-address', $oldMac);
         $leases = $this->client->query($query)->read();
@@ -510,10 +538,14 @@ class MikrotikService
             $setQuery = (new Query('/ip/dhcp-server/lease/set'))
                 ->equal('.id', $leases[0]['.id'])
                 ->equal('mac-address', $newMac)
-                ->equal('address', $newIp);
+                ->equal('address', $newIp)
+                ->equal('server', $server);
+            
+            if ($comment) $setQuery->equal('comment', $comment);
+            
             $this->client->query($setQuery)->read();
         } else {
-            $this->addDhcpLease($newMac, $newIp);
+            $this->addDhcpLease($newMac, $newIp, $server, $comment ?? '');
         }
     }
 
@@ -523,8 +555,23 @@ class MikrotikService
         $leases = $this->client->query($query)->read();
 
         if (!empty($leases)) {
-            $delQuery = (new Query('/ip/dhcp-server/lease/remove'))->equal('.id', $leases[0]['.id']);
-            $this->client->query($delQuery)->read();
+            foreach ($leases as $lease) {
+                $delQuery = (new Query('/ip/dhcp-server/lease/remove'))->equal('.id', $lease['.id']);
+                $this->client->query($delQuery)->read();
+            }
+        }
+    }
+
+    public function removeDhcpLeaseByIp(string $ip): void
+    {
+        $query = (new Query('/ip/dhcp-server/lease/print'))->where('address', $ip);
+        $leases = $this->client->query($query)->read();
+
+        if (!empty($leases)) {
+            foreach ($leases as $lease) {
+                $delQuery = (new Query('/ip/dhcp-server/lease/remove'))->equal('.id', $lease['.id']);
+                $this->client->query($delQuery)->read();
+            }
         }
     }
 
@@ -539,5 +586,52 @@ class MikrotikService
                 ->equal('disabled', $disabled ? 'yes' : 'no');
             $this->client->query($setQuery)->read();
         }
+    }
+
+    public function getDhcpLeases(): array
+    {
+        $query = new Query('/ip/dhcp-server/lease/print');
+        return $this->client->query($query)->read();
+    }
+
+    // -------------------------
+    // Firewall Address List
+    // -------------------------
+
+    public function addToAddressList(string $address, string $list, string $comment = ''): void
+    {
+        // First check if already exists to avoid duplicates
+        if ($this->isInAddressList($address, $list)) {
+            return;
+        }
+
+        $query = (new Query('/ip/firewall/address-list/add'))
+            ->equal('address', $address)
+            ->equal('list', $list)
+            ->equal('comment', $comment);
+        $this->client->query($query)->read();
+    }
+
+    public function removeFromAddressList(string $address, string $list): void
+    {
+        $query = (new Query('/ip/firewall/address-list/print'))
+            ->where('address', $address)
+            ->where('list', $list);
+        $items = $this->client->query($query)->read();
+
+        foreach ($items as $item) {
+            $delQuery = (new Query('/ip/firewall/address-list/remove'))->equal('.id', $item['.id']);
+            $this->client->query($delQuery)->read();
+        }
+    }
+
+    public function isInAddressList(string $address, string $list): bool
+    {
+        $query = (new Query('/ip/firewall/address-list/print'))
+            ->where('address', $address)
+            ->where('list', $list);
+        $items = $this->client->query($query)->read();
+
+        return !empty($items);
     }
 }

@@ -68,6 +68,35 @@
                         @error('registration_template') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
+                    <!-- Instruksi Pembayaran -->
+                    <div>
+                        <label class="block font-medium text-sm text-slate-700 dark:text-slate-300 mb-2" for="payment_instruction">
+                            Instruksi Pembayaran (Tampil di Invoice Publik)
+                        </label>
+                        <textarea wire:model="payment_instruction" id="payment_instruction" rows="4" class="border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm block w-full px-4 py-3 sm:text-sm transition-colors" placeholder="Silakan transfer ke nomor rekening:
+Bank BCA: 12345678 a/n Admin
+Dana: 0812345678"></textarea>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-2 italic">
+                            * Pesan ini akan muncul di bagian bawah halaman invoice yang dibagikan ke pelanggan.
+                        </p>
+                        @error('payment_instruction') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Data QR Statis -->
+                    <div class="p-5 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900/50 dark:to-slate-800/20 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <label class="block font-bold text-sm text-slate-700 dark:text-slate-300 mb-3" for="qr">
+                            Data QR Static (Payload)
+                        </label>
+                        <div class="space-y-4">
+                            <textarea wire:model="qr" id="qr" rows="4" class="border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm block w-full px-4 py-3 sm:text-sm font-mono transition-colors" placeholder="Masukkan 000201010211..."></textarea>
+                            
+                            <p class="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                                <span class="text-blue-500 font-bold mr-1">Info:</span> Masukkan raw data/payload dari QRIS statis Anda di sini. Data ini akan digunakan untuk menghasilkan QR Code otomatis pada invoice pelanggan.
+                            </p>
+                            @error('qr') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
                     <!-- Action -->
                     <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
                         <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 border border-transparent rounded-xl font-bold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 transition ease-in-out duration-150 shadow-lg shadow-blue-500/30">

@@ -51,36 +51,50 @@
                                                 <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="tipe" wire:model="tipe">
                                                     <option value="PPPOE">PPPOE</option>
                                                     <option value="HOTSPOT">HOTSPOT</option>
-                                                    <option value="QUEUE">SIMPLE QUEUE</option>
+                                                    <option value="STATIC">STATIC</option>
                                                 </select>
                                                 @error('tipe') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
                                             <div>
-                                                <label for="price" class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Harga (Rp):</label>
-                                                <input type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="price" placeholder="Masukan Harga" wire:model="price">
+                                                <label for="price" class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Harga Bulanan (Rp):</label>
+                                                <input type="text" 
+                                                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                                    id="price" 
+                                                    placeholder="150.000"
+                                                    x-data="{
+                                                        formatCurrency(val) {
+                                                            if (!val) return '';
+                                                            let num = val.toString().replace(/\D/g, '');
+                                                            return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                                        }
+                                                    }"
+                                                    x-on:input="$event.target.value = formatCurrency($event.target.value); $wire.set('price', $event.target.value.replace(/\D/g, ''))"
+                                                    x-init="$el.value = formatCurrency($wire.get('price') || '')">
                                                 @error('price') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
                                             <div class="flex space-x-4">
                                                 <div class="w-1/2">
                                                     <label for="speed_download" class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Download Speed:</label>
-                                                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="speed_download" placeholder="Contoh: 10M" wire:model="speed_download">
-                                                    @error('speed_download') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                    <div class="flex">
+                                                        <input type="number" class="w-full border border-gray-300 rounded-l-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="speed_download" placeholder="10" wire:model="download_value" min="1">
+                                                        <select class="border border-l-0 border-gray-300 rounded-r-lg px-2 py-2.5 text-sm focus:outline-none bg-gray-50 dark:bg-slate-900 dark:text-slate-300" wire:model="download_unit">
+                                                            <option value="M">M</option>
+                                                            <option value="K">K</option>
+                                                        </select>
+                                                    </div>
+                                                    @error('download_value') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                                 </div>
                                                 <div class="w-1/2">
                                                     <label for="speed_upload" class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Upload Speed:</label>
-                                                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="speed_upload" placeholder="Contoh: 10M" wire:model="speed_upload">
-                                                    @error('speed_upload') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                    <div class="flex">
+                                                        <input type="number" class="w-full border border-gray-300 rounded-l-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="speed_upload" placeholder="10" wire:model="upload_value" min="1">
+                                                        <select class="border border-l-0 border-gray-300 rounded-r-lg px-2 py-2.5 text-sm focus:outline-none bg-gray-50 dark:bg-slate-900 dark:text-slate-300" wire:model="upload_unit">
+                                                            <option value="M">M</option>
+                                                            <option value="K">K</option>
+                                                        </select>
+                                                    </div>
+                                                    @error('upload_value') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <label for="mikrotik_profile" class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">
-                                                    {{ $tipe == 'QUEUE' ? 'Nama Identitas Queue' : 'Mikrotik Profile' }} (Opsional):
-                                                </label>
-                                                <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="mikrotik_profile" placeholder="{{ $tipe == 'QUEUE' ? 'Contoh: Paket-10M' : 'Masukan nama profile di mikrotik' }}" wire:model="mikrotik_profile">
-                                                @error('mikrotik_profile') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                                                @if($tipe == 'QUEUE')
-                                                    <p class="text-xs text-gray-500 mt-1 italic">*Untuk tipe Simple Queue, ini hanya digunakan untuk penanda internal paket.</p>
-                                                @endif
                                             </div>
                                         </div>
                                         <div class="bg-gray-50 dark:bg-slate-900/50 px-4 py-3 sm:px-6 border-t border-gray-100 dark:border-slate-700 flex flex-row-reverse gap-2">
@@ -116,7 +130,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{{ $packages->firstItem() + $idx }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{{ $package->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <span class="px-2 py-1 rounded text-xs font-bold {{ $package->tipe == 'QUEUE' ? 'bg-purple-100 text-purple-800' : ($package->tipe == 'HOTSPOT' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800') }}">
+                                        <span class="px-2 py-1 rounded text-xs font-bold {{ $package->tipe == 'STATIC' ? 'bg-purple-100 text-purple-800' : ($package->tipe == 'HOTSPOT' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800') }}">
                                             {{ $package->tipe }}
                                         </span>
                                     </td>
@@ -131,13 +145,31 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $package->mikrotik_profile ?? '-' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center space-x-2">
-                                        <button wire:click="edit({{ $package->id }})" class="inline-flex items-center px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm">
+                                        <button wire:click="edit({{ $package->id }})" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm disabled:opacity-50">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                             Edit
                                         </button>
-                                        <button wire:click="delete({{ $package->id }})" wire:confirm="Yakin ingin menghapus paket ini?" class="inline-flex items-center px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition-all shadow-sm text-sm">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            Hapus
+                                        <button type="button" 
+                                            @click="Swal.fire({
+                                                title: 'Yakin ingin menghapus?',
+                                                text: 'Paket \'{{ $package->name }}\' akan dihapus permanen!',
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#ef4444',
+                                                cancelButtonColor: '#64748b',
+                                                confirmButtonText: 'Ya, Hapus!',
+                                                cancelButtonText: 'Batal',
+                                                reverseButtons: true
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    @this.delete({{ $package->id }})
+                                                }
+                                            })"
+                                            wire:loading.attr="disabled" wire:target="delete({{ $package->id }})"
+                                            class="inline-flex items-center px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition-all shadow-sm text-sm disabled:bg-rose-400">
+                                            <svg wire:loading.remove wire:target="delete({{ $package->id }})" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            <span wire:loading.remove wire:target="delete({{ $package->id }})">Hapus</span>
+                                            <span wire:loading wire:target="delete({{ $package->id }})">Menghapus...</span>
                                         </button>
                                     </td>
                                 </tr>

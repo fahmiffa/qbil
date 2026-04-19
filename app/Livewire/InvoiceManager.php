@@ -96,7 +96,7 @@ class InvoiceManager extends Component
                         'total_amount' => $totalAmount,
                         'billing_period' => $currentPeriod,
                         'status' => 'unpaid',
-                        'due_date' => now()->addDays(7)->format('Y-m-d'), // Default 7 days
+                        'due_date' => $customer->due_date, 
                     ]);
 
                     $generatedCount++;
@@ -172,7 +172,7 @@ class InvoiceManager extends Component
                     'status' => 'unpaid',
                     'unique_code' => $uniqueCode,
                     'total_amount' => $invoice->amount + $uniqueCode,
-                    'due_date' => now()->addDays(7)->format('Y-m-d'),
+                    'due_date' => $invoice->customer->due_date,
                     'package_id' => $invoice->customer->package_id,
                 ]);
             });

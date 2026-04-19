@@ -96,7 +96,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                         // =========================
                         $periodSlug = str_replace('-', '', $this->period);
 
-                        $seq = Invoice::where('tenant_id', $user->id)
+                        $seq = Invoice::where('customer_id', $customer->id)
                             ->where('billing_period', $this->period)
                             ->lockForUpdate()
                             ->count() + 1;

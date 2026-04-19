@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 // Scheduler hanya sebagai trigger — logika bisnis diproses oleh queue worker
 Schedule::command('invoice:generate')->monthlyOn(1, '00:00');
 Schedule::command('invoice:remind')->dailyAt('08:00');
+Schedule::command('billing:check-due')->dailyAt('00:05');

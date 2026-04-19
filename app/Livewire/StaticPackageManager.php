@@ -13,13 +13,14 @@ class StaticPackageManager extends Component
     use WithPagination;
 
     public $name, $price, $speed_download, $speed_upload, $mikrotik_profile, $package_id;
-    public $tipe = 'QUEUE';
+    public $download_value, $download_unit = 'M', $upload_value, $upload_unit = 'M';
+    public $tipe = 'STATIC';
     public $isOpen = false;
 
     public function render()
     {
         $packages = auth()->user()->packages()
-            ->where('tipe', 'QUEUE')
+            ->where('tipe', 'STATIC')
             ->orderBy('id', 'desc')
             ->paginate(10);
             
@@ -50,9 +51,13 @@ class StaticPackageManager extends Component
         $this->price = '';
         $this->speed_download = '';
         $this->speed_upload = '';
+        $this->download_value = '';
+        $this->download_unit = 'M';
+        $this->upload_value = '';
+        $this->upload_unit = 'M';
         $this->mikrotik_profile = 'default';
         $this->package_id = '';
-        $this->tipe = 'QUEUE';
+        $this->tipe = 'STATIC';
     }
 
     private function getMikrotikClient()
@@ -76,12 +81,21 @@ class StaticPackageManager extends Component
         $rules = [
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
-            'speed_download' => 'required|string|max:50',
-            'speed_upload' => 'required|string|max:50',
+            'download_value' => 'required|numeric|min:1',
+            'upload_value' => 'required|numeric|min:1',
             'mikrotik_profile' => 'nullable|string|max:255',
         ];
 
+        // Bersihkan format titik sebelum validasi
+        if (isset($this->price) && !is_numeric($this->price)) {
+            $this->price = str_replace('.', '', $this->price);
+        }
+
         $this->validate($rules);
+
+        // Gabungkan Value dan Unit
+        $this->speed_download = $this->download_value . $this->download_unit;
+        $this->speed_upload = $this->upload_value . $this->upload_unit;
 
         try {
             // For QUEUE type, we normally don't need to create a profile on Mikrotik side
@@ -93,8 +107,8 @@ class StaticPackageManager extends Component
                 'price' => $this->price,
                 'speed_download' => $this->speed_download,
                 'speed_upload' => $this->speed_upload,
-                'mikrotik_profile' => $this->mikrotik_profile ?? 'default',
-                'tipe' => 'QUEUE',
+                'mikrotik_profile' => $this->name,
+                'tipe' => 'STATIC',
                 'user_id' => auth()->id(),
             ];
 
@@ -121,6 +135,24 @@ class StaticPackageManager extends Component
         $this->price = $package->price;
         $this->speed_download = $package->speed_download;
         $this->speed_upload = $package->speed_upload;
+        
+        // Split Value dan Unit untuk form
+        if (preg_match('/^(\d+)(K|M)$/i', $package->speed_download, $m)) {
+            $this->download_value = $m[1];
+            $this->download_unit = strtoupper($m[2]);
+        } else {
+            $this->download_value = preg_replace('/\D/', '', $package->speed_download);
+            $this->download_unit = 'M';
+        }
+
+        if (preg_match('/^(\d+)(K|M)$/i', $package->speed_upload, $m)) {
+            $this->upload_value = $m[1];
+            $this->upload_unit = strtoupper($m[2]);
+        } else {
+            $this->upload_value = preg_replace('/\D/', '', $package->speed_upload);
+            $this->upload_unit = 'M';
+        }
+
         $this->mikrotik_profile = $package->mikrotik_profile;
         $this->tipe = $package->tipe;
         
