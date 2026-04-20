@@ -62,6 +62,10 @@ class PaymentController extends Controller
                         ]);
 
                         Log::info("Auto-Verified Invoice ID: {$invoice->invoice_number} detected payment: Rp {$nominal} with unique code: {$uniqueCode}");
+                        
+                        // Dispatch job untuk menghapus IP pelanggan dari address-list ISLOR di Mikrotik
+                        \App\Jobs\RemoveIsolirJob::dispatch($invoice->customer);
+
                         $verified = true;
                         $processedInvoice = $invoice;
                         break; // Stop after successfully matching & updating the invoice
