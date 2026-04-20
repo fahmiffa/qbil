@@ -26,9 +26,12 @@ Route::group([
     Route::get('me', [AuthController::class, 'me']);
 });
 
+Route::post('payment', [\App\Http\Controllers\Api\PaymentController::class, 'store']);
+
 Route::group([
     'middleware' => 'auth:api'
 ], function ($router) {
     Route::get('invoices', [InvoiceController::class, 'index']);
     Route::get('invoices/{id}', [InvoiceController::class, 'show']);
+    Route::post('invoices/{id}/confirm', [InvoiceController::class, 'confirmPayment']);
 });

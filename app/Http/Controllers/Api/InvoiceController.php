@@ -51,4 +51,39 @@ class InvoiceController extends Controller
 
         return response()->json($invoice);
     }
+
+    /**
+     * Confirm/Mark invoice as paid.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function confirmPayment($id)
+    {
+        $user = auth('api')->user();
+
+        $invoice = Invoice::where('id', $id)
+            ->whereHas('customer', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->first();
+
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        if ($invoice->status === 'paid') {
+            return response()->json(['message' => 'Invoice is already paid'], 400);
+        }
+
+        $invoice->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Payment confirmed successfully',
+            'invoice' => $invoice
+        ]);
+    }
 }

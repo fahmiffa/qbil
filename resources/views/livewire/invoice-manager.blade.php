@@ -82,7 +82,7 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
-                                        {{ $invoice->due_date->format('d M Y') }}
+                                        {{ $invoice->due_date->format('d') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($invoice->status == 'unpaid')

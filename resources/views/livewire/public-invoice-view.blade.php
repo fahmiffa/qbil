@@ -1,5 +1,5 @@
 <div class="py-4 sm:py-10 px-4 max-w-2xl mx-auto print:max-w-none print:p-0">
-    
+
     <!-- Action Bar (Hidden on Print) -->
     <div class="no-print flex justify-between items-center mb-6 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
         <div class="flex items-center gap-2">
@@ -7,14 +7,16 @@
             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tagihan Digital</span>
         </div>
         <button onclick="window.print()" class="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z"/></svg>
-            Cetak A5
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z" />
+            </svg>
+            Cetak
         </button>
     </div>
 
     <!-- Main Invoice Card -->
     <div class="invoice-card bg-white dark:bg-slate-900 rounded-[2rem] print:rounded-none overflow-hidden border border-slate-100 dark:border-slate-800 shadow-xl print:shadow-none transition-all">
-        
+
         <!-- Header -->
         <div class="p-8 sm:p-10 border-b border-slate-50 dark:border-slate-800">
             <div class="flex justify-between items-start">
@@ -24,9 +26,9 @@
                 </div>
                 <div class="text-right">
                     @if($invoice->status == 'paid')
-                        <div class="px-4 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20">LUNAS</div>
+                    <div class="px-4 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20">LUNAS</div>
                     @else
-                        <div class="px-4 py-1.5 rounded-lg bg-amber-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-amber-500/20">BELUM LUNAS</div>
+                    <div class="px-4 py-1.5 rounded-lg bg-amber-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-amber-500/20">BELUM LUNAS</div>
                     @endif
                 </div>
             </div>
@@ -51,7 +53,7 @@
                     </div>
                     <div class="flex justify-end gap-2 text-slate-500 italic">
                         <span>Jatuh Tempo:</span>
-                        <span class="font-bold text-rose-500 non-italic">{{ $invoice->due_date->format('d/m/Y') }}</span>
+                        <span class="font-bold text-rose-500 non-italic">{{ $invoice->due_date->format('d') }}</span>
                     </div>
                 </div>
             </div>
@@ -134,24 +136,49 @@
             size: A5 portrait;
             margin: 10mm;
         }
+
         @media print {
-            body { 
-                background: white !important; 
-                -webkit-print-color-adjust: exact; 
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            .no-print { display: none !important; }
-            .invoice-card { 
-                border: 1px solid #f1f5f9 !important; 
+
+            .no-print {
+                display: none !important;
+            }
+
+            .invoice-card {
+                border: 1px solid #f1f5f9 !important;
                 margin: 0 !important;
                 width: 100% !important;
                 box-shadow: none !important;
             }
-            .py-4, .py-10 { padding-top: 0 !important; padding-bottom: 0 !important; }
-            .bg-slate-50\/50, .bg-slate-50\/30 { background-color: #f8fafc !important; }
-            .text-blue-600 { color: #2563eb !important; }
-            .text-emerald-600 { color: #059669 !important; }
-            .px-8, .px-10 { padding-left: 20px !important; padding-right: 20px !important; }
+
+            .py-4,
+            .py-10 {
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+            }
+
+            .bg-slate-50\/50,
+            .bg-slate-50\/30 {
+                background-color: #f8fafc !important;
+            }
+
+            .text-blue-600 {
+                color: #2563eb !important;
+            }
+
+            .text-emerald-600 {
+                color: #059669 !important;
+            }
+
+            .px-8,
+            .px-10 {
+                padding-left: 20px !important;
+                padding-right: 20px !important;
+            }
         }
     </style>
 </div>
