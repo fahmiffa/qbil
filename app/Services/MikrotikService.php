@@ -519,17 +519,22 @@ class MikrotikService
         return $this->client->query($query)->read();
     }
 
-    public function addDhcpLease(string $mac, string $ip, string $server = 'all', string $comment = ''): void
+    public function addDhcpLease(string $mac, string $ip, string $server = 'all', string $comment = '', string $rateLimit = ''): void
     {
         $query = (new Query('/ip/dhcp-server/lease/add'))
             ->equal('mac-address', $mac)
             ->equal('address', $ip)
             ->equal('server', $server)
             ->equal('comment', $comment);
+        
+        if ($rateLimit) {
+            $query->equal('rate-limit', $rateLimit);
+        }
+
         $this->client->query($query)->read();   
     }
 
-    public function updateDhcpLeaseByMac(string $oldMac, string $newMac, string $newIp, string $server = 'all', ?string $comment = null): void
+    public function updateDhcpLeaseByMac(string $oldMac, string $newMac, string $newIp, string $server = 'all', ?string $comment = null, string $rateLimit = ''): void
     {
         $query = (new Query('/ip/dhcp-server/lease/print'))->where('mac-address', $oldMac);
         $leases = $this->client->query($query)->read();
@@ -542,10 +547,11 @@ class MikrotikService
                 ->equal('server', $server);
             
             if ($comment) $setQuery->equal('comment', $comment);
+            if ($rateLimit) $setQuery->equal('rate-limit', $rateLimit);
             
-            $this->client->query($setQuery)->read();
+            $a = $this->client->query($setQuery)->read();
         } else {
-            $this->addDhcpLease($newMac, $newIp, $server, $comment ?? '');
+            $this->addDhcpLease($newMac, $newIp, $server, $comment ?? '', $rateLimit);
         }
     }
 

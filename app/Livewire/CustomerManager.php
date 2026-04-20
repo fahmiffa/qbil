@@ -33,9 +33,9 @@ class CustomerManager extends Component
         $query = auth()->user()->customers()->with('package')->orderBy('id', 'desc');
 
         if ($this->search) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('id_pelanggan', 'like', '%' . $this->search . '%');
+                    ->orWhere('id_pelanggan', 'like', '%' . $this->search . '%');
             });
         }
 
@@ -48,12 +48,12 @@ class CustomerManager extends Component
         }
 
         $totalCount = $query->count();
-        $customers = ($this->perPage === 'all') 
-            ? $query->paginate(max(1, $totalCount)) 
+        $customers = ($this->perPage === 'all')
+            ? $query->paginate(max(1, $totalCount))
             : $query->paginate((int) $this->perPage);
 
         $packages = auth()->user()->packages()
-            ->where('tipe', match($this->service_type) {
+            ->where('tipe', match ($this->service_type) {
                 'pppoe' => 'PPPOE',
                 'static' => 'STATIC',
                 default => 'STATIC'
@@ -83,7 +83,7 @@ class CustomerManager extends Component
     {
         $this->isOpen = true;
         $this->resetValidation();
-        
+
         try {
             $mikrotik = $this->getMikrotikService();
             $this->ipPools = $mikrotik->getIpPools();
@@ -141,7 +141,7 @@ class CustomerManager extends Component
         try {
             $mikrotik = $this->getMikrotikService();
             $availableIp = $mikrotik->findAvailableIpInPool($this->selectedPool);
-            
+
             if ($availableIp) {
                 $this->ip_address = $availableIp;
                 session()->flash('message', 'IP Address ditemukan: ' . $availableIp);
@@ -212,6 +212,7 @@ class CustomerManager extends Component
                 $oldMac = $customer->mac_address;
 
                 $customer->update($data);
+                $customer->refresh(); // Wajib direfresh agar cache relasi $customer->package menampilkan paket yang B aru.
 
                 // Provisioning update
                 $this->provisionUpdate($customer, $oldStatus, $oldProfile, $oldUsername, $oldMac);
@@ -254,20 +255,16 @@ class CustomerManager extends Component
             // Clean up existing to avoid conflicts
             if ($customer->mac_address) $mikrotik->removeDhcpLeaseByMac($customer->mac_address);
             if ($customer->ip_address) $mikrotik->removeDhcpLeaseByIp($customer->ip_address);
-            
+
             if ($customer->mac_address && $customer->ip_address) {
-                $mikrotik->addDhcpLease($customer->mac_address, $customer->ip_address, $customer->dhcp_server ?: 'all', $customer->name);
-            }
-            if ($customer->ip_address) {
-                // Remove existing queue with same name if exists
-                try { $mikrotik->removeSimpleQueue($customer->name); } catch(\Exception $e) {}
-                $mikrotik->addSimpleQueue($customer->name, $customer->ip_address, $rateLimit, 'ID PEL: ' . ($customer->id_pelanggan ?: $customer->id));
+                // Pass $rateLimit correctly to DHCP lease
+                $mikrotik->addDhcpLease($customer->mac_address, $customer->ip_address, $customer->dhcp_server ?: 'all', $customer->name, $rateLimit);
             }
         } else {
             // pppoe
             // Clean up existing
             if ($customer->username) $mikrotik->removePppSecret($customer->username);
-            
+
             $profile = $customer->ppp_profile ?? $package?->mikrotik_profile ?? 'default';
             if ($customer->username && $customer->password) {
                 $mikrotik->addPppSecret($customer->username, $customer->password, $profile, $customer->name);
@@ -278,8 +275,8 @@ class CustomerManager extends Component
             if ($customer->service_type === 'pppoe') {
                 $mikrotik->disablePppSecret($customer->username);
             } elseif ($customer->service_type === 'static') {
-                $mikrotik->disableSimpleQueue($customer->name);
                 if ($customer->mac_address) {
+                    // Disable lease directly
                     $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, true);
                 }
             }
@@ -299,24 +296,20 @@ class CustomerManager extends Component
             $mikrotik->updatePppSecret($oldUser, $customer->username, $customer->password, $profile, $customer->name);
         } elseif ($customer->service_type === 'static') {
             if ($customer->mac_address && $customer->ip_address) {
-                $mikrotik->updateDhcpLeaseByMac($oldM, $customer->mac_address, $customer->ip_address, $customer->dhcp_server ?: 'all', $customer->name);
+                $mikrotik->updateDhcpLeaseByMac($oldM, $customer->mac_address, $customer->ip_address, $customer->dhcp_server ?: 'all', $customer->name, $rateLimit);
             }
-            $mikrotik->updateSimpleQueue($customer->name, $customer->name, $customer->ip_address, $rateLimit, $customer->name);
         }
 
-        // Handle Status
         if ($customer->status === 'suspended') {
             if ($customer->service_type === 'pppoe') {
                 $mikrotik->disablePppSecret($customer->username);
             } elseif ($customer->service_type === 'static') {
-                $mikrotik->disableSimpleQueue($customer->name);
                 if ($customer->mac_address) $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, true);
             }
         } elseif ($customer->status === 'active' && $oldStatus === 'suspended') {
             if ($customer->service_type === 'pppoe') {
                 $mikrotik->enablePppSecret($customer->username);
             } elseif ($customer->service_type === 'static') {
-                $mikrotik->enableSimpleQueue($customer->name);
                 if ($customer->mac_address) $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, false);
             }
         }
@@ -358,7 +351,9 @@ class CustomerManager extends Component
                 if ($customer->service_type === 'pppoe' && $customer->username) {
                     $mikrotik->removePppSecret($customer->username);
                 } elseif ($customer->service_type === 'static') {
-                    $mikrotik->removeSimpleQueue($customer->name);
+                    // Cleanup legacy simple queue if any
+                    try { $mikrotik->removeSimpleQueue($customer->name); } catch(\Exception $e) {}
+                    
                     if ($customer->mac_address) {
                         $mikrotik->removeDhcpLeaseByMac($customer->mac_address);
                     }
