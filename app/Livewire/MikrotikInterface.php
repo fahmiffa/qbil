@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\MikrotikService;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class MikrotikInterface extends Component
@@ -43,7 +44,12 @@ class MikrotikInterface extends Component
             $this->loading = true;
             $this->error = '';
             $mikrotik = $this->getMikrotik();
-            $interfaces = $mikrotik->getInterfaces();
+            $routerId = auth()->user()->router->id ?? 0;
+
+            $interfaces = Cache::remember("mk_interfaces_{$routerId}", 300, function() use ($mikrotik) {
+                return $mikrotik->getInterfaces();
+            });
+
             $this->interfaces = collect($interfaces)->map(function($iface) {
                 $iface['id'] = $iface['.id'] ?? null;
                 $iface['running']  = ($iface['running'] ?? 'false') === 'true';
@@ -115,6 +121,8 @@ class MikrotikInterface extends Component
             }
 
             $this->closeModal();
+            $routerId = auth()->user()->router->id ?? 0;
+            Cache::forget("mk_interfaces_{$routerId}");
             $this->loadInterfaces();
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal: ' . $e->getMessage());
@@ -126,6 +134,10 @@ class MikrotikInterface extends Component
         try {
             $mikrotik = $this->getMikrotik();
             $mikrotik->setInterfaceDisabled($id, !$currentlyDisabled);
+            
+            $routerId = auth()->user()->router->id ?? 0;
+            Cache::forget("mk_interfaces_{$routerId}");
+            
             $this->loadInterfaces();
             session()->flash('message', 'Status interface berhasil diubah.');
         } catch (\Exception $e) {
@@ -142,6 +154,10 @@ class MikrotikInterface extends Component
             }
             $mikrotik = $this->getMikrotik();
             $mikrotik->removeInterface($id, $type);
+
+            $routerId = auth()->user()->router->id ?? 0;
+            Cache::forget("mk_interfaces_{$routerId}");
+
             $this->loadInterfaces();
             session()->flash('message', 'Interface berhasil dihapus dari MikroTik.');
         } catch (\Exception $e) {

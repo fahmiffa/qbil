@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\MikrotikService;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class MikrotikHotspotProfile extends Component
@@ -50,12 +51,14 @@ class MikrotikHotspotProfile extends Component
             $this->loading = true;
             $this->error = '';
             $mikrotik = $this->getMikrotik();
+            $routerId = auth()->user()->router->id ?? 0;
             
-            // Get IP Pools
-            $this->ip_pools = $mikrotik->getIpPools();
+            // Get IP Pools (Cached)
+            $this->ip_pools = Cache::remember("mk_pools_{$routerId}", 300, fn() => $mikrotik->getIpPools());
 
-            // Get existing Mikrotik Profiles
-            $allM = $mikrotik->getHotspotProfiles();
+            // Get existing Mikrotik Profiles (Cached)
+            $allM = Cache::remember("mk_hs_profiles_{$routerId}", 300, fn() => $mikrotik->getHotspotProfiles());
+            
             $this->mikrotik_profiles_list = collect($allM)
                 ->filter(fn($p) => strtolower($p['name'] ?? '') !== 'default')
                 ->toArray();
@@ -213,6 +216,8 @@ class MikrotikHotspotProfile extends Component
                 session()->flash('message', "Profil Hotspot berhasil ditambahkan.");
             }
             $this->closeModal();
+            $routerId = auth()->user()->router->id ?? 0;
+            Cache::forget("mk_hs_profiles_{$routerId}");
             $this->loadProfiles();
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal: ' . $e->getMessage());
@@ -238,6 +243,8 @@ class MikrotikHotspotProfile extends Component
                 } catch (\Exception $e) {}
 
                 $package->delete();
+                $routerId = auth()->user()->router->id ?? 0;
+                Cache::forget("mk_hs_profiles_{$routerId}");
                 $this->loadProfiles();
                 session()->flash('message', 'Profil berhasil dihapus dari sistem dan MikroTik.');
             } catch (\Exception $e) {

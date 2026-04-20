@@ -91,7 +91,7 @@ class CustomerManager extends Component
             // Menggunakan Cache Laravel selama 5 Menit agar tidak nge-lag saat buka modal
             $this->ipPools = \Illuminate\Support\Facades\Cache::remember("mk_pools_{$routerId}", 300, fn() => $mikrotik->getIpPools());
             $this->dhcpServers = \Illuminate\Support\Facades\Cache::remember("mk_dhcp_{$routerId}", 300, fn() => $mikrotik->getDhcpServers());
-            $this->pppProfiles = \Illuminate\Support\Facades\Cache::remember("mk_ppp_{$routerId}", 300, fn() => $mikrotik->getPppProfiles());
+            $this->pppProfiles = \Illuminate\Support\Facades\Cache::remember("mk_ppp_profiles_{$routerId}", 300, fn() => $mikrotik->getPppProfiles());
         } catch (\Exception $e) {
             $this->ipPools = [];
             $this->dhcpServers = [];

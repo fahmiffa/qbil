@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\MikrotikService;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class MikrotikIpPool extends Component
@@ -41,7 +42,12 @@ class MikrotikIpPool extends Component
             $this->loading = true;
             $this->error = '';
             $mikrotik = $this->getMikrotik();
-            $pools = $mikrotik->getIpPools();
+            $routerId = auth()->user()->router->id ?? 0;
+
+            $pools = Cache::remember("mk_pools_{$routerId}", 300, function() use ($mikrotik) {
+                return $mikrotik->getIpPools();
+            });
+
             $this->pools = collect($pools)->map(function($pool) {
                 $pool['id'] = $pool['.id'] ?? null;
                 return $pool;
@@ -103,6 +109,8 @@ class MikrotikIpPool extends Component
             }
 
             $this->closeModal();
+            $routerId = auth()->user()->router->id ?? 0;
+            Cache::forget("mk_pools_{$routerId}");
             $this->loadPools();
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal: ' . $e->getMessage());
@@ -114,6 +122,10 @@ class MikrotikIpPool extends Component
         try {
             $mikrotik = $this->getMikrotik();
             $mikrotik->removeIpPool($id);
+            
+            $routerId = auth()->user()->router->id ?? 0;
+            Cache::forget("mk_pools_{$routerId}");
+            
             $this->loadPools();
             session()->flash('message', 'IP Pool berhasil dihapus.');
         } catch (\Exception $e) {
