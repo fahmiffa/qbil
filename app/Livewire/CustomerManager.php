@@ -28,6 +28,7 @@ class CustomerManager extends Component
     public $search = '';
     public $filterPackage = '';
     public $filterService = '';
+    public $filterStatus = '';
     public $perPage = 10;
     public $isOpen = false;
 
@@ -48,6 +49,10 @@ class CustomerManager extends Component
 
         if ($this->filterService) {
             $query->where('service_type', $this->filterService);
+        }
+        
+        if ($this->filterStatus) {
+            $query->where('status', $this->filterStatus);
         }
 
         $totalCount = $query->count();
@@ -96,6 +101,21 @@ class CustomerManager extends Component
 
         // Logic ppp_profiles sudah dipindah ke render agar reaktif
         return;
+    }
+
+    public function updatedFilterStatus()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterPackage()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterService()
+    {
+        $this->resetPage();
     }
 
     public function updatedPerPage()
