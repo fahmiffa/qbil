@@ -55,8 +55,8 @@ class MikrotikPppProfile extends Component
             // Get IP Pools from Mikrotik (Cached)
             $this->ip_pools = Cache::remember("mk_pools_{$routerId}", 300, fn() => $mikrotik->getIpPools());
 
-            // Get PPP Profiles from Mikrotik (Cached)
-            $allM = Cache::remember("mk_ppp_profiles_{$routerId}", 300, fn() => $mikrotik->getPppProfiles());
+            // Get PPP Profiles from local DB (Synced from Mikrotik)
+            $allM = \App\Models\PppProfile::where('user_id', auth()->id())->get()->toArray();
             
             $this->mikrotik_profiles_list = collect($allM)
                 ->filter(fn($p) => !in_array(strtolower($p['name'] ?? ''), ['default', 'default-encryption']))
@@ -184,16 +184,6 @@ class MikrotikPppProfile extends Component
             if ($this->isEditing) {
                 $package = \App\Models\Package::find($this->editId);
                 
-                if ($this->sync_mode === 'new') {
-                    $allM = $mikrotik->getPppProfiles();
-                    $mRecord = collect($allM)->firstWhere('name', $package->mikrotik_profile);
-                    if ($mRecord) {
-                        $mikrotik->updatePppProfileFull($mRecord['.id'], $this->name, $rateLimit, $this->local_address, $this->remote_address);
-                    } else {
-                        $mikrotik->addPppProfile($this->name, $rateLimit, $this->local_address, $this->remote_address);
-                    }
-                }
-
                 $package->update([
                     'name' => $this->name,
                     'mikrotik_profile' => $profileName,
@@ -202,13 +192,17 @@ class MikrotikPppProfile extends Component
                     'speed_download' => $download,
                 ]);
 
-                session()->flash('message', "Profil PPP berhasil diperbarui.");
-            } else {
                 if ($this->sync_mode === 'new') {
-                    $mikrotik->addPppProfile($this->name, $rateLimit, $this->local_address, $this->remote_address);
+                    // Sync ke Mikrotik via Job
+                    \App\Jobs\ProvisionPackageJob::dispatch($package, 'update', $package->mikrotik_profile, [
+                        'local_address' => $this->local_address,
+                        'remote_address' => $this->remote_address,
+                    ]);
                 }
 
-                \App\Models\Package::create([
+                session()->flash('message', "Profil PPP berhasil diperbarui (Antrian).");
+            } else {
+                $package = \App\Models\Package::create([
                     'user_id' => auth()->id(),
                     'tipe' => 'PPPOE',
                     'name' => $this->name,
@@ -218,11 +212,16 @@ class MikrotikPppProfile extends Component
                     'speed_download' => $download,
                 ]);
 
-                session()->flash('message', "Profil PPP berhasil ditambahkan.");
+                if ($this->sync_mode === 'new') {
+                    \App\Jobs\ProvisionPackageJob::dispatch($package, 'create', null, [
+                        'local_address' => $this->local_address,
+                        'remote_address' => $this->remote_address,
+                    ]);
+                }
+
+                session()->flash('message', "Profil PPP berhasil ditambahkan (Antrian).");
             }
             $this->closeModal();
-            $routerId = auth()->user()->router->id ?? 0;
-            Cache::forget("mk_ppp_profiles_{$routerId}");
             $this->loadProfiles();
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal: ' . $e->getMessage());
@@ -236,21 +235,12 @@ class MikrotikPppProfile extends Component
                      ->first();
         if ($package) {
             try {
-                // Try delete from Mikrotik
-                try {
-                    $mikrotik = $this->getMikrotik();
-                    $allM = $mikrotik->getPppProfiles();
-                    $mRecord = collect($allM)->firstWhere('name', $package->mikrotik_profile);
-                    if ($mRecord) {
-                        $mikrotik->removePppProfileById($mRecord['.id']);
-                    }
-                } catch (\Exception $e) {}
+                // Dispatch Job Sync untuk delete
+                \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'delete');
 
                 $package->delete();
-                $routerId = auth()->user()->router->id ?? 0;
-                Cache::forget("mk_ppp_profiles_{$routerId}");
                 $this->loadProfiles();
-                session()->flash('message', 'Profil berhasil dihapus dari sistem dan MikroTik.');
+                session()->flash('message', 'Profil berhasil dihapus.');
             } catch (\Exception $e) {
                 session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
             }

@@ -6,7 +6,7 @@ $classes = ($active ?? false)
 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800';
 @endphp
 
-<a {{ $attributes->merge(['class' => 'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ' . $classes]) }} wire:navigate>
+<a {{ $attributes->merge(['class' => 'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ' . $classes]) }} wire:navigate>
     <div class="shrink-0 w-6 h-6">
         @if($icon == 'home')
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +78,17 @@ $classes = ($active ?? false)
         </svg>
         @endif
     </div>
+    
+    <!-- Menu Text -->
     <span x-show="sidebarOpen" x-transition.opacity.duration.300ms class="font-medium whitespace-nowrap">
         {{ $slot }}
     </span>
+
+    <!-- Tooltip (Visible only when sidebar is collapsed) -->
+    <div x-show="!sidebarOpen" 
+         class="absolute left-full ml-4 px-3 py-2 bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-[100] shadow-2xl border border-slate-700/50 pointer-events-none transform translate-x-2 group-hover:translate-x-0">
+        {{ $slot }}
+        <!-- Triangle Arrow -->
+        <div class="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900 dark:border-r-slate-800"></div>
+    </div>
 </a>

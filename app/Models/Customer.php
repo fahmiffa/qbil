@@ -12,11 +12,12 @@ class Customer extends Model
     protected $fillable = [
         'id_pelanggan', 'name', 'phone', 'address', 'keterangan', 'status', 'due_date', 'user_id',
         'package_id', 'ppp_profile', 'username', 'password', 'service_type', 'ip_address', 'mac_address', 'dhcp_server', 'creation_method', 
-        'activated_at', 'latitude', 'longitude'
+        'activated_at', 'latitude', 'longitude', 'isolated_at'
     ];
 
     protected $casts = [
         'activated_at' => 'datetime',
+        'isolated_at' => 'datetime',
         'due_date' => 'date',
     ];
 

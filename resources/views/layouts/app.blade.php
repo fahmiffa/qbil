@@ -86,13 +86,14 @@
                              x-transition:leave="transition ease-in duration-200"
                              x-transition:leave-start="translate-x-0 opacity-100"
                              x-transition:leave-end="translate-x-full opacity-0"
-                             class="pointer-events-auto flex items-center p-4 rounded-2xl shadow-2xl border backdrop-blur-md"
+                             class="pointer-events-auto flex items-center p-4 rounded-2xl shadow-2xl border backdrop-blur-md transition-all duration-500"
                              :class="{
-                                'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400': n.type === 'success',
-                                'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-400': n.type === 'error',
-                                'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400': n.type === 'warning'
+                                'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:bg-emerald-600/90 dark:border-emerald-500/50 dark:text-white': n.type === 'success',
+                                'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:bg-rose-600/90 dark:border-rose-500/50 dark:text-white': n.type === 'error',
+                                'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:bg-amber-600/90 dark:border-amber-500/50 dark:text-white': n.type === 'warning',
+                                'bg-blue-500/10 border-blue-500/20 text-blue-700 dark:bg-blue-600/90 dark:border-blue-500/50 dark:text-white': n.type === 'info'
                              }">
-                            <div class="mr-3">
+                            <div class="mr-3 shrink-0">
                                 <template x-if="n.type === 'success'">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </template>
@@ -102,9 +103,12 @@
                                 <template x-if="n.type === 'warning'">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                 </template>
+                                <template x-if="n.type === 'info'">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </template>
                             </div>
-                            <div class="flex-1 text-sm font-semibold" x-text="n.message"></div>
-                            <button @click="remove(n.id)" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors">
+                            <div class="flex-1 text-sm font-bold leading-relaxed" x-text="n.message"></div>
+                            <button @click="remove(n.id)" class="ml-4 p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-current opacity-60 hover:opacity-100 transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
@@ -119,5 +123,33 @@
         </div>
 
         @stack('scripts')
+        <script>
+            window.loadGoogleMaps = function(callback) {
+                if (window.google && window.google.maps && window.google.maps.Map) {
+                    if (callback) callback();
+                    return;
+                }
+                
+                const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+                if (existingScript) {
+                    const checkInterval = setInterval(() => {
+                        if (window.google && window.google.maps && window.google.maps.Map) {
+                            clearInterval(checkInterval);
+                            if (callback) callback();
+                        }
+                    }, 100);
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = "https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker";
+                script.async = true;
+                script.defer = true;
+                script.onload = () => {
+                    if (callback) callback();
+                };
+                document.head.appendChild(script);
+            }
+        </script>
     </body>
 </html>

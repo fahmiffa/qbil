@@ -4,6 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Customer;
 use App\Models\Package;
+use App\Models\IpPool;
+use App\Models\DhcpServer;
+use App\Models\PppProfile;
 use App\Services\MikrotikService;
 use App\Services\ExcelImportService;
 use Livewire\Component;
@@ -66,6 +69,13 @@ class CustomerManager extends Component
             ->orderBy('name')
             ->get();
 
+        // Load pools, dhcp, & ppp profiles jika modal terbuka agar reaktif
+        if ($this->isOpen) {
+            $this->ipPools = IpPool::where('user_id', auth()->id())->get()->toArray();
+            $this->dhcpServers = DhcpServer::where('user_id', auth()->id())->get()->toArray();
+            $this->pppProfiles = PppProfile::where('user_id', auth()->id())->get()->toArray();
+        }
+
         return view('livewire.customer-manager', [
             'customers'    => $customers,
             'packages'     => $packages,
@@ -84,19 +94,8 @@ class CustomerManager extends Component
         $this->isOpen = true;
         $this->resetValidation();
 
-        try {
-            $routerId = auth()->user()->router->id ?? 0;
-            $mikrotik = $this->getMikrotikService();
-            
-            // Menggunakan Cache Laravel selama 5 Menit agar tidak nge-lag saat buka modal
-            $this->ipPools = \Illuminate\Support\Facades\Cache::remember("mk_pools_{$routerId}", 300, fn() => $mikrotik->getIpPools());
-            $this->dhcpServers = \Illuminate\Support\Facades\Cache::remember("mk_dhcp_{$routerId}", 300, fn() => $mikrotik->getDhcpServers());
-            $this->pppProfiles = \Illuminate\Support\Facades\Cache::remember("mk_ppp_profiles_{$routerId}", 300, fn() => $mikrotik->getPppProfiles());
-        } catch (\Exception $e) {
-            $this->ipPools = [];
-            $this->dhcpServers = [];
-            $this->pppProfiles = [];
-        }
+        // Logic ppp_profiles sudah dipindah ke render agar reaktif
+        return;
     }
 
     public function updatedPerPage()
@@ -215,22 +214,27 @@ class CustomerManager extends Component
                 $oldMac = $customer->mac_address;
 
                 $customer->update($data);
-                $customer->refresh(); // Wajib direfresh agar cache relasi $customer->package menampilkan paket yang B aru.
+                $customer->refresh();
 
-                // Provisioning update
-                $this->provisionUpdate($customer, $oldStatus, $oldProfile, $oldUsername, $oldMac);
+                // Dispatch Job untuk provisioning update
+                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
+                    'status'      => $oldStatus,
+                    'profile'     => $oldProfile,
+                    'username'    => $oldUsername,
+                    'mac_address' => $oldMac,
+                ]);
 
-                session()->flash('message', 'Pelanggan berhasil diperbarui.');
+                session()->flash('message', 'Pelanggan berhasil diperbarui (Sinkronisasi Antrian).');
             } else {
                 $customer = Customer::create($data);
 
-                // Provisioning create
-                $this->provisionCreate($customer);
+                // Dispatch Job untuk provisioning create
+                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
 
-                session()->flash('message', 'Pelanggan berhasil ditambahkan.');
+                session()->flash('message', 'Pelanggan berhasil ditambahkan (Sinkronisasi Antrian).');
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal Sinkronisasi MikroTik: ' . $e->getMessage());
+            session()->flash('error', 'Gagal Memproses Data: ' . $e->getMessage());
         }
 
         $this->closeModal();
@@ -239,84 +243,6 @@ class CustomerManager extends Component
 
 
 
-    private function getMikrotikService(): MikrotikService
-    {
-        $router = auth()->user()->router;
-        if (!$router) {
-            throw new \Exception('Konfigurasi Router MikroTik belum diatur.');
-        }
-        return new MikrotikService($router);
-    }
-
-    private function provisionCreate(Customer $customer): void
-    {
-        $mikrotik = $this->getMikrotikService();
-        $package  = $customer->package;
-        $rateLimit = $package ? ($package->speed_upload . '/' . $package->speed_download) : '0M/0M';
-
-        if ($customer->service_type === 'static') {
-            // Clean up existing to avoid conflicts
-            if ($customer->mac_address) $mikrotik->removeDhcpLeaseByMac($customer->mac_address);
-            if ($customer->ip_address) $mikrotik->removeDhcpLeaseByIp($customer->ip_address);
-
-            if ($customer->mac_address && $customer->ip_address) {
-                // Pass $rateLimit correctly to DHCP lease
-                $mikrotik->addDhcpLease($customer->mac_address, $customer->ip_address, $customer->dhcp_server ?: 'all', $customer->name, $rateLimit);
-            }
-        } else {
-            // pppoe
-            // Clean up existing
-            if ($customer->username) $mikrotik->removePppSecret($customer->username);
-
-            $profile = $customer->ppp_profile ?? $package?->mikrotik_profile ?? 'default';
-            if ($customer->username && $customer->password) {
-                $mikrotik->addPppSecret($customer->username, $customer->password, $profile, $customer->name);
-            }
-        }
-
-        if ($customer->status === 'suspended') {
-            if ($customer->service_type === 'pppoe') {
-                $mikrotik->disablePppSecret($customer->username);
-            } elseif ($customer->service_type === 'static') {
-                if ($customer->mac_address) {
-                    // Disable lease directly
-                    $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, true);
-                }
-            }
-        }
-    }
-
-    private function provisionUpdate(Customer $customer, string $oldStatus, ?string $oldProfile, ?string $oldUsername, ?string $oldMac): void
-    {
-        $mikrotik = $this->getMikrotikService();
-        $package  = $customer->package;
-        $rateLimit = $package ? ($package->speed_upload . '/' . $package->speed_download) : '0M/0M';
-        $profile  = $customer->ppp_profile ?? $package?->mikrotik_profile ?? $oldProfile ?? 'default';
-        $oldUser = $oldUsername ?: $customer->username;
-        $oldM = $oldMac ?: $customer->mac_address;
-
-        if ($customer->service_type === 'pppoe') {
-            $mikrotik->updatePppSecret($oldUser, $customer->username, $customer->password, $profile, $customer->name);
-        } elseif ($customer->service_type === 'static') {
-            if ($customer->mac_address && $customer->ip_address) {
-                $mikrotik->updateDhcpLeaseByMac($oldM, $customer->mac_address, $customer->ip_address, $customer->dhcp_server ?: 'all', $customer->name, $rateLimit);
-            }
-        }
-
-        if ($customer->status === 'suspended') {
-            if ($customer->service_type === 'pppoe') {
-                $mikrotik->disablePppSecret($customer->username);
-            } elseif ($customer->service_type === 'static') {
-                if ($customer->mac_address) $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, true);
-            }
-        } elseif ($customer->status === 'active' && $oldStatus === 'suspended') {
-            if ($customer->service_type === 'pppoe') {
-                $mikrotik->enablePppSecret($customer->username);
-            } elseif ($customer->service_type === 'static') {
-                if ($customer->mac_address) $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, false);
-            }
-        }
-    }
 
     public function edit($id)
     {
@@ -348,22 +274,20 @@ class CustomerManager extends Component
         try {
             $customer = Customer::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
 
-            // Remove from Mikrotik before deleting
-            try {
-                $mikrotik = $this->getMikrotikService();
-                if ($customer->service_type === 'pppoe' && $customer->username) {
-                    $mikrotik->removePppSecret($customer->username);
-                } elseif ($customer->service_type === 'static') {
-                    // Cleanup legacy simple queue if any
-                    try { $mikrotik->removeSimpleQueue($customer->name); } catch(\Exception $e) {}
-                    
-                    if ($customer->mac_address) {
-                        $mikrotik->removeDhcpLeaseByMac($customer->mac_address);
-                    }
-                }
-            } catch (\Exception $e) {
-                logger()->error('Mikrotik delete error: ' . $e->getMessage());
-            }
+            // Dispatch Job untuk provisioning delete sebelum hapus data DB
+            // Catatan: Karena job ini ShouldQueue, kita harus memastikan data model tetap ada 
+            // sampai job diproses, atau kita pass datanya langsung.
+            // Namun SerializesModels akan gagal jika data dihapus sebelum job diproses.
+            // Solusi: Kita jalankan logic hapus di job dulu, baru hapus di DB? 
+            // Atau DispatchSync jika ingin sinkron.
+            // Tapi user minta "Job saja", jadi saya asumsikan async. 
+            // Saya akan pass array data ke Job daripada model jika ingin hapus DB segera.
+            
+            // Pilihan terbaik: Soft delete atau DispatchSync. 
+            // Namun di sistem billing ini sepertinya tidak ada soft delete.
+            // Saya akan dispatch job dengan data yang dibutuhkan.
+            
+            \App\Jobs\ProvisionCustomerJob::dispatchSync($customer, 'delete');
 
             $customer->delete();
             session()->flash('message', 'Pelanggan berhasil dihapus.');
@@ -377,5 +301,14 @@ class CustomerManager extends Component
     public function togglePassword()
     {
         $this->showPassword = !$this->showPassword;
+    }
+
+    private function getMikrotikService(): MikrotikService
+    {
+        $router = auth()->user()->router;
+        if (!$router) {
+            throw new \Exception('Router MikroTik belum dikonfigurasi.');
+        }
+        return new MikrotikService($router);
     }
 }

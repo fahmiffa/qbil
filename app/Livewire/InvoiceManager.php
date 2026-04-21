@@ -32,88 +32,11 @@ class InvoiceManager extends Component
     public function generateInvoices()
     {
         $currentPeriod = $this->billing_period;
-        $customers = Customer::where('user_id', auth()->id())
-            ->where('status', 'active')
-            ->whereNotNull('package_id')
-            ->get();
+        
+        // Dispatch job untuk generate bulk
+        \App\Jobs\BulkGenerateInvoicesJob::dispatch(auth()->id(), $currentPeriod);
 
-        $generatedCount = 0;
-        $errorCount = 0;
-
-        foreach ($customers as $customer) {
-            // Check if invoice already exists for this period
-            $exists = Invoice::where('customer_id', $customer->id)
-                ->where('billing_period', $currentPeriod)
-                ->exists();
-
-            if ($exists) {
-                continue;
-            }
-
-            try {
-                DB::transaction(function () use ($customer, $currentPeriod, &$generatedCount) {
-                    $amount = $customer->package->price ?? 0;
-                    
-                    // Logic to find unique code (1-999)
-                    // We look for a code not used by any 'unpaid' invoice for this user in this period
-                    // Note: In a high concurrency environment, this should be more robust
-                    $usedCodes = Invoice::whereHas('customer', function($q) {
-                            $q->where('user_id', auth()->id());
-                        })
-                        ->where('status', 'unpaid')
-                        ->pluck('unique_code')
-                        ->toArray();
-
-                    $availableCodes = array_diff(range(1, 999), $usedCodes);
-
-                    if (empty($availableCodes)) {
-                        throw new \Exception("Semua kode unik (1-999) sudah terpakai.");
-                    }
-
-                    $uniqueCode = $availableCodes[array_rand($availableCodes)];
-
-                    $totalAmount = $amount + $uniqueCode;
-                    
-                    // Invoice Number: INV-YYYYMM-XXXX
-                    $lastInvoice = Invoice::where('invoice_number', 'like', 'INV-' . str_replace('-', '', $currentPeriod) . '-%')
-                        ->orderBy('invoice_number', 'desc')
-                        ->first();
-                    
-                    $seq = 1;
-                    if ($lastInvoice) {
-                        $parts = explode('-', $lastInvoice->invoice_number);
-                        $seq = ((int) end($parts)) + 1;
-                    }
-                    $invoiceNumber = 'INV-' . str_replace('-', '', $currentPeriod) . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
-
-                    Invoice::create([
-                        'id' => (string) Str::uuid(),
-                        'customer_id' => $customer->id,
-                        'package_id' => $customer->package_id,
-                        'invoice_number' => $invoiceNumber,
-                        'amount' => $amount,
-                        'unique_code' => $uniqueCode,
-                        'total_amount' => $totalAmount,
-                        'billing_period' => $currentPeriod,
-                        'status' => 'unpaid',
-                        'due_date' => $customer->due_date, 
-                    ]);
-
-                    $generatedCount++;
-                });
-            } catch (\Exception $e) {
-                $errorCount++;
-                session()->flash('error', $e->getMessage());
-                break;
-            }
-        }
-
-        if ($generatedCount > 0) {
-            $this->dispatch('toast', type: 'success', message: "$generatedCount Invoice berhasil dibuat.");
-        } else if ($errorCount == 0) {
-            $this->dispatch('toast', type: 'warning', message: "Tidak ada invoice baru yang perlu dibuat.");
-        }
-
+        $this->dispatch('toast', type: 'info', message: "Proses generate invoice untuk periode $currentPeriod telah dimulai di latar belakang.");
         
         $this->resetPage();
     }
@@ -121,10 +44,34 @@ class InvoiceManager extends Component
     public function markAsPaid($invoiceId)
     {
         $invoice = Invoice::findOrFail($invoiceId);
-        $invoice->update([
-            'status' => 'paid',
-            'paid_at' => now(),
-        ]);
+        
+        DB::transaction(function () use ($invoice) {
+            $invoice->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+
+            $customer = $invoice->customer;
+            if ($customer->status === 'suspended') {
+                $oldStatus = $customer->status;
+                
+                $customer->update([
+                    'status' => 'active',
+                    'isolated_at' => null,
+                    'activated_at' => $customer->activated_at ?? now(),
+                ]);
+
+                // Sinkronkan ke router (Buka Isolir)
+                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
+                    'status' => $oldStatus
+                ]);
+
+                // GENERATE INVOICE SUSULAN (Jika jadwal reguler sudah terlewat)
+                $invoiceService = new \App\Services\InvoiceService();
+                $invoiceService->generateFollowUpIfOverdue($customer);
+            }
+        });
+
         $this->dispatch('toast', type: 'success', message: "Invoice {$invoice->invoice_number} ditandai sebagai LUNAS.");
     }
 

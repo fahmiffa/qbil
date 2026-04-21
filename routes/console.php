@@ -9,6 +9,17 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Scheduler hanya sebagai trigger — logika bisnis diproses oleh queue worker
-Schedule::command('invoice:generate')->monthlyOn(1, '00:00');
-Schedule::command('invoice:remind')->dailyAt('08:00');
-Schedule::command('billing:check-due')->dailyAt('00:05');
+Schedule::command('invoice:generate')->hourly();
+Schedule::command('invoice:remind')->hourly();
+Schedule::command('billing:check-due')->hourly();
+
+
+// Sync IP Pools from Mikrotik. Using --loop and withoutOverlapping ensures 
+// it runs continuously every 5 seconds as requested.
+Schedule::command('mikrotik:sync-pools --loop')->everyMinute()->withoutOverlapping();
+
+// Sync DHCP Servers from Mikrotik every 5 seconds
+Schedule::command('mikrotik:sync-dhcp --loop')->everyMinute()->withoutOverlapping();
+
+// Sync PPP Profiles from Mikrotik every 5 seconds
+Schedule::command('mikrotik:sync-ppp-profiles --loop')->everyMinute()->withoutOverlapping();

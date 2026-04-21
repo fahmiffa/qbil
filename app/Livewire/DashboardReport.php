@@ -33,22 +33,40 @@ class DashboardReport extends Component
             ->where('billing_period', $period)
             ->select(
                 DB::raw('SUM(CASE WHEN invoices.status = "paid" THEN total_amount ELSE 0 END) as total_paid'),
+                DB::raw('SUM(CASE WHEN invoices.status = "paid" THEN amount ELSE 0 END) as total_paid_base'),
+                DB::raw('SUM(CASE WHEN invoices.status = "paid" THEN unique_code ELSE 0 END) as total_paid_unique'),
                 DB::raw('SUM(CASE WHEN invoices.status = "unpaid" THEN total_amount ELSE 0 END) as total_unpaid'),
                 DB::raw('COUNT(CASE WHEN invoices.status = "paid" THEN 1 END) as count_paid'),
                 DB::raw('COUNT(CASE WHEN invoices.status = "unpaid" THEN 1 END) as count_unpaid')
             )
             ->first();
 
-        // Breakdown by Service Type (PPPOE vs HOTSPOT)
-        $serviceBreakdown = collect(['PPPOE', 'hotspot'])->map(function ($tipe) use ($userId, $period) {
-            // Count Active Users
-            if (strtoupper($tipe) === 'PPPOE') {
-                $count = Customer::where('user_id', $userId)->where('status', 'active')->count();
-                $potential = Customer::where('customers.user_id', $userId)->where('customers.status', 'active')
+        // Breakdown by Service Type (PPPOE, STATIC, HOTSPOT)
+        $serviceBreakdown = collect(['PPPOE', 'STATIC', 'HOTSPOT'])->map(function ($tipe) use ($userId, $period) {
+            $activeCount = 0;
+            $suspendCount = 0;
+            $potential = 0;
+
+            if (in_array(strtoupper($tipe), ['PPPOE', 'STATIC'])) {
+                $activeCount = Customer::where('user_id', $userId)
+                    ->where('service_type', strtolower($tipe))
+                    ->where('status', 'active')
+                    ->count();
+                
+                $suspendCount = Customer::where('user_id', $userId)
+                    ->where('service_type', strtolower($tipe))
+                    ->where('status', 'suspended')
+                    ->count();
+
+                $potential = Customer::where('customers.user_id', $userId)
+                    ->where('customers.service_type', strtolower($tipe))
+                    ->where('customers.status', 'active')
                     ->join('packages', 'customers.package_id', '=', 'packages.id')
                     ->sum('packages.price');
             } else {
-                $count = HotspotUser::where('user_id', $userId)->count();
+                // HOTSPOT
+                $activeCount = HotspotUser::where('user_id', $userId)->count();
+                $suspendCount = 0; // Hotspot users don't have suspended status in this model
                 $potential = HotspotUser::where('hotspot_users.user_id', $userId)
                     ->join('packages', 'hotspot_users.package_id', '=', 'packages.id')
                     ->sum('packages.price');
@@ -87,25 +105,23 @@ class DashboardReport extends Component
                 'tipe' => strtoupper($tipe),
                 'total' => $finalTotal,
                 'paid' => $finalPaid,
-                'count' => $count,
+                'active_count' => $activeCount,
+                'suspend_count' => $suspendCount,
                 'potential' => $potential
             ];
         });
 
-        // Detailed List for Table
-        $invoices = Invoice::whereHas('customer', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            })
-            ->with(['customer.package'])
-            ->where('billing_period', $period)
-            ->orderBy('status', 'asc') // unpaid first
-            ->orderBy('created_at', 'desc')
+        // Customer Locations for Map
+        $mapData = Customer::where('user_id', $userId)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->select('name', 'latitude', 'longitude', 'status', 'service_type')
             ->get();
 
         return view('livewire.dashboard-report', [
             'stats' => $stats,
             'serviceBreakdown' => $serviceBreakdown,
-            'invoices' => $invoices
+            'mapData' => $mapData
         ])->layout('layouts.app', ['header' => 'Ringkasan Laporan']);
     }
 }

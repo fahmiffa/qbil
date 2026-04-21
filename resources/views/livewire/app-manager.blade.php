@@ -10,19 +10,114 @@
                 <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-6">Konfigurasi Pengingat & Pesan</h3>
 
                 <form wire:submit.prevent="save" class="space-y-6">
-                    <!-- Notif -->
-                    <div>
-                        <label class="block font-medium text-sm text-slate-700 dark:text-slate-300 mb-2" for="notif">
-                            Minimal Notifikasi Jatuh Tempo (Hari)
-                        </label>
-                        <div class="flex items-center gap-3">
-                            <input wire:model="notif" type="number" id="notif" min="0" class="border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm block w-32 px-4 py-3 sm:text-sm transition-colors" placeholder="3">
-                            <span class="text-sm text-slate-500 dark:text-slate-400">Hari sebelum jatuh tempo</span>
+                    <!-- Jadwal Otomatis Pesan -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-6 border-y border-slate-100 dark:border-slate-700 transition-colors">
+                        <!-- Notifikasi Pertama -->
+                        <div class="space-y-4">
+                            <label class="block font-bold text-sm text-slate-800 dark:text-white uppercase tracking-wider">
+                                Pesan: Notifikasi Pertama
+                            </label>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Rentang Hari</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="reminder_1_days" type="number" class="w-24 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">Hari (Gunakan - untuk H-n)</span>
+                                    </div>
+                                    @error('reminder_1_days') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Waktu Pengiriman</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="reminder_1_time" type="time" class="w-32 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">WIB</span>
+                                    </div>
+                                    @error('reminder_1_time') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                            Pesan tagihan akan mulai dimunculkan atau dikirim ketika rentang hari menuju jatuh tempo mencapai angka ini.
-                        </p>
-                        @error('notif') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+
+                        <!-- Notifikasi Kedua -->
+                        <div class="space-y-4">
+                            <label class="block font-bold text-sm text-slate-800 dark:text-white uppercase tracking-wider">
+                                Pesan: Notifikasi Kedua
+                            </label>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Rentang Hari</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="reminder_2_days" type="number" class="w-24 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">Hari (Contoh: 0 untuk hari H)</span>
+                                    </div>
+                                    @error('reminder_2_days') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Waktu Pengiriman</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="reminder_2_time" type="time" class="w-32 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">WIB</span>
+                                    </div>
+                                    @error('reminder_2_time') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Jadwal Otomatis Sistem -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-6 border-b border-slate-100 dark:border-slate-700 transition-colors">
+                        <!-- Generate Invoice -->
+                        <div class="space-y-4">
+                            <label class="block font-bold text-sm text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                Sistem: Generate Invoice
+                            </label>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Rentang Hari</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="invoice_gen_days" type="number" class="w-24 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">Hari (H-n)</span>
+                                    </div>
+                                    @error('invoice_gen_days') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Waktu Eksekusi</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="invoice_gen_time" type="time" class="w-32 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">WIB</span>
+                                    </div>
+                                    @error('invoice_gen_time') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Isolir Otomatis -->
+                        <div class="space-y-4">
+                            <label class="block font-bold text-sm text-red-600 dark:text-red-400 uppercase tracking-wider">
+                                Sistem: Isolir Otomatis
+                            </label>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Rentang Hari</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="isolate_days" type="number" class="w-24 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">Hari (H+n)</span>
+                                    </div>
+                                    @error('isolate_days') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Waktu Eksekusi</span>
+                                    <div class="flex items-center gap-3">
+                                        <input wire:model="isolate_time" type="time" class="w-32 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm px-4 py-2.5 shadow-sm transition-colors">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">WIB</span>
+                                    </div>
+                                    @error('isolate_time') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Template WhatsApp -->

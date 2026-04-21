@@ -28,27 +28,45 @@ class CheckDueInvoices extends Command
      */
     public function handle()
     {
-        $today = Carbon::today();
+        $now = now();
+        $currentHour = $now->format('H');
         
-        $this->info("Checking for customers past due date ($today)...");
+        $this->info("Memulai pengecekan isolir otomatis...");
 
-        $customers = Customer::where('status', 'active')
-            ->whereNotNull('due_date')
-            ->where('due_date', '<=', $today)
-            ->get();
+        $users = \App\Models\User::with('appSetting')->get();
 
-        if ($customers->isEmpty()) {
-            $this->info("No past due customers found.");
-            return;
+        foreach ($users as $user) {
+            $setting = $user->appSetting;
+            if (!$setting) continue;
+
+            // Cek jam eksekusi
+            $configHour = Carbon::parse($setting->isolate_time)->format('H');
+            if ($currentHour != $configHour) continue;
+
+            $offsetDays = (int) $setting->isolate_days;
+            $targetDate = $now->copy()->subDays($offsetDays);
+
+            // Cari pelanggan yang due_date-nya sudah mencapai ambang batas isolir
+            // Dan statusnya masih aktif (belum isolir)
+            $customers = Customer::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->whereNotNull('due_date')
+                ->whereDate('due_date', '<=', $targetDate)
+                ->get();
+
+            if ($customers->isEmpty()) {
+                continue;
+            }
+
+            foreach ($customers as $customer) {
+                // Tambahan: Pastikan memang belum bayar tagihan di periode jatuh tempo tersebut
+                // Jika sudah bayar, status biasanya tetap active dan tidak masuk kriteria isolir.
+                
+                IsolateCustomerJob::dispatch($customer);
+                $this->line(" - Dispatching isolir: {$customer->name} (User: {$user->name})");
+            }
         }
 
-        $this->info("Found " . $customers->count() . " customers. Dispatching isolation jobs...");
-
-        foreach ($customers as $customer) {
-            IsolateCustomerJob::dispatch($customer);
-            $this->line(" - Dispatched job for customer: {$customer->name} (Due: {$customer->due_date->format('Y-m-d')})");
-        }
-
-        $this->info("All jobs dispatched to queue.");
+        $this->info("Selesai.");
     }
 }

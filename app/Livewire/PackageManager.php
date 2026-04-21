@@ -94,42 +94,6 @@ class PackageManager extends Component
         $this->speed_upload = $this->upload_value . $this->upload_unit;
 
         try {
-            $client = $this->getMikrotikClient();
-            $rateLimit = $this->speed_upload . '/' . $this->speed_download;
-
-            if ($this->tipe !== 'STATIC') {
-                if ($this->package_id) {
-                    // UPDATE
-                    $oldPackage = Package::findOrFail($this->package_id);
-                    
-                    // Cari profile lama di Mikrotik (tergantung tipe)
-                    $path = $this->tipe === 'HOTSPOT' ? '/ip/hotspot/user/profile' : '/ppp/profile';
-                    $query = (new Query($path . '/print'))->where('name', $oldPackage->mikrotik_profile);
-                    $profile = $client->query($query)->read();
-
-                    if (!empty($profile)) {
-                        $updateQuery = (new Query($path . '/set'))
-                            ->equal('.id', $profile[0]['.id'])
-                            ->equal('name', $this->name)
-                            ->equal('rate-limit', $rateLimit);
-                        $client->query($updateQuery)->read();
-                    } else {
-                        // Jika tidak ketemu di mikrotik, buat baru
-                        $addQuery = (new Query($path . '/add'))
-                            ->equal('name', $this->name)
-                            ->equal('rate-limit', $rateLimit);
-                        $client->query($addQuery)->read();
-                    }
-                } else {
-                    // CREATE NEW
-                    $path = $this->tipe === 'HOTSPOT' ? '/ip/hotspot/user/profile' : '/ppp/profile';
-                    $addQuery = (new Query($path . '/add'))
-                        ->equal('name', $this->name)
-                        ->equal('rate-limit', $rateLimit);
-                    $client->query($addQuery)->read();
-                }
-            }
-
             $data = [
                 'name' => $this->name,
                 'price' => $this->price,
@@ -140,18 +104,30 @@ class PackageManager extends Component
                 'user_id' => auth()->id(),
             ];
 
+            $oldProfileName = null;
             if ($this->package_id) {
-                Package::where('id', $this->package_id)->where('user_id', auth()->id())->update($data);
+                $package = Package::findOrFail($this->package_id);
+                $oldProfileName = $package->mikrotik_profile;
+                $package->update($data);
+                $action = 'update';
             } else {
-                Package::create($data);
+                $package = Package::create($data);
+                $action = 'create';
             }
 
-            session()->flash('message', 'Paket berhasil disimpan dan disinkronkan ke Mikrotik.');
+            // Sync ke Mikrotik via Job (Kecuali STATIC)
+            if ($this->tipe !== 'STATIC') {
+                \App\Jobs\ProvisionPackageJob::dispatch($package, $action, $oldProfileName);
+                session()->flash('message', 'Paket berhasil disimpan (Singkronisasi Antrian).');
+            } else {
+                session()->flash('message', 'Paket Static berhasil disimpan.');
+            }
+
             $this->closeModal();
             $this->resetInputFields();
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal Sinkron Mikrotik: ' . $e->getMessage());
+            session()->flash('error', 'Gagal Memproses: ' . $e->getMessage());
         }
     }
 
@@ -191,23 +167,15 @@ class PackageManager extends Component
     {
         try {
             $package = Package::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
-            $client = $this->getMikrotikClient();
             
             if ($package->tipe !== 'STATIC') {
-                $path = $package->tipe === 'HOTSPOT' ? '/ip/hotspot/user/profile' : '/ppp/profile';
-                $query = (new Query($path . '/print'))->where('name', $package->mikrotik_profile);
-                $profile = $client->query($query)->read();
-
-                if (!empty($profile)) {
-                    $delQuery = (new Query($path . '/remove'))->equal('.id', $profile[0]['.id']);
-                    $client->query($delQuery)->read();
-                }
+                \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'delete');
             }
 
             $package->delete();
-            session()->flash('message', 'Paket berhasil dihapus dari sistem dan Mikrotik.');
+            session()->flash('message', 'Paket berhasil dihapus.');
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus di Mikrotik: ' . $e->getMessage());
+            session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
         }
     }
 

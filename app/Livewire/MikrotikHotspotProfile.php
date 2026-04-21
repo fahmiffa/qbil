@@ -179,16 +179,6 @@ class MikrotikHotspotProfile extends Component
             if ($this->isEditing) {
                 $package = \App\Models\Package::find($this->editId);
                 
-                if ($this->sync_mode === 'new') {
-                    $allM = $mikrotik->getHotspotProfiles();
-                    $mRecord = collect($allM)->firstWhere('name', $package->mikrotik_profile);
-                    if ($mRecord) {
-                        $mikrotik->updateHotspotProfileFull($mRecord['.id'], $this->name, $rateLimit, $shusers, $pool, $stimeout);
-                    } else {
-                        $mikrotik->addHotspotProfileFull($this->name, $rateLimit, $shusers, $pool, $stimeout);
-                    }
-                }
-
                 $package->update([
                     'name' => $this->name,
                     'mikrotik_profile' => $profileName,
@@ -197,13 +187,18 @@ class MikrotikHotspotProfile extends Component
                     'speed_download' => $download,
                 ]);
 
-                session()->flash('message', "Profil Hotspot berhasil diperbarui.");
-            } else {
                 if ($this->sync_mode === 'new') {
-                    $mikrotik->addHotspotProfileFull($this->name, $rateLimit, $shusers, $pool, $stimeout);
+                    // Sync ke Mikrotik via Job
+                    \App\Jobs\ProvisionPackageJob::dispatch($package, 'update', $package->mikrotik_profile, [
+                        'shared_users' => $shusers,
+                        'address_pool' => $pool,
+                        'session_timeout' => $stimeout,
+                    ]);
                 }
 
-                \App\Models\Package::create([
+                session()->flash('message', "Profil Hotspot berhasil diperbarui (Antrian).");
+            } else {
+                $package = \App\Models\Package::create([
                     'user_id' => auth()->id(),
                     'tipe' => 'hotspot',
                     'name' => $this->name,
@@ -213,11 +208,17 @@ class MikrotikHotspotProfile extends Component
                     'speed_download' => $download,
                 ]);
 
-                session()->flash('message', "Profil Hotspot berhasil ditambahkan.");
+                if ($this->sync_mode === 'new') {
+                     \App\Jobs\ProvisionPackageJob::dispatch($package, 'create', null, [
+                        'shared_users' => $shusers,
+                        'address_pool' => $pool,
+                        'session_timeout' => $stimeout,
+                    ]);
+                }
+
+                session()->flash('message', "Profil Hotspot berhasil ditambahkan (Antrian).");
             }
             $this->closeModal();
-            $routerId = auth()->user()->router->id ?? 0;
-            Cache::forget("mk_hs_profiles_{$routerId}");
             $this->loadProfiles();
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal: ' . $e->getMessage());
@@ -232,21 +233,12 @@ class MikrotikHotspotProfile extends Component
                      ->first();
         if ($package) {
             try {
-                // Try delete from Mikrotik
-                try {
-                    $mikrotik = $this->getMikrotik();
-                    $allM = $mikrotik->getHotspotProfiles();
-                    $mRecord = collect($allM)->firstWhere('name', $package->mikrotik_profile);
-                    if ($mRecord) {
-                        $mikrotik->removeHotspotProfile($mRecord['.id']);
-                    }
-                } catch (\Exception $e) {}
+                // Dispatch Job Sync untuk delete
+                \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'delete');
 
                 $package->delete();
-                $routerId = auth()->user()->router->id ?? 0;
-                Cache::forget("mk_hs_profiles_{$routerId}");
                 $this->loadProfiles();
-                session()->flash('message', 'Profil berhasil dihapus dari sistem dan MikroTik.');
+                session()->flash('message', 'Profil berhasil dihapus.');
             } catch (\Exception $e) {
                 session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
             }

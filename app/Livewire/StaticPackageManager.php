@@ -5,8 +5,6 @@ namespace App\Livewire;
 use App\Models\Package;
 use Livewire\Component;
 use Livewire\WithPagination;
-use RouterOS\Client;
-use RouterOS\Query;
 
 class StaticPackageManager extends Component
 {
@@ -60,21 +58,6 @@ class StaticPackageManager extends Component
         $this->tipe = 'STATIC';
     }
 
-    private function getMikrotikClient()
-    {
-        $router = auth()->user()->router;
-        if (!$router) {
-            throw new \Exception('Silakan konfigurasi Router Mikrotik terlebih dahulu.');
-        }
-
-        return new Client([
-            'host' => $router->host,
-            'user' => $router->username,
-            'pass' => $router->password,
-            'port' => (int) $router->port,
-            'timeout' => 5,
-        ]);
-    }
 
     public function store()
     {

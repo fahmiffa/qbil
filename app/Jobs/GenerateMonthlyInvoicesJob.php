@@ -36,12 +36,12 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
     public function __construct(public readonly string $period) {}
 
     /**
-     * Unique key — job dengan periode yang sama tidak bisa masuk queue dua kali
-     * selama job pertama masih pending/running.
+     * Unique key — dibuat unik per jam agar pengecekan setiap jam
+     * tidak saling memblokir.
      */
     public function uniqueId(): string
     {
-        return 'generate-invoices-' . $this->period;
+        return 'generate-invoices-' . $this->period . '-' . now()->format('Y-m-d-H');
     }
 
     /**
@@ -53,21 +53,35 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
         return 600;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(WhatsappService $whatsappService): void
     {
-        Log::info("[GenerateMonthlyInvoicesJob] Mulai generate invoice untuk periode: {$this->period}");
+        Log::info("[GenerateMonthlyInvoicesJob] Mulai pengecekan generate invoice otomatis...");
 
         $totalGenerated = 0;
+        $now = now();
+        $currentHour = $now->format('H');
 
-        $users = User::all();
+        $users = User::with('appSetting')->get();
 
         foreach ($users as $user) {
+            $setting = $user->appSetting;
+
+            if (!$setting) {
+                continue;
+            }
+
+            // Cek apakah jam sekarang sesuai dengan konfigurasi jam eksekusi
+            $configHour = Carbon::parse($setting->invoice_gen_time)->format('H');
+            if ($currentHour != $configHour) {
+                continue;
+            }
+
+            $offsetDays = (int) $setting->invoice_gen_days;
+
             $customers = Customer::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->whereNotNull('package_id')
+                ->whereNotNull('due_date')
                 ->get();
 
             if ($customers->isEmpty()) {
@@ -75,63 +89,26 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
             }
 
             foreach ($customers as $customer) {
+                // Cek apakah hari ini adalah tanggal eksekusi (due_date + offset)
+                $originalDueDate = Carbon::parse($customer->due_date);
+                $targetDate = $originalDueDate->copy()->addDays($offsetDays);
+
+                if (!$now->isSameDay($targetDate)) {
+                    continue;
+                }
+
+                // Tentukan periode billing
+                $targetPeriod = $this->period ?: $originalDueDate->format('Y-m');
 
                 try {
-                    DB::transaction(function () use ($customer, $user, &$totalGenerated) {
+                    $invoiceService = new \App\Services\InvoiceService();
+                    $invoice = $invoiceService->generateForCustomer($customer, $targetPeriod);
 
-                        $amount = $customer->package->price ?? 0;
-
-                        // =========================
-                        // 1. UNIQUE CODE GENERATION
-                        // =========================
-                        $base = $customer->id . $this->period;
-
-                        $uniqueCode = hexdec(substr(md5($base), 0, 8)) % 1000;
-
-                        // safety format 3 digit
-                        $uniqueCode = str_pad($uniqueCode, 3, '0', STR_PAD_LEFT);
-
-                        // =========================
-                        // 2. INVOICE NUMBER SAFE SEQUENCE
-                        // =========================
-                        $periodSlug = str_replace('-', '', $this->period);
-
-                        $seq = Invoice::where('customer_id', $customer->id)
-                            ->where('billing_period', $this->period)
-                            ->lockForUpdate()
-                            ->count() + 1;
-
-                        $invoiceNumber = 'INV-' . $periodSlug . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
-
-                        // =========================
-                        // 3. CREATE (DB IS GUARDIAN)
-                        // =========================
-                        Invoice::create([
-                            'id'             => (string) Str::uuid(),
-                            'customer_id'    => $customer->id,
-                            'package_id'     => $customer->package_id,
-                            'invoice_number' => $invoiceNumber,
-                            'amount'         => $amount,
-                            'unique_code'    => $uniqueCode,
-                            'total_amount'   => $amount + (int)$uniqueCode,
-                            'billing_period' => $this->period,
-                            'status'         => 'unpaid',
-                            'due_date'       => $customer->due_date,
-                        ]);
-
+                    if ($invoice) {
                         $totalGenerated++;
-                    });
-                } catch (\Illuminate\Database\QueryException $e) {
-
-                    // =========================
-                    // DUPLICATE SAFE HANDLING
-                    // =========================
-                    if ($e->getCode() == 23000) {
-                        // duplicate → skip silently
-                        continue;
                     }
-
-                    Log::error($e->getMessage());
+                } catch (\Exception $e) {
+                    Log::error("GenerateMonthlyInvoicesJob Error for customer {$customer->id}: " . $e->getMessage());
                 }
             }
         }

@@ -34,7 +34,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'send-reminders-' . now()->format('Y-m-d');
+        return 'send-reminders-' . now()->format('Y-m-d-H');
     }
 
     /**
@@ -57,13 +57,15 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             ->get();
 
         $sentCount = 0;
+        $now = now();
+        $currentHour = $now->format('H');
 
         foreach ($invoices as $invoice) {
             $customer   = $invoice->customer;
             $user       = $customer->user;
             $appSetting = $user->appSetting;
 
-            if (!$appSetting || !$appSetting->notif || !$appSetting->template) {
+            if (!$appSetting || !$appSetting->template) {
                 continue;
             }
 
@@ -71,12 +73,26 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            // Tanggal pengingat = due_date customer - NOTIF hari
-            $dueDate      = Carbon::parse($customer->due_date);
-            $reminderDate = $dueDate->copy()->subDays((int) $appSetting->notif);
+            $dueDate = Carbon::parse($customer->due_date);
+            $shouldSend = false;
 
-            // Kirim hanya jika hari ini adalah tanggal pengingat
-            if (!now()->isSameDay($reminderDate)) {
+            // Logika Notifikasi Pertama
+            $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days);
+            $r1Hour = Carbon::parse($appSetting->reminder_1_time)->format('H');
+            
+            if ($now->isSameDay($r1Date) && $currentHour == $r1Hour) {
+                $shouldSend = true;
+            }
+
+            // Logika Notifikasi Kedua
+            $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days);
+            $r2Hour = Carbon::parse($appSetting->reminder_2_time)->format('H');
+            
+            if ($now->isSameDay($r2Date) && $currentHour == $r2Hour) {
+                $shouldSend = true;
+            }
+
+            if (!$shouldSend) {
                 continue;
             }
 

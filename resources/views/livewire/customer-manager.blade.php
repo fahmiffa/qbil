@@ -84,7 +84,7 @@
                             <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" wire:click="closeModal()"></div>
                             
                             <div class="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl z-10 border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all"
-                                 wire:click.stop>
+                                 x-on:click.stop>
                                 <!-- Modal Header -->
                                 <div class="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
                                     <div>
@@ -186,7 +186,7 @@
                                                 <select wire:model="package_id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
                                                     <option value="">-- Pilih Paket --</option>
                                                     @foreach($packages as $pkg)
-                                                        <option value="{{ $pkg->id }}">{{ $pkg->name }} — Rp {{ number_format($pkg->price, 0, ',', '.') }}</option>
+                                                        <option value="{{ $pkg->id }}">{{ $pkg->name }} [{{ $pkg->speed_upload }}/{{ $pkg->speed_download }}] — Rp {{ number_format($pkg->price, 0, ',', '.') }}</option>
                                                     @endforeach
                                                 </select>
                                                 @error('package_id') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
@@ -329,9 +329,14 @@
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-300">
                                     @if($customer->package)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
-                                            {{ $customer->package->name }}
-                                        </span>
+                                        <div class="flex flex-col">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 w-fit">
+                                                {{ $customer->package->name }}
+                                            </span>
+                                            <span class="text-[10px] text-gray-500 mt-0.5 font-mono">
+                                                Speed: {{ $customer->package->speed_upload }}/{{ $customer->package->speed_download }}
+                                            </span>
+                                        </div>
                                     @else
                                         <span class="text-gray-400 dark:text-slate-500 italic">—</span>
                                     @endif
@@ -385,7 +390,5 @@
     </div>
 
     @push('scripts')
-    <!-- Pastikan Anda menambahkan GOOGLE_MAPS_API_KEY di file .env -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&loading=async&libraries=places,marker"></script>
     @endpush
 </div>

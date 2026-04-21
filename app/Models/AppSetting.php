@@ -11,11 +11,18 @@ class AppSetting extends Model
 
     protected $fillable = [
         'user_id',
-        'notif',
         'template',
         'registration_template',
         'payment_instruction',
         'qr',
+        'reminder_1_days',
+        'reminder_1_time',
+        'reminder_2_days',
+        'reminder_2_time',
+        'invoice_gen_days',
+        'invoice_gen_time',
+        'isolate_days',
+        'isolate_time',
     ];
 
     public function user()

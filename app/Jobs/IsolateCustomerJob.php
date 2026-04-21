@@ -56,7 +56,10 @@ class IsolateCustomerJob implements ShouldQueue
 
             // Update status in local DB if not already
             if ($this->customer->status !== 'suspended') {
-                $this->customer->update(['status' => 'suspended']);
+                $this->customer->update([
+                    'status' => 'suspended',
+                    'isolated_at' => now(),
+                ]);
             }
 
         } catch (\Exception $e) {

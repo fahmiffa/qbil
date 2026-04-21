@@ -5,8 +5,6 @@ namespace App\Livewire;
 use App\Models\HotspotUser;
 use Livewire\Component;
 use Livewire\WithPagination;
-use RouterOS\Client;
-use RouterOS\Query;
 
 class HotspotManager extends Component
 {
@@ -36,21 +34,6 @@ class HotspotManager extends Component
             ->get();
     }
 
-    private function getMikrotikClient()
-    {
-        $router = auth()->user()->router;
-        if (!$router) {
-            throw new \Exception('Router belum dikonfigurasi.');
-        }
-
-        return new Client([
-            'host' => $router->host,
-            'user' => $router->username,
-            'pass' => $router->password,
-            'port' => (int) $router->port,
-            'timeout' => 5,
-        ]);
-    }
 
     public function create()
     {
@@ -97,52 +80,39 @@ class HotspotManager extends Component
         ]);
 
         try {
-            $client = $this->getMikrotikClient();
             $package = auth()->user()->packages()->findOrFail($this->package_id);
             $this->profile = $package->mikrotik_profile ?: 'default';
+            $oldUsername = null;
 
             if ($this->hotspot_user_id) {
-                // UPDATE
-                $oldUser = HotspotUser::findOrFail($this->hotspot_user_id);
-                $query = (new Query('/ip/hotspot/user/print'))->where('name', $oldUser->username);
-                $mikrotikUser = $client->query($query)->read();
-
-                if (!empty($mikrotikUser)) {
-                    $updateQuery = (new Query('/ip/hotspot/user/set'))
-                        ->equal('.id', $mikrotikUser[0]['.id'])
-                        ->equal('name', $this->username)
-                        ->equal('password', $this->password)
-                        ->equal('profile', $this->profile);
-                    $client->query($updateQuery)->read();
-                } else {
-                    $addQuery = (new Query('/ip/hotspot/user/add'))
-                        ->equal('name', $this->username)
-                        ->equal('password', $this->password)
-                        ->equal('profile', $this->profile);
-                    $client->query($addQuery)->read();
-                }
+                $hotspotUser = HotspotUser::findOrFail($this->hotspot_user_id);
+                $oldUsername = $hotspotUser->username;
+                $hotspotUser->update([
+                    'username' => $this->username,
+                    'password' => $this->password,
+                    'profile' => $this->profile,
+                    'package_id' => $this->package_id,
+                ]);
+                $action = 'update';
             } else {
-                // CREATE
-                $addQuery = (new Query('/ip/hotspot/user/add'))
-                    ->equal('name', $this->username)
-                    ->equal('password', $this->password)
-                    ->equal('profile', $this->profile);
-                $client->query($addQuery)->read();
+                $hotspotUser = HotspotUser::create([
+                    'user_id' => auth()->id(),
+                    'username' => $this->username,
+                    'password' => $this->password,
+                    'profile' => $this->profile,
+                    'package_id' => $this->package_id,
+                ]);
+                $action = 'create';
             }
 
-            HotspotUser::updateOrCreate(['id' => $this->hotspot_user_id], [
-                'user_id' => auth()->id(),
-                'username' => $this->username,
-                'password' => $this->password,
-                'profile' => $this->profile,
-                'package_id' => $this->package_id,
-            ]);
+            // Dispatch Job
+            \App\Jobs\ProvisionHotspotUserJob::dispatch($hotspotUser, $action, $oldUsername);
 
-            session()->flash('message', 'User Hotspot berhasil disimpan.');
+            session()->flash('message', 'User Hotspot berhasil disimpan (Sinkronisasi Antrian).');
             $this->closeModal();
             $this->resetInputFields();
         } catch (\Exception $e) {
-            session()->flash('error', 'Mikrotik Error: ' . $e->getMessage());
+            session()->flash('error', 'Gagal: ' . $e->getMessage());
         }
     }
 
@@ -162,20 +132,15 @@ class HotspotManager extends Component
     {
         try {
             $user = HotspotUser::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
-            $client = $this->getMikrotikClient();
-
-            $query = (new Query('/ip/hotspot/user/print'))->where('name', $user->username);
-            $mikrotikUser = $client->query($query)->read();
-
-            if (!empty($mikrotikUser)) {
-                $delQuery = (new Query('/ip/hotspot/user/remove'))->equal('.id', $mikrotikUser[0]['.id']);
-                $client->query($delQuery)->read();
-            }
+            
+            // Dispatch sync for delete to ensure it happens before DB record is gone 
+            // OR use dispatch and accept risk OR pass values
+            \App\Jobs\ProvisionHotspotUserJob::dispatchSync($user, 'delete');
 
             $user->delete();
             session()->flash('message', 'User Hotspot dihapus.');
         } catch (\Exception $e) {
-            session()->flash('error', 'Mikrotik Error: ' . $e->getMessage());
+            session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
         }
     }
 }
