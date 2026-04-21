@@ -30,4 +30,17 @@ class Customer extends Model
     {
         return $this->belongsTo(Package::class);
     }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($customer) {
+            // Hapus semua invoice terkait saat pelanggan dihapus
+            $customer->invoices()->delete();
+        });
+    }
 }

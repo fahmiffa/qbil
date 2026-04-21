@@ -207,6 +207,7 @@
                                                                 <option value="{{ $profile['name'] }}">{{ $profile['name'] }}</option>
                                                             @endforeach
                                                         </select>
+                                                        @error('ppp_profile') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                         <p class="text-[10px] text-slate-500 mt-1 italic">* Jika dikosongkan, akan menggunakan profile dari Paket yang dipilih.</p>
                                                     </div>
 
@@ -214,12 +215,14 @@
                                                         <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Username PPPOE</label>
                                                         <input type="text" wire:model="username" placeholder="user@ebilling"
                                                             class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono">
+                                                        @error('username') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                     </div>
                                                     <div>
                                                         <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Password PPPOE</label>
                                                         <div class="relative">
                                                             <input type="{{ $showPassword ? 'text' : 'password' }}" wire:model="password" placeholder="Pass123"
                                                                 class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono pr-12">
+                                                            @error('password') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                             <button type="button" wire:click="togglePassword" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-indigo-500 transition-colors">
                                                                 @if($showPassword)
                                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
@@ -241,6 +244,7 @@
                                                         <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">MAC Address</label>
                                                         <input type="text" wire:model="mac_address" placeholder="00:00:00:00:00:00"
                                                             class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono uppercase">
+                                                        @error('mac_address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                     </div>
 
                                                     <div>
@@ -251,6 +255,7 @@
                                                                 <option value="{{ $srv['name'] }}">{{ $srv['name'] }} ({{ $srv['interface'] }})</option>
                                                             @endforeach
                                                         </select>
+                                                        @error('dhcp_server') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                     </div>
 
                                                     <div>
@@ -274,6 +279,7 @@
                                                                 <svg wire:loading wire:target="autoAssignIp" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                                             </button>
                                                         </div>
+                                                        @error('ip_address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                     </div>
                                                 </div>
                                             @endif

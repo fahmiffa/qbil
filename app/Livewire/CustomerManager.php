@@ -165,8 +165,8 @@ class CustomerManager extends Component
             'keterangan'   => 'nullable|string',
             'status'       => 'required|in:active,suspended',
             'due_date'     => 'nullable|date',
-            'username'     => 'nullable|string|max:100',
-            'password'     => 'nullable|string|max:100',
+            'username'     => 'required_if:service_type,pppoe|nullable|string|max:100',
+            'password'     => 'required_if:service_type,pppoe|nullable|string|max:100',
             'ppp_profile'  => 'nullable|string|max:100',
             'service_type' => 'required|in:static,pppoe',
             'ip_address'   => 'required_if:service_type,static|nullable|string|max:50',
@@ -174,6 +174,7 @@ class CustomerManager extends Component
             'dhcp_server'  => 'required_if:service_type,static|nullable|string|max:50',
             'latitude'     => 'nullable|string|max:50',
             'longitude'    => 'nullable|string|max:50',
+            'package_id'   => 'nullable|exists:packages,id',
         ]);
 
         $normMac = $this->mac_address ? strtoupper(trim(str_replace(['-', ' '], ':', $this->mac_address))) : null;
