@@ -8,10 +8,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Scheduler hanya sebagai trigger — logika bisnis diproses oleh queue worker
-Schedule::command('invoice:generate')->hourly();
-Schedule::command('invoice:remind')->hourly();
-Schedule::command('billing:check-due')->hourly();
+// // Scheduler hanya sebagai trigger — logika bisnis diproses oleh queue worker
+// Schedule::command('invoice:generate')->hourly();
+// Schedule::command('invoice:remind')->hourly();
+// Schedule::command('billing:check-due')->hourly();
 
 
 // Sync IP Pools from Mikrotik. Using --loop and withoutOverlapping ensures 
