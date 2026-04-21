@@ -67,6 +67,18 @@
                             </div>
                         </div>
 
+                        <!-- Filter Status -->
+                        <div class="relative w-full sm:w-40">
+                            <select wire:model.live="filterStatus" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
+                                <option value="">Semua Status</option>
+                                <option value="active">ACTIVE</option>
+                                <option value="suspended">SUSPENDED</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+
                         <!-- Search -->
                         <div class="relative w-full sm:w-64">
                             <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari Nama / ID Pelanggan..." 
