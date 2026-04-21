@@ -80,7 +80,7 @@
         this.$watch('lng', () => this.syncMarkerFromCoords());
         });
     }
-} shadow-sm border border-slate-200 dark:border-slate-700 p-4 rounded-2xl">
+}" class="shadow-sm border border-slate-200 dark:border-slate-700 p-4 rounded-2xl">
     <label class="block text-gray-700 dark:text-slate-300 text-sm font-semibold mb-1">Koordinat Lokasi Pemasangan</label>
     <div class="grid grid-cols-2 gap-2 mb-2">
         <input type="text" x-model="lat" placeholder="Latitude" readonly class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 focus:outline-none">
