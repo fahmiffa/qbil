@@ -35,6 +35,16 @@ class Customer extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+ 
+    public function deposits()
+    {
+        return $this->hasMany(Deposit::class);
+    }
+ 
+    public function piutangs()
+    {
+        return $this->hasMany(Piutang::class);
+    }
 
     protected static function booted()
     {

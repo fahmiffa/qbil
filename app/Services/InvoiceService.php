@@ -61,11 +61,30 @@ class InvoiceService
             $invoiceNumber = "INV-{$periodSlug}-" . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
             // 4. DUE DATE CALCULATION
-            // Keeping the same day relative to customer's original due_date
             $originalDueDate = Carbon::parse($customer->due_date);
             $invoiceDueDate = Carbon::parse($period . '-' . $originalDueDate->format('d'));
 
-            // 5. CREATE
+            // 5. CHECK FOR ACTIVE DEPOSITS
+            $status = 'unpaid';
+            $paidAt = null;
+
+            $activeDeposit = \App\Models\Deposit::where('customer_id', $customer->id)
+                ->where('status', 'active')
+                ->whereDate('start_date', '<=', $period . '-01')
+                ->whereDate('end_date', '>=', $period . '-01')
+                ->lockForUpdate()
+                ->first();
+
+            if ($activeDeposit) {
+                $activeDeposit->increment('used_months');
+                if ($activeDeposit->used_months >= $activeDeposit->months_count) {
+                    $activeDeposit->update(['status' => 'exhausted']);
+                }
+                $status = 'paid';
+                $paidAt = now();
+            }
+
+            // 6. CREATE
             return Invoice::create([
                 'id'             => (string) Str::uuid(),
                 'customer_id'    => $customer->id,
@@ -75,8 +94,9 @@ class InvoiceService
                 'unique_code'    => $uniqueCode,
                 'total_amount'   => $totalAmount,
                 'billing_period' => $period,
-                'status'         => 'unpaid',
+                'status'         => $status,
                 'due_date'       => $invoiceDueDate,
+                'paid_at'        => $paidAt,
             ]);
         });
     }

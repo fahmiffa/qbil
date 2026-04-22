@@ -25,6 +25,8 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('hotspot-profiles', \App\Livewire\MikrotikHotspotProfile::class)->name('hotspot-profiles');
     Route::get('app-settings', \App\Livewire\AppManager::class)->name('app-settings');
     Route::get('invoice', \App\Livewire\InvoiceManager::class)->name('invoice');
+    Route::get('deposits', \App\Livewire\DepositManager::class)->name('deposits');
+    Route::get('piutangs', \App\Livewire\PiutangManager::class)->name('piutangs');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)
@@ -33,6 +35,13 @@ Route::get('router', \App\Livewire\RouterConfig::class)
 
 // Public Invoice View
 Route::get('i/{invoice}', \App\Livewire\PublicInvoiceView::class)->name('public.invoice');
+
+// Print Routes (Unified)
+Route::middleware(['auth'])->group(function () {
+    Route::get('print/invoice/{invoice}', [App\Http\Controllers\PrintController::class, 'invoice'])->name('print.invoice');
+    Route::get('print/deposit/{deposit}', [App\Http\Controllers\PrintController::class, 'deposit'])->name('print.deposit');
+    Route::get('print/piutang/{piutang}', [App\Http\Controllers\PrintController::class, 'piutang'])->name('print.piutang');
+});
 
 
 

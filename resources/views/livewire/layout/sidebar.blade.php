@@ -67,6 +67,14 @@ new class extends Component
                 Invoice
             </x-sidebar-link>
 
+            <x-sidebar-link :href="route('deposits')" :active="request()->routeIs('deposits')" icon="box">
+                Deposit
+            </x-sidebar-link>
+
+            <x-sidebar-link :href="route('piutangs')" :active="request()->routeIs('piutangs')" icon="user-group">
+                Piutang
+            </x-sidebar-link>
+
             <div class="pt-4 pb-2">
                 <span x-show="sidebarOpen" class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3">Master</span>
                 <div x-show="!sidebarOpen" class="border-t border-slate-100 dark:border-slate-800 mx-3"></div>

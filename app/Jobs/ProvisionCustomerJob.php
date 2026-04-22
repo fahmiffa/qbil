@@ -130,8 +130,14 @@ class ProvisionCustomerJob implements ShouldQueue
     {
         if ($customer->service_type === 'pppoe') {
             $mikrotik->disablePppSecret($customer->username);
+            if ($customer->ip_address) {
+                $mikrotik->addToAddressList($customer->ip_address, 'ISOLIR', 'Suspended: ' . $customer->name);
+            }
         } elseif ($customer->service_type === 'static' && $customer->mac_address) {
             $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, true);
+            if ($customer->ip_address) {
+                $mikrotik->addToAddressList($customer->ip_address, 'ISOLIR', 'Suspended: ' . $customer->name);
+            }
         }
     }
 
@@ -139,8 +145,14 @@ class ProvisionCustomerJob implements ShouldQueue
     {
         if ($customer->service_type === 'pppoe') {
             $mikrotik->enablePppSecret($customer->username);
+            if ($customer->ip_address) {
+                $mikrotik->removeFromAddressList($customer->ip_address, 'ISOLIR');
+            }
         } elseif ($customer->service_type === 'static' && $customer->mac_address) {
             $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, false);
+            if ($customer->ip_address) {
+                $mikrotik->removeFromAddressList($customer->ip_address, 'ISOLIR');
+            }
         }
     }
 }

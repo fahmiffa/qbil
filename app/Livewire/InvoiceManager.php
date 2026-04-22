@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Piutang;
+use App\Models\Deposit;
 use App\Models\AppSetting;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -19,10 +21,14 @@ class InvoiceManager extends Component
     public $filter_status = '';
     public $billing_period = '';
     public $perPage = 10;
+    public $paid_at;
 
     protected $queryString = ['search', 'filter_status', 'billing_period', 'perPage'];
 
 
+
+    public $showVerifyModal = false;
+    public $selectedInvoice = null;
 
     public function mount()
     {
@@ -41,15 +47,32 @@ class InvoiceManager extends Component
         $this->resetPage();
     }
 
-    public function markAsPaid($invoiceId)
+    public function openVerifyModal($invoiceId)
     {
-        $invoice = Invoice::findOrFail($invoiceId);
+        $this->selectedInvoice = Invoice::with('customer')->findOrFail($invoiceId);
+        $this->paid_at = now()->format('Y-m-d\TH:i');
+        $this->showVerifyModal = true;
+    }
+
+    public function closeVerifyModal()
+    {
+        $this->showVerifyModal = false;
+        $this->selectedInvoice = null;
+    }
+
+    public function markAsPaid($invoiceId = null)
+    {
+        $id = $invoiceId ?? $this->selectedInvoice->id;
+        $invoice = Invoice::findOrFail($id);
         
         DB::transaction(function () use ($invoice) {
             $invoice->update([
                 'status' => 'paid',
-                'paid_at' => now(),
+                'paid_at' => $this->paid_at ?? now(),
             ]);
+
+            // If it was already in piutang table, mark it as paid there too
+            \App\Models\Piutang::where('invoice_id', $invoice->id)->update(['status' => 'paid']);
 
             $customer = $invoice->customer;
             if ($customer->status === 'suspended') {
@@ -73,6 +96,51 @@ class InvoiceManager extends Component
         });
 
         $this->dispatch('toast', type: 'success', message: "Invoice {$invoice->invoice_number} ditandai sebagai LUNAS.");
+        $this->closeVerifyModal();
+    }
+
+    public function markAsPiutang()
+    {
+        $invoice = $this->selectedInvoice;
+        
+        DB::transaction(function () use ($invoice) {
+            // Create Piutang Record
+            Piutang::updateOrCreate([
+                'invoice_id' => $invoice->id
+            ], [
+                'customer_id' => $invoice->customer_id,
+                'user_id' => auth()->id(),
+                'amount' => $invoice->total_amount,
+                'billing_period' => $invoice->billing_period,
+                'status' => 'unpaid',
+                'notes' => 'Piutang dari invoice ' . $invoice->invoice_number
+            ]);
+
+            $invoice->update([
+                'status' => 'paid',
+                'paid_at' => $this->paid_at ?? now(),
+            ]);
+
+            // Re-activate Customer (Open Isolir) even if it's Piutang
+            $customer = $invoice->customer;
+            if ($customer->status === 'suspended') {
+                $oldStatus = $customer->status;
+                
+                $customer->update([
+                    'status' => 'active',
+                    'isolated_at' => null,
+                    'activated_at' => $customer->activated_at ?? now(),
+                ]);
+
+                // Sinkronkan ke router (Buka Isolir)
+                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
+                    'status' => $oldStatus
+                ]);
+            }
+        });
+
+        $this->dispatch('toast', type: 'info', message: "Invoice {$invoice->invoice_number} dimasukkan ke daftar PIUTANG. Internet dibuka.");
+        $this->closeVerifyModal();
     }
 
     public function cancelInvoice($invoiceId)

@@ -15,6 +15,8 @@ class AssetManager extends Component
     
     public $asset_id, $name;
     public $isOpen = false;
+    public $category_mode = 'old'; // 'old' or 'new'
+    public $selected_category, $new_category, $latitude, $longitude;
 
     protected $queryString = ['search', 'perPage'];
 
@@ -29,6 +31,10 @@ class AssetManager extends Component
         $asset = Asset::findOrFail($id);
         $this->asset_id = $id;
         $this->name = $asset->name;
+        $this->selected_category = $asset->category;
+        $this->latitude = $asset->latitude;
+        $this->longitude = $asset->longitude;
+        $this->category_mode = 'old';
         $this->openModal();
     }
 
@@ -36,14 +42,22 @@ class AssetManager extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
+            'category_mode' => 'required|in:old,new',
+            'new_category' => 'required_if:category_mode,new|max:255',
+            'selected_category' => 'required_if:category_mode,old|max:255',
         ]);
 
         try {
+            $category = $this->category_mode === 'new' ? $this->new_category : $this->selected_category;
+
             Asset::updateOrCreate(
                 ['id' => $this->asset_id],
                 [
                     'user_id' => auth()->id(),
                     'name' => $this->name,
+                    'category' => $category,
+                    'latitude' => $this->latitude,
+                    'longitude' => $this->longitude,
                 ]
             );
 
@@ -70,6 +84,11 @@ class AssetManager extends Component
     {
         $this->asset_id = null;
         $this->name = '';
+        $this->selected_category = '';
+        $this->new_category = '';
+        $this->latitude = '';
+        $this->longitude = '';
+        $this->category_mode = 'old';
     }
 
     public function openModal()
@@ -94,7 +113,10 @@ class AssetManager extends Component
         $query = Asset::where('user_id', auth()->id());
 
         if ($this->search) {
-            $query->where('name', 'like', '%' . $this->search . '%');
+            $query->where(function($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('category', 'like', '%' . $this->search . '%');
+            });
         }
 
         $totalCount = $query->count();
@@ -102,7 +124,12 @@ class AssetManager extends Component
 
         $assets = $query->orderBy('id', 'desc')->paginate($limit);
 
-        return view('livewire.asset-manager', compact('assets'))
+        $categories = Asset::where('user_id', auth()->id())
+            ->whereNotNull('category')
+            ->distinct()
+            ->pluck('category');
+
+        return view('livewire.asset-manager', compact('assets', 'categories'))
             ->layout('layouts.app', ['header' => 'Master Asset']);
     }
 }

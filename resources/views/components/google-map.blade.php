@@ -7,9 +7,9 @@
     marker: null,
     init() {
         window.loadGoogleMaps(async () => {
-            let initLat = parseFloat(this.lat) || -6.8694;
-            let initLng = parseFloat(this.lng) || 109.0435;
-            let initZoom = this.lat ? 16 : 11;
+            let initLat = parseFloat(this.lat) || -6.9400;
+            let initLng = parseFloat(this.lng) || 108.9300;
+            let initZoom = this.lat ? 16 : 10;
 
             // Ensure container is ready in DOM for modal
             await new Promise(r => setTimeout(r, 500));
