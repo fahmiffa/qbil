@@ -48,10 +48,14 @@ class CheckDueInvoices extends Command
 
             // Cari pelanggan yang due_date-nya sudah mencapai ambang batas isolir
             // Dan statusnya masih aktif (belum isolir)
+            // SERTA memiliki invoice yang belum lunas (unpaid)
             $customers = Customer::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->whereNotNull('due_date')
                 ->whereDate('due_date', '<=', $targetDate)
+                ->whereHas('invoices', function($query) {
+                    $query->where('status', 'unpaid');
+                })
                 ->get();
 
             if ($customers->isEmpty()) {
