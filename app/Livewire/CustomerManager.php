@@ -237,8 +237,8 @@ class CustomerManager extends Component
             'ip_address'   => $normIp,
             'mac_address'  => $normMac,
             'dhcp_server'  => $this->dhcp_server ?: 'all',
-            'latitude'     => $this->latitude,
-            'longitude'    => $this->longitude,
+            'latitude'     => $this->latitude === '' ? null : $this->latitude,
+            'longitude'    => $this->longitude === '' ? null : $this->longitude,
             'user_id'      => auth()->id(),
             'activated_at' => $this->status === 'active' ? now() : null,
         ];

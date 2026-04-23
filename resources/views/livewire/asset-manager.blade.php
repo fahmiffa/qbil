@@ -99,6 +99,14 @@
                                             @endif
                                         </div>
 
+                                        <!-- Alamat Lengkap -->
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Alamat / Lokasi Pemasangan</label>
+                                            <textarea wire:model="address" rows="3" placeholder="Alamat lengkap lokasi asset..."
+                                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors @error('address') border-red-400 @enderror"></textarea>
+                                            @error('address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                        </div>
+
                                         <!-- Koordinate -->
                                         <div>
                                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Lokasi Koordinat</label>
@@ -157,6 +165,9 @@
                                     {{ $asset->name }}
                                     @if($asset->latitude && $asset->longitude)
                                         <p class="text-[9px] text-slate-400 mt-0.5 font-mono">{{ $asset->latitude }}, {{ $asset->longitude }}</p>
+                                    @endif
+                                    @if($asset->address)
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{{ $asset->address }}</p>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">

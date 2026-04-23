@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Asset extends Model
 {
-    protected $fillable = ['user_id', 'name', 'category', 'latitude', 'longitude'];
+    protected $fillable = ['user_id', 'name', 'category', 'latitude', 'longitude', 'address'];
 
     protected $casts = [
         'latitude' => 'decimal:8',

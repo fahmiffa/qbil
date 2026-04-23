@@ -16,7 +16,7 @@ class AssetManager extends Component
     public $asset_id, $name;
     public $isOpen = false;
     public $category_mode = 'old'; // 'old' or 'new'
-    public $selected_category, $new_category, $latitude, $longitude;
+    public $selected_category, $new_category, $latitude, $longitude, $address;
 
     protected $queryString = ['search', 'perPage'];
 
@@ -34,6 +34,7 @@ class AssetManager extends Component
         $this->selected_category = $asset->category;
         $this->latitude = $asset->latitude;
         $this->longitude = $asset->longitude;
+        $this->address = $asset->address;
         $this->category_mode = 'old';
         $this->openModal();
     }
@@ -45,6 +46,9 @@ class AssetManager extends Component
             'category_mode' => 'required|in:old,new',
             'new_category' => 'required_if:category_mode,new|max:255',
             'selected_category' => 'required_if:category_mode,old|max:255',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string',
+            'address' => 'nullable|string',
         ]);
 
         try {
@@ -56,8 +60,9 @@ class AssetManager extends Component
                     'user_id' => auth()->id(),
                     'name' => $this->name,
                     'category' => $category,
-                    'latitude' => $this->latitude,
-                    'longitude' => $this->longitude,
+                    'latitude' => $this->latitude === '' ? null : $this->latitude,
+                    'longitude' => $this->longitude === '' ? null : $this->longitude,
+                    'address' => $this->address,
                 ]
             );
 
@@ -88,6 +93,7 @@ class AssetManager extends Component
         $this->new_category = '';
         $this->latitude = '';
         $this->longitude = '';
+        $this->address = '';
         $this->category_mode = 'old';
     }
 
