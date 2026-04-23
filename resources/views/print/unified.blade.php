@@ -26,10 +26,19 @@
         <div class="invoice-card bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-xl print:shadow-none transition-all">
             <!-- Header -->
             <div class="p-8 border-b border-slate-50 dark:border-slate-800">
-                <div class="flex justify-between items-start">
-                    <div class="space-y-1">
-                        <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{{ $type }}</h1>
-                        <p class="text-xs font-mono text-slate-400 uppercase">#{{ $number }}</p>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        @if($customer->user->photo)
+                            <img src="{{ Storage::url($customer->user->photo) }}" class="h-16 w-16 rounded-2xl object-cover shadow-lg border border-slate-100 dark:border-slate-800">
+                        @else
+                            <div class="h-16 w-16 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                <span class="text-2xl font-black text-white uppercase">{{ substr($customer->user->name, 0, 1) }}</span>
+                            </div>
+                        @endif
+                        <div class="space-y-1">
+                            <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{{ $type }}</h1>
+                            <p class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">#{{ $number }}</p>
+                        </div>
                     </div>
                     <div class="text-right">
                         @if($status == 'paid')

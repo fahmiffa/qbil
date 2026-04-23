@@ -2,9 +2,13 @@
 
     <!-- Action Bar (Hidden on Print) -->
     <div class="no-print flex justify-between items-center mb-6 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div class="flex items-center gap-2">
-            <x-application-logo class="w-6 h-6 text-blue-600" />
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tagihan Digital</span>
+        <div class="flex items-center gap-3">
+            @if($invoice->customer->user->photo)
+                <img src="{{ Storage::url($invoice->customer->user->photo) }}" class="w-8 h-8 rounded-lg object-cover">
+            @else
+                <x-application-logo class="w-6 h-6 text-blue-600" />
+            @endif
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ $invoice->customer->user->name }}</span>
         </div>
         <button onclick="window.print()" class="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,10 +23,19 @@
 
         <!-- Header -->
         <div class="p-8 sm:p-10 border-b border-slate-50 dark:border-slate-800">
-            <div class="flex justify-between items-start">
-                <div class="space-y-1">
-                    <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tighter">INVOICE</h1>
-                    <p class="text-xs font-mono text-slate-400 dark:text-slate-500 uppercase">#{{ $invoice->invoice_number }}</p>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    @if($invoice->customer->user->photo)
+                        <img src="{{ Storage::url($invoice->customer->user->photo) }}" class="h-16 w-16 rounded-2xl object-cover shadow-lg border border-slate-100 dark:border-slate-800">
+                    @else
+                        <div class="h-16 w-16 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                            <span class="text-2xl font-black text-white uppercase">{{ substr($invoice->customer->user->name, 0, 1) }}</span>
+                        </div>
+                    @endif
+                    <div class="space-y-1">
+                        <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tighter">INVOICE</h1>
+                        <p class="text-xs font-mono text-slate-400 dark:text-slate-500 uppercase tracking-widest">#{{ $invoice->invoice_number }}</p>
+                    </div>
                 </div>
                 <div class="text-right">
                     @if($invoice->status == 'paid')

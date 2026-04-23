@@ -38,12 +38,12 @@ class InvoiceManager extends Component
     public function generateInvoices()
     {
         $currentPeriod = $this->billing_period;
-        
+
         // Dispatch job untuk generate bulk
         \App\Jobs\BulkGenerateInvoicesJob::dispatch(auth()->id(), $currentPeriod);
 
         $this->dispatch('toast', type: 'info', message: "Proses generate invoice untuk periode $currentPeriod telah dimulai di latar belakang.");
-        
+
         $this->resetPage();
     }
 
@@ -64,7 +64,7 @@ class InvoiceManager extends Component
     {
         $id = $invoiceId ?? $this->selectedInvoice->id;
         $invoice = Invoice::findOrFail($id);
-        
+
         DB::transaction(function () use ($invoice) {
             $invoice->update([
                 'status' => 'paid',
@@ -77,7 +77,7 @@ class InvoiceManager extends Component
             $customer = $invoice->customer;
             if ($customer->status === 'suspended') {
                 $oldStatus = $customer->status;
-                
+
                 $customer->update([
                     'status' => 'active',
                     'isolated_at' => null,
@@ -105,7 +105,7 @@ class InvoiceManager extends Component
     public function markAsPiutang()
     {
         $invoice = $this->selectedInvoice;
-        
+
         DB::transaction(function () use ($invoice) {
             // Create Piutang Record
             Piutang::updateOrCreate([
@@ -128,7 +128,7 @@ class InvoiceManager extends Component
             $customer = $invoice->customer;
             if ($customer->status === 'suspended') {
                 $oldStatus = $customer->status;
-                
+
                 $customer->update([
                     'status' => 'active',
                     'isolated_at' => null,
@@ -163,17 +163,17 @@ class InvoiceManager extends Component
     public function sendWhatsappNotification($invoiceId)
     {
         $invoice = Invoice::findOrFail($invoiceId);
-        
+
         // Dispatch job ke antrean
         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
-        
+
         $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} sedang diproses di latar belakang.");
     }
 
     public function regenerateInvoice($invoiceId)
     {
         $invoice = Invoice::findOrFail($invoiceId);
-        
+
         if ($invoice->status !== 'canceled') {
             return;
         }
@@ -181,9 +181,9 @@ class InvoiceManager extends Component
         try {
             DB::transaction(function () use ($invoice) {
                 // Find a fresh unique code
-                $usedCodes = Invoice::whereHas('customer', function($q) {
-                        $q->where('user_id', auth()->id());
-                    })
+                $usedCodes = Invoice::whereHas('customer', function ($q) {
+                    $q->where('user_id', auth()->id());
+                })
                     ->where('status', 'unpaid')
                     ->pluck('unique_code')
                     ->toArray();
@@ -213,20 +213,20 @@ class InvoiceManager extends Component
 
     public function render()
     {
-        $query = Invoice::whereHas('customer', function($q) {
-                $q->where('user_id', auth()->id());
-            })
+        $query = Invoice::whereHas('customer', function ($q) {
+            $q->where('user_id', auth()->id());
+        })
             ->with(['customer.package']);
 
         if ($this->search) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('invoice_number', 'like', '%' . $this->search . '%')
-                  ->orWhere('unique_code', 'like', '%' . $this->search . '%')
-                  ->orWhereHas('customer', function($c) {
-                      $c->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('username', 'like', '%' . $this->search . '%')
-                        ->orWhere('id_pelanggan', 'like', '%' . $this->search . '%');
-                  });
+                    ->orWhere('unique_code', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('customer', function ($c) {
+                        $c->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('username', 'like', '%' . $this->search . '%')
+                            ->orWhere('id_pelanggan', 'like', '%' . $this->search . '%');
+                    });
             });
         }
 
@@ -240,7 +240,7 @@ class InvoiceManager extends Component
 
         $totalCount = $query->count();
         $limit = $this->perPage === 'all' ? max(1, $totalCount) : (int) $this->perPage;
-        
+
         $invoices = $query->orderBy('created_at', 'desc')->paginate($limit);
 
 
