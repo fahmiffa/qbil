@@ -15,6 +15,7 @@ Route::view('profile', 'profile')
 Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('assets', \App\Livewire\AssetManager::class)->name('assets');
     Route::get('customers', \App\Livewire\CustomerManager::class)->name('customers');
+    Route::get('customers/{customer}', \App\Livewire\CustomerDetail::class)->name('customers.detail');
     Route::get('packages', \App\Livewire\PackageManager::class)->name('packages');
     Route::get('static-packages', \App\Livewire\StaticPackageManager::class)->name('static-packages');
     Route::get('hotspot', \App\Livewire\HotspotManager::class)->name('hotspot');

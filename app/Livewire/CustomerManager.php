@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Customer;
 use App\Models\Package;
+use App\Models\Asset;
 use App\Models\IpPool;
 use App\Models\DhcpServer;
 use App\Models\PppProfile;
@@ -20,6 +21,7 @@ class CustomerManager extends Component
     public $package_id, $ppp_profile, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $latitude, $longitude;
+    public $asset_id;
     public $selectedPool;
     public $ipPools = [];
     public $dhcpServers = [];
@@ -81,10 +83,17 @@ class CustomerManager extends Component
             $this->pppProfiles = PppProfile::where('user_id', auth()->id())->get()->toArray();
         }
 
+        // Assets dikelompokkan per kategori untuk dropdown
+        $groupedAssets = \App\Models\Asset::where('user_id', auth()->id())
+            ->orderBy('category')->orderBy('name')
+            ->get()
+            ->groupBy('category');
+
         return view('livewire.customer-manager', [
-            'customers'    => $customers,
-            'packages'     => $packages,
-            'allPackages'  => $allPackages,
+            'customers'     => $customers,
+            'packages'      => $packages,
+            'allPackages'   => $allPackages,
+            'groupedAssets' => $groupedAssets,
         ])->layout('layouts.app');
     }
 
@@ -169,6 +178,7 @@ class CustomerManager extends Component
         $this->dhcp_server  = '';
         $this->latitude     = '';
         $this->longitude    = '';
+        $this->asset_id     = '';
         $this->selectedPool = '';
         $this->showPassword = false;
     }
@@ -239,6 +249,7 @@ class CustomerManager extends Component
             'dhcp_server'  => $this->dhcp_server ?: 'all',
             'latitude'     => $this->latitude === '' ? null : $this->latitude,
             'longitude'    => $this->longitude === '' ? null : $this->longitude,
+            'asset_id'     => $this->asset_id ?: null,
             'user_id'      => auth()->id(),
             'activated_at' => $this->status === 'active' ? now() : null,
         ];
@@ -309,6 +320,7 @@ class CustomerManager extends Component
         $this->dhcp_server  = $customer->dhcp_server;
         $this->latitude     = $customer->latitude;
         $this->longitude    = $customer->longitude;
+        $this->asset_id     = $customer->asset_id;
         $this->openModal();
         $this->dispatch('map-updated', ['lat' => $customer->latitude, 'lng' => $customer->longitude]);
     }

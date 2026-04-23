@@ -12,7 +12,7 @@ class Customer extends Model
     protected $fillable = [
         'id_pelanggan', 'name', 'phone', 'address', 'keterangan', 'status', 'due_date', 'user_id',
         'package_id', 'ppp_profile', 'username', 'password', 'service_type', 'ip_address', 'mac_address', 'dhcp_server', 'creation_method', 
-        'activated_at', 'latitude', 'longitude', 'isolated_at'
+        'activated_at', 'latitude', 'longitude', 'isolated_at', 'asset_id'
     ];
 
     protected $casts = [
@@ -29,6 +29,11 @@ class Customer extends Model
     public function package()
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function asset()
+    {
+        return $this->belongsTo(Asset::class);
     }
 
     public function invoices()
