@@ -34,7 +34,7 @@ class CustomerManager extends Component
 
     public function render()
     {
-        $query = auth()->user()->customers()->with('package')->orderBy('id', 'desc');
+        $query = auth()->user()->customers()->with('package')->latest();
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -91,7 +91,27 @@ class CustomerManager extends Component
     public function create()
     {
         $this->resetInputFields();
+        $this->generateIdPelanggan();
         $this->openModal();
+    }
+
+    public function generateIdPelanggan()
+    {
+        $prefix = date('ymd');
+        $lastCustomer = Customer::where('user_id', auth()->id())
+            ->where('id_pelanggan', 'like', $prefix . '%')
+            ->orderBy('id_pelanggan', 'desc')
+            ->first();
+
+        if ($lastCustomer) {
+            // Ambil 4 digit terakhir dan tambah 1
+            $lastNumber = (int) substr($lastCustomer->id_pelanggan, -4);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $this->id_pelanggan = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function openModal()
@@ -251,6 +271,9 @@ class CustomerManager extends Component
 
                 // Dispatch Job untuk provisioning create
                 \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
+                
+                // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
+                \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
 
                 session()->flash('message', 'Pelanggan berhasil ditambahkan (Sinkronisasi Antrian).');
             }

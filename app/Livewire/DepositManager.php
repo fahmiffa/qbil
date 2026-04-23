@@ -149,7 +149,7 @@ class DepositManager extends Component
         // Load selected months from relation
         $this->selected_months = $deposit->months->map(function($m) {
             $d = \Carbon\Carbon::parse($m->month);
-            return $d->format('Y') . '-' . $d->format('n');
+            return $d->format('Y') . '-' . $d->format('m');
         })->toArray();
 
         // Fallback for old data without relationship
@@ -157,7 +157,7 @@ class DepositManager extends Component
             $current = $deposit->start_date->copy()->startOfMonth();
             $end = $deposit->end_date->copy()->startOfMonth();
             while ($current <= $end) {
-                $this->selected_months[] = $current->format('Y-n');
+                $this->selected_months[] = $current->format('Y-m');
                 $current->addMonth();
             }
         }
@@ -169,7 +169,7 @@ class DepositManager extends Component
             $this->selected_year = $year;
         }
 
-        $this->calculateTotals();
+        $this->calculateTotal();
         $this->openModal();
     }
 

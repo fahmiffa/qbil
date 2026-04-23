@@ -53,10 +53,11 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-5">
-                                        <div class="flex flex-wrap gap-1 max-w-xs">
+                                        <div class="flex flex-col gap-1.5 max-w-xs items-start">
                                             @foreach($customer->piutangs as $item)
-                                                <span class="px-2 py-0.5 rounded-lg text-[9px] font-bold border {{ $item->status == 'paid' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' : 'bg-slate-50 border-slate-100 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400' }}">
-                                                    {{ $item->billing_period }}
+                                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold border flex items-center justify-between min-w-[140px] {{ $item->status == 'paid' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' : 'bg-slate-50 border-slate-100 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400' }}">
+                                                    <span>{{ \Carbon\Carbon::parse($item->billing_period)->translatedFormat('F Y') }}</span>
+                                                    <span class="ml-3 opacity-80 font-black">Rp {{ number_format($item->amount, 0, ',', '.') }}</span>
                                                 </span>
                                             @endforeach
                                         </div>

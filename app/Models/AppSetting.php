@@ -13,6 +13,7 @@ class AppSetting extends Model
         'user_id',
         'template',
         'registration_template',
+        'payment_template',
         'payment_instruction',
         'qr',
         'reminder_1_days',

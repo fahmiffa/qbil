@@ -61,6 +61,10 @@ class WhatsappService
             '{period}' => $data['period'] ?? '',
             '{due_date}' => $data['due_date'] ?? '',
             '{package}' => $data['package'] ?? '',
+            '{id_pelanggan}' => $data['id_pelanggan'] ?? '',
+            '{address}' => $data['address'] ?? '',
+            '{package_name}' => $data['package_name'] ?? ($data['package'] ?? ''),
+            '{public_url}' => $data['public_url'] ?? '',
         ];
 
         return str_replace(array_keys($placeholders), array_values($placeholders), $template);

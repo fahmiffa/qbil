@@ -117,12 +117,14 @@
                                 <form wire:submit.prevent="store">
                                     <div class="px-8 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                            <!-- ID Pelanggan -->
                                             <div>
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">ID Pelanggan</label>
-                                                <div class="relative">
+                                                <div class="relative flex gap-2">
                                                     <input type="text" wire:model="id_pelanggan" placeholder="EB-XXXX"
-                                                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors border-l-4 border-l-blue-500">
+                                                        class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors border-l-4 border-l-blue-500">
+                                                    <button type="button" wire:click="generateIdPelanggan" class="px-3 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                    </button>
                                                 </div>
                                                 @error('id_pelanggan') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>

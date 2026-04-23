@@ -12,11 +12,20 @@
                 <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div class="flex items-center gap-4">
                         <div>
-                            <input type="month" wire:model.live="billing_period" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
+                            <select wire:model.live="billing_period" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors min-w-[150px]">
+                                @php $currentYear = date('Y'); @endphp
+                                @for($i = 1; $i <= 12; $i++)
+                                    @php
+                                        $monthValue = $currentYear . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+                                        $monthLabel = \Carbon\Carbon::create()->month($i)->translatedFormat('F');
+                                    @endphp
+                                    <option value="{{ $monthValue }}">{{ $monthLabel }}</option>
+                                @endfor
+                            </select>
                         </div>
                         <button wire:click="generateInvoices" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/20">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                            Generate Tagihan Bulan Ini
+                            Generate Tagihan ({{ \Carbon\Carbon::parse($billing_period)->translatedFormat('F Y') }})
                         </button>
                     </div>
 
@@ -104,6 +113,9 @@
                                             <a href="{{ route('public.invoice', $invoice->id) }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold text-xs flex-shrink-0">
                                                 Open
                                             </a>
+                                            <button wire:click="sendWhatsappNotification('{{ $invoice->id }}')" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold text-xs flex-shrink-0">
+                                                Kirim WA
+                                            </button>
                                         </div>
 
                                         @if($invoice->status == 'unpaid' && !$invoice->paid_at)

@@ -98,6 +98,8 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 
             Log::info("[SendInvoiceRemindersJob] Mengirim pengingat untuk {$customer->name}...");
 
+            $publicUrl = route('public.invoice', ['invoice' => $invoice->id]);
+
             $message = $whatsappService->formatMessage($appSetting->template, [
                 'name'           => $customer->name,
                 'invoice_number' => $invoice->invoice_number,
@@ -107,11 +109,11 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 'period'         => $invoice->billing_period,
                 'due_date'       => $invoice->due_date->format('d-m-Y'),
                 'package'        => $customer->package->name ?? '-',
+                'id_pelanggan'   => $customer->id_pelanggan ?? '-',
+                'address'        => $customer->address ?? '-',
+                'package_name'   => $customer->package->name ?? '-',
+                'public_url'     => $publicUrl,
             ]);
-
-            // Tambahkan link tagihan pabrik (Public Invoice URL) di akhir pesan
-            $publicUrl = url("/i/{$invoice->id}");
-            $message .= "\n\n📄 *Rincian Tagihan & Bayar Online:*\n" . $publicUrl;
 
             $success = $whatsappService->sendMessage(
                 $user->phone ?? '',

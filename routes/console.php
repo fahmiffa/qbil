@@ -9,9 +9,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // // Scheduler hanya sebagai trigger — logika bisnis diproses oleh queue worker
-// Schedule::command('invoice:generate')->hourly();
-// Schedule::command('invoice:remind')->hourly();
-// Schedule::command('billing:check-due')->hourly();
+Schedule::command('invoice:generate')->hourly();
+Schedule::command('invoice:remind')->hourly();
+Schedule::command('billing:check-due')->hourly();
 
 
 // Sync IP Pools from Mikrotik. Using --loop and withoutOverlapping ensures 

@@ -66,6 +66,9 @@ class PaymentController extends Controller
                         // Dispatch job untuk menghapus IP pelanggan dari address-list ISLOR di Mikrotik
                         \App\Jobs\RemoveIsolirJob::dispatch($invoice->customer);
 
+                        // Dispatch job untuk mengirim notifikasi WhatsApp pembayaran (Lunas)
+                        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
+
                         $verified = true;
                         $processedInvoice = $invoice;
                         break; // Stop after successfully matching & updating the invoice

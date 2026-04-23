@@ -95,6 +95,9 @@ class InvoiceManager extends Component
             }
         });
 
+        // Dispatch job untuk notifikasi WhatsApp (Kwitansi Pembayaran)
+        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
+
         $this->dispatch('toast', type: 'success', message: "Invoice {$invoice->invoice_number} ditandai sebagai LUNAS.");
         $this->closeVerifyModal();
     }
@@ -155,6 +158,16 @@ class InvoiceManager extends Component
         $invoice = Invoice::findOrFail($invoiceId);
         $invoice->delete();
         $this->dispatch('toast', type: 'error', message: "Invoice telah dihapus permanen.");
+    }
+
+    public function sendWhatsappNotification($invoiceId)
+    {
+        $invoice = Invoice::findOrFail($invoiceId);
+        
+        // Dispatch job ke antrean
+        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
+        
+        $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} sedang diproses di latar belakang.");
     }
 
     public function regenerateInvoice($invoiceId)
