@@ -22,6 +22,21 @@ class MikrotikService
             'timeout' => 5,
         ]);
     }
+    public function checkConnection(): bool
+    {
+        try {
+            $query = new Query('/system/identity/print');
+            $this->client->query($query)->read();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public function getRouter(): Router
+    {
+        return $this->router;
+    }
 
     // -------------------------
     // PPP Profiles (Paket/Package)

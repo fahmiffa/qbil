@@ -23,3 +23,6 @@ Schedule::command('mikrotik:sync-dhcp --loop')->everyMinute()->withoutOverlappin
 
 // Sync PPP Profiles from Mikrotik every 5 seconds
 Schedule::command('mikrotik:sync-ppp-profiles --loop')->everyMinute()->withoutOverlapping();
+
+// Check Router Connection Status every 10 seconds
+Schedule::command('router:check-status --loop')->everyMinute()->withoutOverlapping();

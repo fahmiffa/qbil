@@ -11,6 +11,7 @@ class RouterConfig extends Component
 {
     public $name, $host, $port = 8728, $username, $password;
     public $status_connection = 'Disconnected';
+    public $ping_ms, $last_checked_at, $connection_error;
     public $message = '';
 
     public function mount()
@@ -22,11 +23,24 @@ class RouterConfig extends Component
             $this->port = $router->port;
             $this->username = $router->username;
             $this->password = $router->password;
+            $this->status_connection = $router->connection_status;
+            $this->ping_ms = $router->ping_ms;
+            $this->last_checked_at = $router->last_checked_at ? $router->last_checked_at->format('Y-m-d H:i:s') : null;
+            $this->connection_error = $router->connection_error;
         }
     }
 
     public function render()
     {
+        // Selalu ambil data terbaru dari DB untuk polling status
+        $router = auth()->user()->router;
+        if ($router) {
+            $this->status_connection = $router->connection_status;
+            $this->ping_ms = $router->ping_ms;
+            $this->last_checked_at = $router->last_checked_at ? $router->last_checked_at->format('Y-m-d H:i:s') : null;
+            $this->connection_error = $router->connection_error;
+        }
+
         return view('livewire.router-config')
             ->layout('layouts.app');
     }

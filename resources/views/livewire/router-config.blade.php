@@ -47,7 +47,7 @@
                                 </div>
 
                                     <div class="flex items-center gap-3 pt-2">
-                                        <button type="submit" wire:loading.attr="disabled" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                                        <button type="submit" wire:loading.attr="disabled" wire:target="save" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-lg transition-colors">
                                             <span wire:loading.remove wire:target="save">Simpan Perubahan</span>
                                             <span wire:loading wire:target="save">Menyimpan...</span>
                                         </button>
@@ -64,19 +64,17 @@
                             </form>
                         </div>
 
-                        <div class="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-xl border border-gray-200 dark:border-slate-700 transition-colors">
+                        <div wire:poll.5s class="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-xl border border-gray-200 dark:border-slate-700 transition-colors">
                             <h3 class="text-lg font-semibold mb-4 border-b border-gray-200 dark:border-slate-700 pb-2 text-gray-800 dark:text-white">Status Koneksi</h3>
                             
 
 
                             <div class="flex items-center mb-4 gap-3">
                                 <div wire:loading.remove wire:target="testConnection">
-                                    @if($status_connection == 'Connected')
+                                    @if($status_connection == 'online' || $status_connection == 'Connected')
                                         <div class="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]"></div>
-                                    @elseif($status_connection == 'Error')
-                                        <div class="w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]"></div>
                                     @else
-                                        <div class="w-4 h-4 rounded-full bg-gray-400"></div>
+                                        <div class="w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]"></div>
                                     @endif
                                 </div>
 
@@ -84,11 +82,34 @@
                                     <div class="w-4 h-4 rounded-full bg-blue-500 animate-pulse"></div>
                                 </div>
 
-                                <span class="font-medium text-gray-700 dark:text-slate-300" wire:loading.remove wire:target="testConnection">Status: {{ $status_connection }}</span>
+                                <span class="font-bold {{ ($status_connection == 'online' || $status_connection == 'Connected') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}" wire:loading.remove wire:target="testConnection">
+                                    Status: {{ ucfirst($status_connection) }}
+                                </span>
                                 <span class="font-medium text-blue-600 dark:text-blue-400" wire:loading wire:target="testConnection">Status: Sedang Mengecek...</span>
                             </div>
 
-                            <div class="text-sm text-gray-600 dark:text-slate-400 italic">
+                            @if($status_connection == 'online' || $status_connection == 'Connected')
+                                <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30 rounded-xl">
+                                    <div class="flex justify-between text-xs text-green-700 dark:text-green-400 font-bold mb-1">
+                                        <span>Latency (Ping)</span>
+                                        <span>{{ $ping_ms ?? '-' }} ms</span>
+                                    </div>
+                                    <div class="w-full bg-green-200 dark:bg-green-800/30 h-1.5 rounded-full">
+                                        <div class="bg-green-500 h-1.5 rounded-full" style="width: {{ min(100, ($ping_ms ?? 0) / 2) }}%"></div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($connection_error)
+                                <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50 rounded-xl">
+                                    <p class="text-xs font-black text-red-600 dark:text-red-400 uppercase tracking-widest mb-1">Log Error Terakhir</p>
+                                    <p class="text-[11px] text-red-500 font-mono leading-relaxed">{{ $connection_error }}</p>
+                                </div>
+                            @endif
+
+                            <div class="text-[10px] text-gray-500 dark:text-slate-500 italic leading-relaxed">
+                                * Sistem melakukan pengecekan koneksi secara otomatis setiap 10 detik.
+                                <br>
                                 * Pastikan API service di Mikrotik sudah aktif (/ip service set api disabled=no)
                             </div>
                         </div>

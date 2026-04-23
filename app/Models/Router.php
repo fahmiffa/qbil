@@ -10,7 +10,13 @@ class Router extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'name', 'host', 'port', 'username', 'password'
+        'user_id', 'name', 'host', 'port', 'username', 'password',
+        'connection_status', 'ping_ms', 'connection_error', 'last_checked_at',
+    ];
+
+    protected $casts = [
+        'last_checked_at' => 'datetime',
+        'ping_ms' => 'integer',
     ];
 
     public function user()
