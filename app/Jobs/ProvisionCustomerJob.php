@@ -116,12 +116,18 @@ class ProvisionCustomerJob implements ShouldQueue
     {
         if ($customer->service_type === 'pppoe' && $customer->username) {
             $mikrotik->removePppSecret($customer->username);
+            if ($customer->ip_address) {
+                $mikrotik->removeFromAddressList($customer->ip_address, 'ISOLIR');
+            }
         } elseif ($customer->service_type === 'static') {
             // Cleanup legacy simple queue if any
             try { $mikrotik->removeSimpleQueue($customer->name); } catch(\Exception $e) {}
             
             if ($customer->mac_address) {
                 $mikrotik->removeDhcpLeaseByMac($customer->mac_address);
+            }
+            if ($customer->ip_address) {
+                $mikrotik->removeFromAddressList($customer->ip_address, 'ISOLIR');
             }
         }
     }

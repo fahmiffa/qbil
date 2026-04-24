@@ -18,7 +18,7 @@ class CustomerManager extends Component
 {
     use WithPagination;
 
-    public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'suspended', $customer_id, $due_date;
+    public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'active', $customer_id, $due_date;
     public $package_id, $ppp_profile, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $latitude, $longitude;
@@ -166,7 +166,7 @@ class CustomerManager extends Component
         $this->phone        = '';
         $this->address      = '';
         $this->keterangan   = '';
-        $this->status       = 'suspended';
+        $this->status       = 'active';
         $this->due_date     = '';
         $this->package_id   = '';
         $this->ppp_profile  = '';
@@ -301,7 +301,10 @@ class CustomerManager extends Component
                     \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($firstInvoice);
                 }
 
-                session()->flash('message', 'Pelanggan berhasil ditambahkan (Sinkronisasi Antrian).');
+                // TRIAL 30 MENIT: Jika belum bayar dalam 30 menit, otomatis isolir
+                \App\Jobs\IsolateCustomerJob::dispatch($customer)->delay(now()->addMinutes(30));
+
+                session()->flash('message', 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
             }
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal Memproses Data: ' . $e->getMessage());

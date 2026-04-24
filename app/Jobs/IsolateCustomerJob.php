@@ -32,6 +32,13 @@ class IsolateCustomerJob implements ShouldQueue
      */
     public function handle(): void
     {
+        // Pengecekan: Jika pelanggan sudah membayar tagihannya, batalkan isolir (Trial 30 Menit)
+        $hasUnpaid = $this->customer->invoices()->where('status', 'unpaid')->exists();
+        if (!$hasUnpaid) {
+            Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan sudah dibayar.");
+            return;
+        }
+
         $user = $this->customer->user;
         $router = $user->router;
 
