@@ -19,7 +19,7 @@ class MikrotikService
             'user'    => $router->username,
             'pass'    => $router->password,
             'port'    => (int) $router->port,
-            'timeout' => 5,
+            'timeout' => 30,
         ]);
     }
     public function checkConnection(): bool
@@ -367,32 +367,34 @@ class MikrotikService
 
         $ranges = explode(',', $pools[0]['ranges']);
         
-        // 2. Collect Used IPs from various sources in Mikrotik
+        // 2. Collect Used IPs efficiently
+        // Using associative array for O(1) lookup speed
         $usedIps = [];
 
+        // Optimize: Only fetch what's absolutely necessary or use more efficient queries
+        // If we have thousands of leases/queues, this is the bottleneck.
+        
         // From DHCP Leases
         $leases = $this->client->query(new Query('/ip/dhcp-server/lease/print'))->read();
         foreach ($leases as $l) {
-            if (isset($l['address'])) $usedIps[] = $l['address'];
+            if (isset($l['address'])) $usedIps[$l['address']] = true;
         }
 
         // From Simple Queues (Target)
         $queues = $this->client->query(new Query('/queue/simple/print'))->read();
         foreach ($queues as $q) {
             if (isset($q['target'])) {
-                // Remove CIDR if present
                 $ip = explode('/', $q['target'])[0];
-                $usedIps[] = $ip;
+                $usedIps[$ip] = true;
             }
         }
 
-        // From ARP Table
+        // From ARP Table (Optional/Limit? Checking ARP can be slow)
+        // Let's keep it but be aware it adds to the query count
         $arps = $this->client->query(new Query('/ip/arp/print'))->read();
         foreach ($arps as $a) {
-            if (isset($a['address'])) $usedIps[] = $a['address'];
+            if (isset($a['address'])) $usedIps[$a['address']] = true;
         }
-
-        $usedIps = array_unique($usedIps);
 
         // 3. Iterate through ranges to find first free
         foreach ($ranges as $range) {
@@ -401,16 +403,20 @@ class MikrotikService
                 $startLong = ip2long(trim($start));
                 $endLong = ip2long(trim($end));
 
+                // Limit the search to prevent infinite/long loops (Max 1000 IPs per range)
+                $count = 0;
                 for ($i = $startLong; $i <= $endLong; $i++) {
                     $candidate = long2ip($i);
-                    if (!in_array($candidate, $usedIps)) {
+                    if (!isset($usedIps[$candidate])) {
                         return $candidate;
                     }
+                    
+                    $count++;
+                    if ($count > 2000) break; // Break if we scanned too many without success
                 }
             } else {
-                // Single IP or CIDR (not handled deeply here, but single IP check)
                 $candidate = trim($range);
-                if (!in_array($candidate, $usedIps)) {
+                if (!isset($usedIps[$candidate])) {
                     return $candidate;
                 }
             }

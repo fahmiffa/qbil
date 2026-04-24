@@ -192,6 +192,9 @@ class CustomerManager extends Component
         }
 
         try {
+            // Tingkatkan batas waktu eksekusi khusus untuk proses pencarian IP ini
+            set_time_limit(60);
+
             $mikrotik = $this->getMikrotikService();
             $availableIp = $mikrotik->findAvailableIpInPool($this->selectedPool);
 
