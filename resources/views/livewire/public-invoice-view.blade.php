@@ -1,3 +1,16 @@
+@section('title', "Invoice {$invoice->invoice_number} - {$invoice->customer->user->name}")
+
+@push('meta')
+    <meta property="og:title" content="Invoice - {{ $invoice->customer->user->name }}">
+    <meta property="og:description" content="{{ $invoice->package->name ?? 'Tagihan Internet' }} #{{ $invoice->invoice_number }} - {{ $invoice->billing_period }}">
+    @if($invoice->customer->user->photo)
+        <meta property="og:image" content="{{ url(Storage::url($invoice->customer->user->photo)) }}">
+    @endif
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request()->fullUrl() }}">
+    <meta name="twitter:card" content="summary_large_image">
+@endpush
+
 <div class="py-4 sm:py-10 px-4 max-w-2xl mx-auto print:max-w-none print:p-0">
 
     <!-- Action Bar (Hidden on Print) -->
