@@ -89,6 +89,7 @@ class SendManualInvoiceWhatsappJob implements ShouldQueue
             'address'        => $customer->address ?? '-',
             'package_name'   => $customer->package->name ?? '-',
             'public_url'     => $publicUrl,
+            'user_name'      => $user->name,
         ]);
 
         $success = $whatsappService->sendMessage(

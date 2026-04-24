@@ -74,6 +74,7 @@ class SendRegistrationWhatsappJob implements ShouldQueue
             'public_url'     => $publicUrl,
             'invoice_number' => $latestInvoice ? $latestInvoice->invoice_number : '-',
             'total_amount'   => $latestInvoice ? $latestInvoice->total_amount : $amount,
+            'user_name'      => $user->name,
         ]);
 
         $success = $whatsappService->sendMessage(
