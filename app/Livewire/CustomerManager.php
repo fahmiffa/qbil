@@ -12,12 +12,13 @@ use App\Services\MikrotikService;
 use App\Services\ExcelImportService;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
 
 class CustomerManager extends Component
 {
     use WithPagination;
 
-    public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'active', $customer_id, $due_date;
+    public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'suspended', $customer_id, $due_date;
     public $package_id, $ppp_profile, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $latitude, $longitude;
@@ -165,7 +166,7 @@ class CustomerManager extends Component
         $this->phone        = '';
         $this->address      = '';
         $this->keterangan   = '';
-        $this->status       = 'active';
+        $this->status       = 'suspended';
         $this->due_date     = '';
         $this->package_id   = '';
         $this->ppp_profile  = '';
@@ -279,6 +280,14 @@ class CustomerManager extends Component
                 session()->flash('message', 'Pelanggan berhasil diperbarui (Sinkronisasi Antrian).');
             } else {
                 $customer = Customer::create($data);
+
+                // Generate Invoice Pertama (untuk pendaftaran baru)
+                try {
+                    $invoiceService = new \App\Services\InvoiceService();
+                    $invoiceService->generateForCustomer($customer, now()->format('Y-m'));
+                } catch (\Exception $e) {
+                    Log::error("Gagal generate invoice pertama untuk {$customer->name}: " . $e->getMessage());
+                }
 
                 // Dispatch Job untuk provisioning create
                 \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');

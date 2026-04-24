@@ -55,6 +55,14 @@ class SendRegistrationWhatsappJob implements ShouldQueue
 
         Log::info("[SendRegistrationWhatsappJob] Mengirim pesan pendaftaran untuk {$customer->name}...");
 
+        // Cari invoice terbaru (yang baru di-generate saat pendaftaran)
+        $latestInvoice = \App\Models\Invoice::where('customer_id', $customer->id)
+            ->where('status', 'unpaid')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $publicUrl = $latestInvoice ? route('public.invoice', ['invoice' => $latestInvoice->id]) : '-';
+
         $message = $whatsappService->formatMessage($templateText, [
             'name'           => $customer->name,
             'amount'         => $amount,
@@ -62,8 +70,10 @@ class SendRegistrationWhatsappJob implements ShouldQueue
             'address'        => $customer->address ?? '-',
             'username'       => $customer->username ?? '-',
             'password'       => $customer->password ?? '-',
-            // Fallback for some common variables if needed
             'id_pelanggan'   => $customer->id_pelanggan ?? '-',
+            'public_url'     => $publicUrl,
+            'invoice_number' => $latestInvoice ? $latestInvoice->invoice_number : '-',
+            'total_amount'   => $latestInvoice ? $latestInvoice->total_amount : $amount,
         ]);
 
         $success = $whatsappService->sendMessage(

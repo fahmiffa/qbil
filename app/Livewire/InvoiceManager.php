@@ -75,15 +75,25 @@ class InvoiceManager extends Component
             \App\Models\Piutang::where('invoice_id', $invoice->id)->update(['status' => 'paid']);
 
             $customer = $invoice->customer;
-            if ($customer->status === 'suspended') {
-                $oldStatus = $customer->status;
+            $oldStatus = $customer->status;
 
-                $customer->update([
-                    'status' => 'active',
-                    'isolated_at' => null,
-                    'activated_at' => $customer->activated_at ?? now(),
-                ]);
+            // Logika Reset/Advance Due Date (Dynamic Subscription)
+            if ($oldStatus === 'suspended') {
+                // Jika dari suspend (baru/vaku), reset siklus dari hari ini
+                $newDueDate = now()->addMonth();
+            } else {
+                // Jika pembayaran rutin, majukan 1 bulan dari tgl jatuh tempo sebelumnya
+                $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
+            }
 
+            $customer->update([
+                'status' => 'active',
+                'isolated_at' => null,
+                'due_date' => $newDueDate,
+                'activated_at' => $customer->activated_at ?? now(),
+            ]);
+
+            if ($oldStatus === 'suspended') {
                 // Sinkronkan ke router (Buka Isolir)
                 \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
                     'status' => $oldStatus
@@ -126,15 +136,23 @@ class InvoiceManager extends Component
 
             // Re-activate Customer (Open Isolir) even if it's Piutang
             $customer = $invoice->customer;
-            if ($customer->status === 'suspended') {
-                $oldStatus = $customer->status;
+            $oldStatus = $customer->status;
 
-                $customer->update([
-                    'status' => 'active',
-                    'isolated_at' => null,
-                    'activated_at' => $customer->activated_at ?? now(),
-                ]);
+            // Reset/Advance Due Date even for Piutang
+            if ($oldStatus === 'suspended') {
+                $newDueDate = now()->addMonth();
+            } else {
+                $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
+            }
 
+            $customer->update([
+                'status' => 'active',
+                'isolated_at' => null,
+                'due_date' => $newDueDate,
+                'activated_at' => $customer->activated_at ?? now(),
+            ]);
+
+            if ($oldStatus === 'suspended') {
                 // Sinkronkan ke router (Buka Isolir)
                 \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
                     'status' => $oldStatus
