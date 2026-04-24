@@ -282,9 +282,10 @@ class CustomerManager extends Component
                 $customer = Customer::create($data);
 
                 // Generate Invoice Pertama (untuk pendaftaran baru)
+                $firstInvoice = null;
                 try {
                     $invoiceService = new \App\Services\InvoiceService();
-                    $invoiceService->generateForCustomer($customer, now()->format('Y-m'));
+                    $firstInvoice = $invoiceService->generateForCustomer($customer, now()->format('Y-m'));
                 } catch (\Exception $e) {
                     Log::error("Gagal generate invoice pertama untuk {$customer->name}: " . $e->getMessage());
                 }
@@ -294,6 +295,11 @@ class CustomerManager extends Component
                 
                 // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
                 \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
+
+                // Dispatch Job untuk Notifikasi WhatsApp Tagihan (Invoice) Pertama
+                if ($firstInvoice) {
+                    \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($firstInvoice);
+                }
 
                 session()->flash('message', 'Pelanggan berhasil ditambahkan (Sinkronisasi Antrian).');
             }
