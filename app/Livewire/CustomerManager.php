@@ -211,6 +211,10 @@ class CustomerManager extends Component
 
     public function store()
     {
+        if (!auth()->user()->hasFeature('mikrotik')) {
+            $this->service_type = 'static';
+        }
+
         $this->validate([
             'id_pelanggan' => 'nullable|string|max:50',
             'name'         => 'required|string|max:255',
@@ -223,9 +227,9 @@ class CustomerManager extends Component
             'password'     => 'required_if:service_type,pppoe|nullable|string|max:100',
             'ppp_profile'  => 'nullable|string|max:100',
             'service_type' => 'required|in:static,pppoe',
-            'ip_address'   => 'required_if:service_type,static|nullable|string|max:50',
-            'mac_address'  => 'required_if:service_type,static|nullable|string|max:50',
-            'dhcp_server'  => 'required_if:service_type,static|nullable|string|max:50',
+            'ip_address'   => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
+            'mac_address'  => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
+            'dhcp_server'  => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
             'latitude'     => 'nullable|string|max:50',
             'longitude'    => 'nullable|string|max:50',
             'package_id'   => 'nullable|exists:packages,id',
@@ -273,12 +277,15 @@ class CustomerManager extends Component
                 $customer->refresh();
 
                 // Dispatch Job untuk provisioning update
-                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
-                    'status'      => $oldStatus,
-                    'profile'     => $oldProfile,
-                    'username'    => $oldUsername,
-                    'mac_address' => $oldMac,
-                ]);
+                if (auth()->user()->hasFeature('mikrotik')) {
+                    \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
+                        'status'      => $oldStatus,
+                        'profile'     => $oldProfile,
+                        'username'    => $oldUsername,
+                        'mac_address' => $oldMac,
+                    ]);
+                }
+
 
                 session()->flash('message', 'Pelanggan berhasil diperbarui (Sinkronisasi Antrian).');
             } else {
@@ -294,7 +301,10 @@ class CustomerManager extends Component
                 }
 
                 // Dispatch Job untuk provisioning create
-                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
+                if (auth()->user()->hasFeature('mikrotik')) {
+                    \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
+                }
+
                 
                 // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
                 \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
@@ -305,7 +315,10 @@ class CustomerManager extends Component
                 }
 
                 // TRIAL 30 MENIT: Jika belum bayar dalam 30 menit, otomatis isolir
-                \App\Jobs\IsolateCustomerJob::dispatch($customer)->delay(now()->addMinutes(30));
+                if (auth()->user()->hasFeature('mikrotik')) {
+                    \App\Jobs\IsolateCustomerJob::dispatch($customer)->delay(now()->addMinutes(30));
+                }
+
 
                 session()->flash('message', 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
             }
@@ -364,7 +377,10 @@ class CustomerManager extends Component
             // Namun di sistem billing ini sepertinya tidak ada soft delete.
             // Saya akan dispatch job dengan data yang dibutuhkan.
             
-            \App\Jobs\ProvisionCustomerJob::dispatchSync($customer, 'delete');
+            if (auth()->user()->hasFeature('mikrotik')) {
+                \App\Jobs\ProvisionCustomerJob::dispatchSync($customer, 'delete');
+            }
+
 
             $customer->delete();
             session()->flash('message', 'Pelanggan berhasil dihapus.');

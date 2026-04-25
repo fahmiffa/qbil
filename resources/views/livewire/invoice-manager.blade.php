@@ -116,7 +116,11 @@
                                             <button wire:click="sendWhatsappNotification('{{ $invoice->id }}')" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold text-xs flex-shrink-0">
                                                 Kirim WA
                                             </button>
+                                            <a href="{{ route('public.print-thermal', $invoice->id) }}" target="_blank" class="text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-xs flex-shrink-0">
+                                                Thermal
+                                            </a>
                                         </div>
+
 
                                         @if($invoice->status == 'unpaid' && !$invoice->paid_at)
                                             <button wire:click="openVerifyModal('{{ $invoice->id }}')" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold text-xs">Verifikasi</button>

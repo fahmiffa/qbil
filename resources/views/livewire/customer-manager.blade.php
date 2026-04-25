@@ -55,6 +55,7 @@
                             </div>
                         </div>
 
+                        @if(auth()->user()->hasFeature('mikrotik'))
                         <!-- Filter Layanan -->
                         <div class="relative w-full sm:w-40">
                             <select wire:model.live="filterService" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
@@ -66,6 +67,8 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </div>
                         </div>
+                        @endif
+
 
                         <!-- Filter Status -->
                         <div class="relative w-full sm:w-40">
@@ -169,6 +172,7 @@
                                                     class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors"></textarea>
                                             </div>
 
+                                            @if(auth()->user()->hasFeature('maps'))
                                             <!-- Lokasi Map -->
                                             <div class="sm:col-span-2">
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Koordinat Lokasi</label>
@@ -176,6 +180,8 @@
                                                     <x-google-map lat="latitude" lng="longitude" />
                                                 </div>
                                             </div>
+                                            @endif
+
 
                                             <!-- Asset / Perangkat Terpasang -->
                                             <div class="sm:col-span-2">
@@ -203,6 +209,7 @@
                                                 </div>
                                             </div>
 
+                                            @if(auth()->user()->hasFeature('mikrotik'))
                                             <!-- Tipe Layanan -->
                                             <div>
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Layanan</label>
@@ -211,10 +218,12 @@
                                                     <option value="pppoe">PPPOE (User & PW)</option>
                                                 </select>
                                             </div>
+                                            @endif
+
 
                                             <!-- Paket -->
-                                            <div>
-                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Paket Langganan</label>
+                                            <div class="{{ auth()->user()->hasFeature('mikrotik') ? '' : 'sm:col-span-2' }}">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">{{ auth()->user()->hasFeature('mikrotik') ? 'Paket Langganan' : 'Pilih Paket' }}</label>
                                                 <select wire:model="package_id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
                                                     <option value="">-- Pilih Paket --</option>
                                                     @foreach($packages as $pkg)
@@ -224,33 +233,33 @@
                                                 @error('package_id') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>
 
-                                            @if($service_type === 'pppoe')
+
+                                            @if(auth()->user()->hasFeature('mikrotik') && $service_type === 'pppoe')
                                                 <!-- PPPOE Config -->
                                                 <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-3xl">
                                                     <div class="sm:col-span-2">
-                                                        <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Konfigurasi PPPOE Secret</p>
+                                                        <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Konfigurasi PPPoE</p>
                                                     </div>
 
                                                     <div class="sm:col-span-2">
-                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Pilih Profile Mikrotik</label>
+                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Profile Mikrotik</label>
                                                         <select wire:model="ppp_profile" class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                                                            <option value="">-- Pilih Profile (Default dari Paket) --</option>
+                                                            <option value="">-- Default Paket --</option>
                                                             @foreach($pppProfiles as $profile)
                                                                 <option value="{{ $profile['name'] }}">{{ $profile['name'] }}</option>
                                                             @endforeach
                                                         </select>
                                                         @error('ppp_profile') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
-                                                        <p class="text-[10px] text-slate-500 mt-1 italic">* Jika dikosongkan, akan menggunakan profile dari Paket yang dipilih.</p>
                                                     </div>
 
                                                     <div>
-                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Username PPPOE</label>
+                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Username PPPoE</label>
                                                         <input type="text" wire:model="username" placeholder="user@ebilling"
                                                             class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono">
                                                         @error('username') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                     </div>
                                                     <div>
-                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Password PPPOE</label>
+                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Password PPPoE</label>
                                                         <div class="relative">
                                                             <input type="{{ $showPassword ? 'text' : 'password' }}" wire:model="password" placeholder="Pass123"
                                                                 class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono pr-12">
@@ -265,55 +274,10 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @else
+                                            @elseif(auth()->user()->hasFeature('mikrotik') && $service_type === 'static')
                                                 <!-- STATIC Config -->
                                                 <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-3xl">
-                                                    <div class="sm:col-span-2">
-                                                        <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Konfigurasi DHCP & MAC Binding</p>
-                                                    </div>
-                                                    
-                                                    <div>
-                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">MAC Address</label>
-                                                        <input type="text" wire:model="mac_address" placeholder="00:00:00:00:00:00"
-                                                            class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono uppercase">
-                                                        @error('mac_address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
-                                                    </div>
 
-                                                    <div>
-                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">DHCP Server</label>
-                                                        <select wire:model="dhcp_server" class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
-                                                            <option value="all">all</option>
-                                                            @foreach($dhcpServers as $srv)
-                                                                <option value="{{ $srv['name'] }}">{{ $srv['name'] }} ({{ $srv['interface'] }})</option>
-                                                            @endforeach
-                                                        </select>
-                                                        @error('dhcp_server') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">Pilih IP Pool</label>
-                                                        <select wire:model="selectedPool" class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
-                                                            <option value="">-- Pilih Pool --</option>
-                                                            @foreach($ipPools as $pool)
-                                                                <option value="{{ $pool['name'] }}">{{ $pool['name'] }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">IP Address</label>
-                                                        <div class="flex gap-2">
-                                                            <input type="text" wire:model="ip_address" placeholder="192.168.x.x"
-                                                                class="flex-1 bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono">
-                                                            <button type="button" wire:click="autoAssignIp" wire:loading.attr="disabled" 
-                                                                class="px-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50">
-                                                                <svg wire:loading.remove wire:target="autoAssignIp" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                                                                <svg wire:loading wire:target="autoAssignIp" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                            </button>
-                                                        </div>
-                                                        @error('ip_address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
-                                                    </div>
-                                                </div>
                                             @endif
                                         </div>
                                     </div>
@@ -349,7 +313,10 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Paket</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">User / IP</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Jatuh Tempo</th>
+                                @if(auth()->user()->hasFeature('mikrotik'))
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Layanan</th>
+                                @endif
+
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Aksi</th>
                             </tr>
@@ -385,11 +352,14 @@
                                 <td class="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500 dark:text-slate-400">
                                     {{ $customer->due_date ? $customer->due_date->format('d/m/Y') : '-' }}
                                 </td>
+                                @if(auth()->user()->hasFeature('mikrotik'))
                                 <td class="px-4 py-3 whitespace-nowrap text-center text-sm">
                                     <span class="px-2 py-0.5 rounded text-xs font-medium {{ $customer->service_type === 'pppoe' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800' }}">
                                         {{ strtoupper($customer->service_type) }}
                                     </span>
                                 </td>
+                                @endif
+
                                 <td class="px-4 py-3 whitespace-nowrap text-center">
                                     @if($customer->status === 'active')
                                         <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>

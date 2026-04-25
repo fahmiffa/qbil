@@ -39,10 +39,11 @@ class SendRegistrationWhatsappJob implements ShouldQueue
         }
 
         $user = $customer->user;
-        if (!$user) {
-            Log::warning("[SendRegistrationWhatsappJob] User tidak ditemukan untuk customer: {$customer->name}");
+        if (!$user || !$user->hasFeature('whatsapp')) {
+            Log::warning("[SendRegistrationWhatsappJob] Fitur WhatsApp tidak aktif untuk user: " . ($user ? $user->id : 'Unknown'));
             return;
         }
+
 
         $appSetting = AppSetting::where('user_id', $user->id)->first();
         if (!$appSetting || empty($appSetting->registration_template)) {

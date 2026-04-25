@@ -30,6 +30,13 @@ class ProvisionCustomerJob implements ShouldQueue
      */
     public function handle(): void
     {
+        // Check if user has mikrotik feature
+        $user = \App\Models\User::find($this->customer->user_id);
+        if ($user && !$user->hasFeature('mikrotik')) {
+            Log::info("Skipping ProvisionCustomerJob for customer {$this->customer->id} because MikroTik feature is disabled.");
+            return;
+        }
+
         try {
             $router = Router::where('user_id', $this->customer->user_id)->first();
             if (!$router) {

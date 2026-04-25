@@ -38,6 +38,11 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $user = \App\Models\User::find($this->userId);
+            if ($user && !$user->hasFeature('mikrotik')) {
+                Log::warning("[BulkGenerateHotspotVouchersJob] MikroTik feature disabled for user {$this->userId}");
+                return;
+            }
             $router = Router::where('user_id', $this->userId)->first();
             if (!$router) {
                 Log::warning("[BulkGenerateHotspotVouchersJob] No router found for user {$this->userId}");

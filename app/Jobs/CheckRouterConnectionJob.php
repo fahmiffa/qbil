@@ -30,6 +30,11 @@ class CheckRouterConnectionJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $user = $this->router->user;
+        if ($user && !$user->hasFeature('mikrotik')) {
+            return;
+        }
+
         $startTime = microtime(true);
         $status = 'offline';
         $error = null;

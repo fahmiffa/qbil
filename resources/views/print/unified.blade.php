@@ -6,11 +6,28 @@
     <title>{{ strtoupper($type) }} #{{ $number }}</title>
     @vite(['resources/css/app.css'])
     <style>
-        @page { size: A5 portrait; margin: 10mm; }
+        @page { size: A5 landscape; margin: 3mm; }
         @media print {
-            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 !important; margin: 0 !important; font-size: 10px !important; }
             .no-print { display: none !important; }
-            .invoice-card { border: 1px solid #f1f5f9 !important; margin: 0 !important; width: 100% !important; box-shadow: none !important; }
+            .invoice-card { border: none !important; margin: 0 !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; }
+            .p-8, .p-10 { padding: 0.5rem 1rem !important; }
+            .pb-8, .pb-10 { padding-bottom: 0.5rem !important; }
+            .py-5, .py-6 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+            .text-2xl { font-size: 1rem !important; }
+            .h-16 { height: 2.5rem !important; width: 2.5rem !important; }
+            .mt-6, .mb-6 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
+            .gap-8 { gap: 1rem !important; }
+            table tfoot td { py-2 !important; }
+            .italic.text-center { font-size: 8px !important; margin-top: 5px !important; }
+            .bg-slate-50\/50, .bg-slate-50\/30, .bg-indigo-500, .bg-emerald-500, .bg-amber-500, .bg-blue-600, .bg-white {
+                background: white !important;
+                color: black !important;
+                box-shadow: none !important;
+            }
+            .invoice-card { background-image: none !important; border: 1px solid #eee !important; box-shadow: none !important; }
+            .text-white { color: black !important; }
+            * { box-shadow: none !important; }
         }
         body { font-family: 'Figtree', sans-serif; }
     </style>

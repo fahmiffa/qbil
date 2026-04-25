@@ -13,6 +13,9 @@ class UserManager extends Component
 
     public $name, $email, $phone, $password, $role = 1, $user_id;
     public $isOpen = false;
+    public $selectedFeatures = [];
+    public $allFeatures = [];
+
 
     public function render()
     {
@@ -30,8 +33,10 @@ class UserManager extends Component
     public function openModal()
     {
         $this->isOpen = true;
+        $this->allFeatures = \App\Models\Feature::all();
         $this->resetValidation();
     }
+
 
     public function closeModal()
     {
@@ -46,7 +51,9 @@ class UserManager extends Component
         $this->password = '';
         $this->role = 1;
         $this->user_id = '';
+        $this->selectedFeatures = [];
     }
+
 
     public function store()
     {
@@ -75,10 +82,15 @@ class UserManager extends Component
         }
 
         if ($this->user_id) {
-            User::where('id', $this->user_id)->update($data);
+            $user = User::findOrFail($this->user_id);
+            $user->update($data);
         } else {
-            User::create($data);
+            $user = User::create($data);
         }
+
+        // Sync Features
+        $user->features()->sync($this->selectedFeatures);
+
 
         session()->flash('message',
             $this->user_id ? 'User updated successfully.' : 'User created successfully.');
@@ -95,9 +107,11 @@ class UserManager extends Component
         $this->email = $user->email;
         $this->phone = $user->phone;
         $this->role = $user->role;
+        $this->selectedFeatures = $user->features->pluck('id')->map(fn($id) => (string)$id)->toArray();
         
         $this->openModal();
     }
+
 
     public function delete($id)
     {

@@ -30,14 +30,15 @@ class CheckRouterStatus extends Command
         $loop = $this->option('loop');
 
         do {
-            $routers = Router::all();
+            $routers = Router::with('user')->get();
             
             foreach ($routers as $router) {
-                // We use dispatchSync or dispatch based on requirements. 
-                // For a loop, dispatch is better to not block the loop, but 
-                // since we want quick updates, let's use dispatch to queue workers.
+                if ($router->user && !$router->user->hasFeature('mikrotik')) {
+                    continue;
+                }
                 CheckRouterConnectionJob::dispatch($router);
             }
+
 
             if ($loop) {
                 $this->info('Router status check dispatched. Sleeping for 10 seconds...');

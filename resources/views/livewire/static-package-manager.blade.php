@@ -1,9 +1,10 @@
 <div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Master Paket Static') }}
+            {{ auth()->user()->hasFeature('mikrotik') ? __('Master Paket Static') : __('Master Paket') }}
         </h2>
     </x-slot>
+
 
     <div class="w-full">
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-slate-700 transition-colors">
@@ -23,9 +24,10 @@
                     <div class="flex flex-wrap gap-3 mb-4">
                         <button wire:click="create()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Tambah Paket Static
+                            {{ auth()->user()->hasFeature('mikrotik') ? 'Tambah Paket Static' : 'Tambah Paket' }}
                         </button>
                     </div>
+
 
                     @if($isOpen)
                         <div class="fixed z-50 inset-0 overflow-y-auto">
@@ -35,7 +37,14 @@
                                     <form wire:submit.prevent="store">
                                         <div class="px-6 pt-5 pb-4 space-y-4">
                                             <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-700 pb-3">
-                                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ $package_id ? 'Edit Paket Static' : 'Tambah Paket Static' }}</h3>
+                                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                                    @if(auth()->user()->hasFeature('mikrotik'))
+                                                        {{ $package_id ? 'Edit Paket Static' : 'Tambah Paket Static' }}
+                                                    @else
+                                                        {{ $package_id ? 'Edit Paket' : 'Tambah Paket' }}
+                                                    @endif
+                                                </h3>
+
                                                 <button type="button" wire:click="closeModal()" class="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                                 </button>
@@ -155,9 +164,10 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data paket static.</td>
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data paket.</td>
                                 </tr>
                                 @endforelse
+
                             </tbody>
                         </table>
                     </div>

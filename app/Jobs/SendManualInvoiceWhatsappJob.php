@@ -42,6 +42,11 @@ class SendManualInvoiceWhatsappJob implements ShouldQueue
         $customer = $invoice->customer;
         $user = $customer->user;
 
+        if ($user && !$user->hasFeature('whatsapp')) {
+            Log::warning("[SendManualInvoiceWhatsappJob] Fitur WhatsApp tidak aktif untuk user: {$user->id}");
+            return;
+        }
+
         if (!$customer->phone) {
             Log::warning("[SendManualInvoiceWhatsappJob] Nomor telepon tidak ada untuk customer: {$customer->name}");
             return;

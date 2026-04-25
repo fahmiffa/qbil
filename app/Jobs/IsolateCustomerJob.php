@@ -32,33 +32,35 @@ class IsolateCustomerJob implements ShouldQueue
      */
     public function handle(): void
     {
-        // Pengecekan: Jika pelanggan sudah membayar tagihannya, batalkan isolir (Trial 30 Menit)
-        $hasUnpaid = $this->customer->invoices()->where('status', 'unpaid')->exists();
-        if (!$hasUnpaid) {
-            Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan sudah dibayar.");
-            return;
-        }
-
-        $user = $this->customer->user;
-        $router = $user->router;
-
-        if (!$router) {
-            Log::warning("Router not configured for user {$user->id} during isolation of customer {$this->customer->id}");
-            return;
-        }
-
         try {
-            $mikrotik = new MikrotikService($router);
-            
-            if ($this->customer->service_type === 'static' && $this->customer->ip_address) {
-                $mikrotik->addToAddressList($this->customer->ip_address, 'ISOLIR', 'Jatuh Tempo: ' . $this->customer->name);
-                Log::info("Customer {$this->customer->name} (Static) added to ISOLIR address list.");
-            } elseif ($this->customer->service_type === 'pppoe' && $this->customer->username) {
-                // For PPPoE, isolation is often done by disabling or using a special profile.
-                // But the user asked specifically for Address List ISOLIR.
-                // We'll try to get the active IP if possible, or just disable it as a fallback.
-                $mikrotik->disablePppSecret($this->customer->username);
-                Log::info("Customer {$this->customer->name} (PPPoE) disabled due to expiration.");
+            // Pengecekan: Jika pelanggan sudah membayar tagihannya, batalkan isolir (Trial 30 Menit)
+            $hasUnpaid = $this->customer->invoices()->where('status', 'unpaid')->exists();
+            if (!$hasUnpaid) {
+                Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan sudah dibayar.");
+                return;
+            }
+
+            $user = $this->customer->user;
+
+            if ($user && $user->hasFeature('mikrotik')) {
+                $router = $user->router;
+                if ($router) {
+                    try {
+                        $mikrotik = new MikrotikService($router);
+                        
+                        if ($this->customer->service_type === 'static' && $this->customer->ip_address) {
+                            $mikrotik->addToAddressList($this->customer->ip_address, 'ISOLIR', 'Jatuh Tempo: ' . $this->customer->name);
+                            Log::info("Customer {$this->customer->name} (Static) added to ISOLIR address list.");
+                        } elseif ($this->customer->service_type === 'pppoe' && $this->customer->username) {
+                            $mikrotik->disablePppSecret($this->customer->username);
+                            Log::info("Customer {$this->customer->name} (PPPoE) disabled due to expiration.");
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Failed to isolate customer {$this->customer->name} on Mikrotik: " . $e->getMessage());
+                    }
+                } else {
+                    Log::warning("Router not configured for user {$user->id} during isolation of customer {$this->customer->id}");
+                }
             }
 
             // Update status in local DB if not already

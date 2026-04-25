@@ -124,7 +124,7 @@ class PrintController extends Controller
     public function hotspotVouchers(Request $request)
     {
         $ids = explode(',', $request->ids);
-        $vouchers = HotspotUser::with('package')
+        $vouchers = HotspotUser::with(['package', 'user'])
             ->whereIn('id', $ids)
             ->where('user_id', auth()->id())
             ->get();
@@ -133,5 +133,14 @@ class PrintController extends Controller
             'vouchers' => $vouchers
         ]);
     }
+
+    public function thermal(Invoice $invoice)
+    {
+        $invoice->load(['customer.user.appSetting', 'package']);
+        return view('print.thermal', [
+            'invoice' => $invoice
+        ]);
+    }
 }
+
 

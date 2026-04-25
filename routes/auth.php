@@ -27,5 +27,6 @@ Route::middleware(['auth'])->group(function () {
             return view('admin');
         });
         Route::get('/akun', \App\Livewire\UserManager::class)->name('akun');
+        Route::get('/features', \App\Livewire\FeatureManager::class)->name('features');
     });
 });

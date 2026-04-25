@@ -31,13 +31,17 @@ class SyncIpPools extends Command
         $loop = $this->option('loop');
 
         do {
-            $routers = Router::all();
+            $routers = Router::with('user')->get();
 
             if ($routers->isEmpty()) {
                 $this->warn('No routers found to sync.');
             }
 
             foreach ($routers as $router) {
+                if ($router->user && !$router->user->hasFeature('mikrotik')) {
+                    continue;
+                }
+
                 try {
                     $this->info("Syncing IP Pools from: {$router->name} ({$router->host})");
                     

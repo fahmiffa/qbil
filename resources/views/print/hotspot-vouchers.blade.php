@@ -197,7 +197,7 @@
     <div class="page">
         @foreach($pageVouchers as $v)
         <div class="voucher">
-            <div class="voucher-header">Voucher Wi-Fi</div>
+            <div class="voucher-header">{{ $v->user->name ?? 'Voucher Wi-Fi' }}</div>
             
             <div class="voucher-body">
                 <div class="voucher-code-label">KODE AKSES</div>
@@ -215,7 +215,7 @@
                     </svg>
                     {{ $v->package->session_timeout ?? 'Active' }}
                 </div>
-                <div class="voucher-price">Rp {{ number_format($v->package->price ?? 0, 0, ',', '.') }}</div>
+                <div class="voucher-price">{{ $v->package->name ?? '-' }}</div>
             </div>
         </div>
         @endforeach

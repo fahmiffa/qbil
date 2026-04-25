@@ -35,6 +35,12 @@ class ProvisionPackageJob implements ShouldQueue
             return;
         }
 
+        // Check if user has mikrotik feature
+        $user = \App\Models\User::find($this->package->user_id);
+        if ($user && !$user->hasFeature('mikrotik')) {
+            return;
+        }
+
         try {
             $router = Router::where('user_id', $this->package->user_id)->first();
             if (!$router) return;

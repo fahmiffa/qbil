@@ -42,7 +42,9 @@ class DashboardReport extends Component
             ->first();
 
         // Breakdown by Service Type (PPPOE, STATIC, HOTSPOT)
-        $serviceBreakdown = collect(['PPPOE', 'STATIC', 'HOTSPOT'])->map(function ($tipe) use ($userId, $period) {
+        $allowedTypes = auth()->user()->hasFeature('mikrotik') ? ['PPPOE', 'STATIC', 'HOTSPOT'] : ['STATIC'];
+        
+        $serviceBreakdown = collect($allowedTypes)->map(function ($tipe) use ($userId, $period) {
             $activeCount = 0;
             $suspendCount = 0;
             $potential = 0;

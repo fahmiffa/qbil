@@ -95,4 +95,19 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(AppSetting::class);
     }
+
+    public function features()
+    {
+        return $this->belongsToMany(Feature::class);
+    }
+
+    public function hasFeature(string $parameter): bool
+    {
+        // Super Admin (role 0) can access everything
+        if ($this->role == 0) {
+            return true;
+        }
+
+        return $this->features->contains('parameter', $parameter);
+    }
 }

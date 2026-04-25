@@ -63,6 +63,11 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
         foreach ($invoices as $invoice) {
             $customer   = $invoice->customer;
             $user       = $customer->user;
+            
+            if ($user && !$user->hasFeature('whatsapp')) {
+                continue;
+            }
+
             $appSetting = $user->appSetting;
 
             if (!$appSetting || !$appSetting->template) {

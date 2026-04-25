@@ -59,9 +59,11 @@ new class extends Component
                 Pelanggan
             </x-sidebar-link>
 
+            @if(auth()->user()->hasFeature('mikrotik'))
             <x-sidebar-link :href="route('hotspot')" :active="request()->routeIs('hotspot')" icon="wifi">
                 Hotspot
             </x-sidebar-link>
+            @endif
 
             <x-sidebar-link :href="route('invoice')" :active="request()->routeIs('invoice')" icon="interface">
                 Invoice
@@ -80,6 +82,7 @@ new class extends Component
                 <div x-show="!sidebarOpen" class="border-t border-slate-100 dark:border-slate-800 mx-3"></div>
             </div>
 
+            @if(auth()->user()->hasFeature('mikrotik'))
             <!-- Router Mikrotik -->
             <x-sidebar-link :href="route('router')" :active="request()->routeIs('router')" icon="server">
                 Router
@@ -88,11 +91,13 @@ new class extends Component
             <x-sidebar-link :href="route('assets')" :active="request()->routeIs('assets')" icon="box">
                 Asset
             </x-sidebar-link>
+            @endif
 
             <x-sidebar-link :href="route('static-packages')" :active="request()->routeIs('static-packages')" icon="static">
-                Static
+                {{ auth()->user()->hasFeature('mikrotik') ? 'Static' : 'Paket' }}
             </x-sidebar-link>
 
+            @if(auth()->user()->hasFeature('mikrotik'))
             <x-sidebar-link :href="route('ppp-profiles')" :active="request()->routeIs('ppp-profiles')" icon="ethernet">
                 PPPOE
             </x-sidebar-link>
@@ -100,6 +105,7 @@ new class extends Component
             <x-sidebar-link :href="route('hotspot-profiles')" :active="request()->routeIs('hotspot-profiles')" icon="wifi">
                 Hotspot
             </x-sidebar-link>
+            @endif
 
             <div class="pt-4 pb-2">
                 <span x-show="sidebarOpen" class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3">Pengaturan</span>
@@ -110,9 +116,11 @@ new class extends Component
                 Aplikasi
             </x-sidebar-link>
 
+            @if(auth()->user()->hasFeature('whatsapp'))
             <x-sidebar-link :href="route('whatsapp')" :active="request()->routeIs('whatsapp')" icon="message">
                 WhatsApp
             </x-sidebar-link>
+            @endif
 
             <x-sidebar-link :href="route('profile')" :active="request()->routeIs('profile')" icon="user">
                 Profile
@@ -128,6 +136,10 @@ new class extends Component
             <!-- Akun (User Management) -->
             <x-sidebar-link :href="route('akun')" :active="request()->routeIs('akun')" icon="user-group">
                 Kelola User
+            </x-sidebar-link>
+
+            <x-sidebar-link :href="route('features')" :active="request()->routeIs('features')" icon="cube">
+                Fitur & Modul
             </x-sidebar-link>
             @endif
         </nav>

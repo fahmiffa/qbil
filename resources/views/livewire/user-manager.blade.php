@@ -53,13 +53,27 @@
                                                 @error('phone') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
                                             <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Role:</label>
-                                                <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" wire:model="role">
-                                                    <option value="1">User</option>
-                                                    <option value="0">Super Admin</option>
-                                                </select>
-                                                @error('role') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                                            </div>
+                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Role:</label>
+                                                 <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors dark:bg-slate-900 dark:text-slate-100" wire:model="role">
+                                                     <option value="1">User</option>
+                                                     <option value="0">Super Admin</option>
+                                                 </select>
+                                                 @error('role') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                             </div>
+                                             
+                                             <div>
+                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Hak Akses Fitur:</label>
+                                                 <div class="grid grid-cols-2 gap-2">
+                                                     @foreach($allFeatures as $f)
+                                                     <label class="flex items-center space-x-2 text-sm text-gray-600 dark:text-slate-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 p-1.5 rounded transition-colors">
+                                                         <input type="checkbox" wire:model="selectedFeatures" value="{{ $f->id }}" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
+                                                         <span>{{ $f->name }}</span>
+                                                     </label>
+                                                     @endforeach
+                                                 </div>
+                                                 @error('selectedFeatures') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                             </div>
+
                                             <div>
                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Password (Kosongkan jika tidak ingin diubah):</label>
                                                 <x-password-input id="password" wire:model="password" />

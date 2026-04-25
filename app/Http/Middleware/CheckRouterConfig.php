@@ -17,6 +17,10 @@ class CheckRouterConfig
     {
         $user = $request->user();
 
+        if ($user && !$user->hasFeature('mikrotik')) {
+            return $next($request);
+        }
+
         // Periksa apakah user sudah login dan memiliki konfigurasi router
         if ($user && !$user->router) {
             

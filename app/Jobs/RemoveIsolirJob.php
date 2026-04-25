@@ -32,30 +32,27 @@ class RemoveIsolirJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $user = $this->customer->user;
-        $router = $user->router;
-
-        if (!$router) {
-            Log::warning("Router tidak dikonfigurasi untuk user {$user->id} saat mencoba hapus block ISLOR pelanggan {$this->customer->id}");
-            return;
-        }
-
         try {
-            $mikrotik = new MikrotikService($router);
-            
-            // Ambil ip pelanggan dan jalankan perintah hapus dari address list 'ISLOR'
-            if ($this->customer->ip_address) {
-                
-                // Menambahkan fallback untuk "ISOLIR" (karena default script isolir lain menggunakan nama ini)
-                $mikrotik->removeFromAddressList($this->customer->ip_address, 'ISOLIR');
-                
-                Log::info("Customer {$this->customer->name} dengan IP {$this->customer->ip_address} berhasil dihapus dari firewall address-list ISLOR.");
-            }
+            $user = $this->customer->user;
+            if ($user && $user->hasFeature('mikrotik')) {
+                $router = $user->router;
+                if ($router) {
+                    try {
+                        $mikrotik = new MikrotikService($router);
+                        
+                        if ($this->customer->ip_address) {
+                            $mikrotik->removeFromAddressList($this->customer->ip_address, 'ISOLIR');
+                            Log::info("Customer {$this->customer->name} berhasil dihapus dari address-list ISOLIR.");
+                        }
 
-            // Jika tipe PPPoE dan sempat didisable saat jatuh tempo, maka enable kembali
-            if ($this->customer->service_type === 'pppoe' && $this->customer->username) {
-                $mikrotik->enablePppSecret($this->customer->username);
-                Log::info("Secret PPPoE untuk {$this->customer->name} kembali di-enable.");
+                        if ($this->customer->service_type === 'pppoe' && $this->customer->username) {
+                            $mikrotik->enablePppSecret($this->customer->username);
+                            Log::info("Secret PPPoE untuk {$this->customer->name} kembali di-enable.");
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Gagal menghapus pelanggan {$this->customer->name} dari ISOLIR on Mikrotik: " . $e->getMessage());
+                    }
+                }
             }
 
             // Update status local
@@ -64,7 +61,7 @@ class RemoveIsolirJob implements ShouldQueue
             }
 
         } catch (\Exception $e) {
-            Log::error("Gagal menghapus pelanggan {$this->customer->name} dari ISLOR: " . $e->getMessage());
+            Log::error("Gagal menghapus pelanggan {$this->customer->name}: " . $e->getMessage());
             throw $e; // Rethrow agar Queue mencoba lagi (retry)
         }
     }

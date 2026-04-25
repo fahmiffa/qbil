@@ -32,9 +32,13 @@ class SyncPppProfiles extends Command
         $loop = $this->option('loop');
 
         do {
-            $routers = Router::all();
+            $routers = Router::with('user')->get();
 
             foreach ($routers as $router) {
+                if ($router->user && !$router->user->hasFeature('mikrotik')) {
+                    continue;
+                }
+
                 try {
                     $this->info("Syncing PPP Profiles from: {$router->name}");
                     

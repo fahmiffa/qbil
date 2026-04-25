@@ -30,6 +30,13 @@ class ProvisionHotspotUserJob implements ShouldQueue
      */
     public function handle(): void
     {
+        // Check if user has mikrotik feature
+        $user = \App\Models\User::find($this->hotspotUser->user_id);
+        if ($user && !$user->hasFeature('mikrotik')) {
+            Log::info("Skipping ProvisionHotspotUserJob because MikroTik feature is disabled.");
+            return;
+        }
+
         try {
             $router = Router::where('user_id', $this->hotspotUser->user_id)->first();
             if (!$router) {

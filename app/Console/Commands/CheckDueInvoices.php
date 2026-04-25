@@ -36,6 +36,8 @@ class CheckDueInvoices extends Command
         $users = \App\Models\User::with('appSetting')->get();
 
         foreach ($users as $user) {
+            if (!$user->hasFeature('mikrotik')) continue;
+            
             $setting = $user->appSetting;
             if (!$setting) continue;
 

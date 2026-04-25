@@ -36,6 +36,8 @@ Route::get('router', \App\Livewire\RouterConfig::class)
 
 // Public Invoice View
 Route::get('i/{invoice}', \App\Livewire\PublicInvoiceView::class)->name('public.invoice');
+Route::get('i/{invoice}/print', [App\Http\Controllers\PrintController::class, 'thermal'])->name('public.print-thermal');
+
 
 // Print Routes (Unified)
 Route::middleware(['auth'])->group(function () {

@@ -23,12 +23,21 @@
             @endif
             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ $invoice->customer->user->name }}</span>
         </div>
-        <button onclick="window.print()" class="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z" />
-            </svg>
-            Cetak
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('public.print-thermal', $invoice->id) }}" target="_blank" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z" />
+                </svg>
+                58mm
+            </a>
+            <button onclick="window.print()" class="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z" />
+                </svg>
+                A5 / PDF
+            </button>
+        </div>
+
     </div>
 
     <!-- Main Invoice Card -->
@@ -159,8 +168,8 @@
     <!-- Print Optimization for A5 -->
     <style>
         @page {
-            size: A5 portrait;
-            margin: 10mm;
+            size: A5 landscape;
+            margin: 0;
         }
 
         @media print {
@@ -168,6 +177,9 @@
                 background: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 9px !important;
             }
 
             .no-print {
@@ -175,30 +187,108 @@
             }
 
             .invoice-card {
-                border: 1px solid #f1f5f9 !important;
+                border: none !important;
                 margin: 0 !important;
                 width: 100% !important;
                 box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 5mm !important;
             }
 
-            .py-4,
-            .py-10 {
+            /* Header Section */
+            .p-8.sm\:p-10.border-b {
+                padding: 0 0 5px 0 !important;
+                margin-bottom: 5px !important;
+            }
+
+            /* Main Content: Info and Table Side-by-Side */
+            .p-8.sm\:p-10.grid.grid-cols-2 {
+                padding: 0 !important;
+                gap: 10px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
+            }
+
+            .p-8.sm\:p-10.grid.grid-cols-2 > div {
+                flex: 1 !important;
+            }
+
+            /* Table Section */
+            .px-8.sm\:px-10.pb-8 {
+                padding: 0 !important;
+                margin-top: 5px !important;
+            }
+
+            table th, table td {
+                padding: 3px 0 !important;
+            }
+
+            .py-6, .py-4 {
+                padding-top: 2px !important;
+                padding-bottom: 2px !important;
+            }
+
+            /* Footer Section */
+            .p-8.sm\:p-10.bg-slate-50\/30 {
+                padding: 5px 0 !important;
+                border-top: 1px dashed #eee !important;
+                margin-top: 5px !important;
+            }
+
+            .h-16 {
+                height: 30px !important;
+                width: 30px !important;
+            }
+
+            .text-2xl {
+                font-size: 14px !important;
+            }
+
+            /* Remove Backgrounds and Gradients */
+            .bg-slate-50\/50,
+            .bg-slate-50\/30,
+            .bg-indigo-500,
+            .bg-emerald-500,
+            .bg-amber-500,
+            .bg-blue-600,
+            .bg-slate-900,
+            .bg-white {
+                background: white !important;
+                background-color: white !important;
+                color: black !important;
+            }
+
+            .invoice-card, div, section, table, img, button {
+                background-image: none !important;
+                background-color: white !important;
+                border-color: #eee !important;
+                box-shadow: none !important;
+            }
+
+            .text-white {
+                color: black !important;
+            }
+            
+            .status-badge, .px-4.py-1\.5 {
+                border: 1px solid #000 !important;
+                background: none !important;
+                color: #000 !important;
+            }
+
+            /* QRIS scaling */
+            svg {
+                width: 80px !important;
+                height: 80px !important;
+            }
+            
+            .px-8, .px-10, .p-8, .p-10, .pb-8, .pb-10 {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
                 padding-top: 0 !important;
                 padding-bottom: 0 !important;
             }
-
-            .bg-slate-50\/50,
-            .bg-slate-50\/30 {
-                background-color: #f8fafc !important;
-            }
-
-            .text-blue-600 {
-                color: #2563eb !important;
-            }
-
-            .text-emerald-600 {
-                color: #059669 !important;
-            }
+        }
 
             .px-8,
             .px-10 {
