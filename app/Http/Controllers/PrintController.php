@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Deposit;
 use App\Models\Piutang;
+use App\Models\HotspotUser;
+
 use Illuminate\Http\Request;
 
 class PrintController extends Controller
@@ -118,4 +120,18 @@ class PrintController extends Controller
             'items' => $items
         ]);
     }
+
+    public function hotspotVouchers(Request $request)
+    {
+        $ids = explode(',', $request->ids);
+        $vouchers = HotspotUser::with('package')
+            ->whereIn('id', $ids)
+            ->where('user_id', auth()->id())
+            ->get();
+            
+        return view('print.hotspot-vouchers', [
+            'vouchers' => $vouchers
+        ]);
+    }
 }
+

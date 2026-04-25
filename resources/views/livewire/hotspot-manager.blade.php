@@ -21,9 +21,21 @@
                     @endif
 
                     <div class="flex justify-between items-center mb-4">
-                        <button wire:click="create()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                            Tambah Hotspot
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button wire:click="create()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                Tambah Hotspot
+                            </button>
+
+                            @if(count($selectedIds) > 0)
+                                <a href="{{ route('hotspot.print-vouchers', ['ids' => implode(',', $selectedIds)]) }}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Cetak Voucher ({{ count($selectedIds) }})
+                                </a>
+                            @endif
+                        </div>
+
 
                         <div class="flex items-center gap-2">
                             <label class="text-sm text-gray-600 dark:text-slate-400">Tampilkan:</label>
@@ -105,7 +117,11 @@
                         <table class="min-w-full min-w-[850px] divide-y divide-gray-200 dark:divide-slate-700">
                             <thead class="bg-gray-50 dark:bg-slate-900/50">
                                 <tr>
+                                    <th class="px-6 py-3 text-left">
+                                        <input type="checkbox" wire:model.live="selectAll" class="rounded dark:bg-slate-900 border-gray-300 dark:border-slate-700 text-blue-600 shadow-sm focus:ring-blue-500">
+                                    </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">No</th>
+
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Username</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Password</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Paket</th>
@@ -115,7 +131,11 @@
                             <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700 transition-colors">
                                 @forelse($hotspotUsers as $idx => $hu)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                        <input type="checkbox" wire:model.live="selectedIds" value="{{ $hu->id }}" class="rounded dark:bg-slate-900 border-gray-300 dark:border-slate-700 text-blue-600 shadow-sm focus:ring-blue-500">
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400 text-center">{{ $hotspotUsers->firstItem() + $idx }}</td>
+
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ $hu->username }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400 font-mono">{{ $hu->password }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
@@ -135,9 +155,10 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data user hotspot.</td>
+                                    <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data user hotspot.</td>
                                 </tr>
                                 @endforelse
+
                             </tbody>
                         </table>
                         <div class="mt-4 px-4 pb-4">

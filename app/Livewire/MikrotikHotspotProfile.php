@@ -103,9 +103,13 @@ class MikrotikHotspotProfile extends Component
                 if ($mProfile) {
                     $this->shared_users = $mProfile['shared-users'] ?? '1';
                     $this->address_pool = $mProfile['address-pool'] ?? 'none';
-                    $this->session_timeout = $mProfile['session-timeout'] ?? '8h';
+                    $this->session_timeout = $p->session_timeout ?: ($mProfile['session-timeout'] ?? '8h');
+                } else {
+                    $this->session_timeout = $p->session_timeout ?: '8h';
                 }
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+                $this->session_timeout = $p->session_timeout ?: '8h';
+            }
             
             // Split Speed
             if (preg_match('/^(\d+)(K|M)$/i', $p->speed_download, $m)) {
@@ -185,6 +189,7 @@ class MikrotikHotspotProfile extends Component
                     'price' => $this->price ?: 0,
                     'speed_upload' => $upload,
                     'speed_download' => $download,
+                    'session_timeout' => $stimeout,
                 ]);
 
                 if ($this->sync_mode === 'new') {
@@ -206,6 +211,7 @@ class MikrotikHotspotProfile extends Component
                     'price' => $this->price ?: 0,
                     'speed_upload' => $upload,
                     'speed_download' => $download,
+                    'session_timeout' => $stimeout,
                 ]);
 
                 if ($this->sync_mode === 'new') {

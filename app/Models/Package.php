@@ -10,7 +10,7 @@ class Package extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'price', 'speed_download', 'speed_upload', 'mikrotik_profile', 'user_id', 'tipe'
+        'name', 'price', 'speed_download', 'speed_upload', 'mikrotik_profile', 'user_id', 'tipe', 'session_timeout'
     ];
 
     public function user()

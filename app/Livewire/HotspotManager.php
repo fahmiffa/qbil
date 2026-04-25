@@ -17,6 +17,11 @@ class HotspotManager extends Component
     public $perPage = 10;
     public $packages_list = [];
     public $isOpen = false;
+    
+    // Selection
+    public $selectedIds = [];
+    public $selectAll = false;
+
 
     public function mount()
     {
@@ -35,6 +40,39 @@ class HotspotManager extends Component
         return view('livewire.hotspot-manager', ['hotspotUsers' => $hotspotUsers])
             ->layout('layouts.app');
     }
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
+            $this->selectedIds = auth()->user()->hotspotUsers()
+                ->orderBy('id', 'desc')
+                ->limit($limit)
+                ->pluck('id')
+                ->map(fn($id) => (string)$id)
+                ->toArray();
+        } else {
+            $this->selectedIds = [];
+        }
+    }
+
+    public function updatedSelectedIds()
+    {
+        $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
+        $count = auth()->user()->hotspotUsers()->limit($limit)->count();
+        $this->selectAll = count($this->selectedIds) === $count && $count > 0;
+    }
+
+    public function printSelected()
+    {
+        if (empty($this->selectedIds)) {
+            return;
+        }
+
+        $ids = implode(',', $this->selectedIds);
+        return redirect()->route('hotspot.print-vouchers', ['ids' => $ids]);
+    }
+
 
     public function loadPackages()
     {
