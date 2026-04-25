@@ -20,9 +20,21 @@
                         </div>
                     @endif
 
-                    <button wire:click="create()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mb-4 transition-colors">
-                        Tambah User Hotspot
-                    </button>
+                    <div class="flex justify-between items-center mb-4">
+                        <button wire:click="create()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            Tambah Hotspot
+                        </button>
+
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm text-gray-600 dark:text-slate-400">Tampilkan:</label>
+                            <select wire:model.live="perPage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="10">10</option>
+                                <option value="100">100</option>
+                                <option value="1000">1000</option>
+                                <option value="all">Semua</option>
+                            </select>
+                        </div>
+                    </div>
 
                     @if($isOpen)
                         <div class="fixed z-50 inset-0 overflow-y-auto">
@@ -33,6 +45,19 @@
                                     <form wire:submit.prevent="store">
                                         <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 space-y-4">
                                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ $hotspot_user_id ? 'Edit User Hotspot' : 'Tambah User Hotspot' }}</h3>
+                                            
+                                            @if(!$hotspot_user_id)
+                                            <div>
+                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Tipe:</label>
+                                                <select class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" wire:model.live="type">
+                                                    <option value="account">Akun (Username & Password)</option>
+                                                    <option value="voucher">Voucher (Kode Random)</option>
+                                                </select>
+                                                @error('type') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                            </div>
+                                            @endif
+
+                                            @if($type === 'account')
                                             <div>
                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Username:</label>
                                                 <input type="text" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" wire:model="username">
@@ -43,6 +68,14 @@
                                                 <x-password-input id="password" wire:model="password" />
                                                 @error('password') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
+                                            @else
+                                            <div>
+                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Jumlah Voucher:</label>
+                                                <input type="number" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" wire:model="quantity" placeholder="Contoh: 10">
+                                                <p class="text-[10px] text-gray-500 mt-1">* Voucher akan digenerate secara otomatis di background.</p>
+                                                @error('quantity') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                            </div>
+                                            @endif
                                             <div>
                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Paket/Profile:</label>
                                                 <select class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" wire:model.live="package_id">

@@ -5,12 +5,16 @@ namespace App\Livewire;
 use App\Models\HotspotUser;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Str;
 
 class HotspotManager extends Component
 {
     use WithPagination;
 
     public $username, $password, $profile, $hotspot_user_id, $package_id;
+    public $type = 'account'; // 'account' or 'voucher'
+    public $quantity = 1;
+    public $perPage = 10;
     public $packages_list = [];
     public $isOpen = false;
 
@@ -21,7 +25,13 @@ class HotspotManager extends Component
 
     public function render()
     {
-        $hotspotUsers = auth()->user()->hotspotUsers()->with('package')->orderBy('id', 'desc')->paginate(10);
+        $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
+        
+        $hotspotUsers = auth()->user()->hotspotUsers()
+            ->with('package')
+            ->orderBy('id', 'desc')
+            ->paginate($limit);
+
         return view('livewire.hotspot-manager', ['hotspotUsers' => $hotspotUsers])
             ->layout('layouts.app');
     }
@@ -59,6 +69,8 @@ class HotspotManager extends Component
         $this->package_id = null;
         $this->profile = 'default';
         $this->hotspot_user_id = '';
+        $this->type = 'account';
+        $this->quantity = 1;
     }
 
     public function updatedPackageId($value)
@@ -73,42 +85,61 @@ class HotspotManager extends Component
 
     public function store()
     {
-        $this->validate([
-            'username' => 'required',
-            'password' => 'required',
+        $rules = [
             'package_id' => 'required|exists:packages,id',
-        ]);
+            'type' => 'required|in:account,voucher',
+        ];
+
+        if ($this->type === 'account') {
+            $rules['username'] = 'required';
+            $rules['password'] = 'required';
+        } else {
+            $rules['quantity'] = 'required|integer|min:1';
+        }
+
+        $this->validate($rules);
 
         try {
             $package = auth()->user()->packages()->findOrFail($this->package_id);
             $this->profile = $package->mikrotik_profile ?: 'default';
             $oldUsername = null;
 
-            if ($this->hotspot_user_id) {
-                $hotspotUser = HotspotUser::findOrFail($this->hotspot_user_id);
-                $oldUsername = $hotspotUser->username;
-                $hotspotUser->update([
-                    'username' => $this->username,
-                    'password' => $this->password,
-                    'profile' => $this->profile,
-                    'package_id' => $this->package_id,
-                ]);
-                $action = 'update';
+            if ($this->type === 'voucher') {
+                // Dispatch Job untuk proses background (Insert DB + API Mikrotik)
+                \App\Jobs\BulkGenerateHotspotVouchersJob::dispatch(
+                    auth()->id(),
+                    $this->package_id,
+                    (int) $this->quantity
+                );
+                
+                session()->flash('message', 'Proses generate ' . $this->quantity . ' voucher sedang berjalan di background.');
             } else {
-                $hotspotUser = HotspotUser::create([
-                    'user_id' => auth()->id(),
-                    'username' => $this->username,
-                    'password' => $this->password,
-                    'profile' => $this->profile,
-                    'package_id' => $this->package_id,
-                ]);
-                $action = 'create';
+                if ($this->hotspot_user_id) {
+                    $hotspotUser = HotspotUser::findOrFail($this->hotspot_user_id);
+                    $oldUsername = $hotspotUser->username;
+                    $hotspotUser->update([
+                        'username' => $this->username,
+                        'password' => $this->password,
+                        'profile' => $this->profile,
+                        'package_id' => $this->package_id,
+                    ]);
+                    $action = 'update';
+                } else {
+                    $hotspotUser = HotspotUser::create([
+                        'user_id' => auth()->id(),
+                        'username' => $this->username,
+                        'password' => $this->password,
+                        'profile' => $this->profile,
+                        'package_id' => $this->package_id,
+                    ]);
+                    $action = 'create';
+                }
+
+                // Dispatch Job untuk single user
+                \App\Jobs\ProvisionHotspotUserJob::dispatch($hotspotUser, $action, $oldUsername);
+                session()->flash('message', 'User Hotspot berhasil disimpan.');
             }
 
-            // Dispatch Job
-            \App\Jobs\ProvisionHotspotUserJob::dispatch($hotspotUser, $action, $oldUsername);
-
-            session()->flash('message', 'User Hotspot berhasil disimpan (Sinkronisasi Antrian).');
             $this->closeModal();
             $this->resetInputFields();
         } catch (\Exception $e) {
@@ -125,6 +156,7 @@ class HotspotManager extends Component
         $this->package_id = $user->package_id;
         $this->profile = $user->profile;
         $this->loadPackages();
+        $this->type = 'account';
         $this->openModal();
     }
 
