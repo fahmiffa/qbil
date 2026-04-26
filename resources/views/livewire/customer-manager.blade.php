@@ -374,11 +374,13 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400 text-center">{{ $customers->firstItem() + $idx }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-slate-400">{{ $customer->id_pelanggan ?? '-' }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                    {{ $customer->name }}
-                                    @if($customer->phone)
-                                        <p class="text-[10px] text-gray-400 font-normal">{{ $customer->phone }}</p>
-                                    @endif
+                                <td class="whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white p-0">
+                                    <a href="{{ route('customers.detail', $customer->id) }}" class="block px-4 py-3 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group" wire:navigate>
+                                        <span class="group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{{ $customer->name }}</span>
+                                        @if($customer->phone)
+                                            <p class="text-[10px] text-gray-400 font-normal mt-0.5">{{ $customer->phone }}</p>
+                                        @endif
+                                    </a>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-300">
                                     @if($customer->package)

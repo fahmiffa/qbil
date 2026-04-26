@@ -75,11 +75,13 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="font-mono font-bold text-slate-700 dark:text-slate-300">{{ $invoice->invoice_number }}</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex flex-col">
-                                            <span class="font-bold text-slate-900 dark:text-white">{{ $invoice->customer->name }}</span>
-                                            <span class="text-xs text-slate-400 dark:text-slate-500">{{ $invoice->customer->username }} ({{ $invoice->customer->package->name ?? '-' }})</span>
-                                        </div>
+                                    <td class="whitespace-nowrap p-0">
+                                        <a href="{{ route('customers.detail', $invoice->customer_id) }}" class="block px-6 py-4 transition-colors group" wire:navigate>
+                                            <div class="flex flex-col">
+                                                <span class="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{{ $invoice->customer->name }}</span>
+                                                <span class="text-xs text-slate-400 dark:text-slate-500">{{ $invoice->customer->username }} ({{ $invoice->customer->package->name ?? '-' }})</span>
+                                            </div>
+                                        </a>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                         {{ $invoice->billing_period }}

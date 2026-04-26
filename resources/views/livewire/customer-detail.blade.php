@@ -153,14 +153,25 @@
                         <h3 class="text-sm font-black text-slate-800 dark:text-white">Riwayat Invoice & Pembayaran</h3>
                         <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">{{ $totalInvoices }} total invoice tercatat</p>
                     </div>
-                    <button wire:click="openModal" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-blue-500/20">
-                        + Bayar Manual
-                    </button>
+                    <div class="flex items-center gap-2">
+                        @if(count($selected_invoices) > 0)
+                            <a href="{{ route('print.invoices.bulk', ['ids' => implode(',', $selected_invoices)]) }}" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z" /></svg>
+                                Print ({{ count($selected_invoices) }})
+                            </a>
+                        @endif
+                        <button wire:click="openModal" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-blue-500/20">
+                            + Bayar Manual
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="bg-slate-50/50 dark:bg-slate-900/50 text-left">
+                                <th class="px-4 py-4 w-10">
+                                    <input type="checkbox" wire:model.live="select_all" class="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-blue-600 focus:ring-blue-500">
+                                </th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">No. Invoice</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Periode</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tagihan</th>
@@ -174,6 +185,9 @@
                         <tbody class="divide-y divide-slate-50 dark:divide-slate-700/50">
                             @forelse($invoices as $invoice)
                                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors">
+                                    <td class="px-4 py-4">
+                                        <input type="checkbox" wire:model.live="selected_invoices" value="{{ $invoice->id }}" class="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-blue-600 focus:ring-blue-500">
+                                    </td>
                                     <td class="px-6 py-4">
                                         <p class="text-xs font-mono font-bold text-slate-800 dark:text-white">{{ $invoice->invoice_number }}</p>
                                     </td>
@@ -215,7 +229,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 italic text-sm">
+                                    <td colspan="9" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 italic text-sm">
                                         Belum ada riwayat invoice untuk pelanggan ini.
                                     </td>
                                 </tr>

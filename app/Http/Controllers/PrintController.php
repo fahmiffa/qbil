@@ -29,6 +29,38 @@ class PrintController extends Controller
         ]);
     }
 
+    public function bulkInvoices(Request $request)
+    {
+        $ids = explode(',', $request->query('ids', ''));
+        $invoices = Invoice::whereIn('id', $ids)->with(['customer.user.appSetting', 'package'])->orderBy('billing_period', 'asc')->get();
+        
+        if ($invoices->isEmpty()) abort(404);
+
+        $customer = $invoices->first()->customer;
+        $totalAmount = $invoices->sum('total_amount');
+        
+        \App::setLocale('id');
+        $items = [];
+        foreach ($invoices as $inv) {
+            $monthObj = \Carbon\Carbon::parse($inv->billing_period);
+            $items[] = [
+                'label' => 'Bulan: ' . $monthObj->translatedFormat('F Y'),
+                'value' => $inv->total_amount
+            ];
+        }
+
+        return view('print.unified', [
+            'type' => 'Pembayaran Multi Bulan',
+            'data' => $invoices->first(), // For settings fallback
+            'customer' => $customer,
+            'number' => 'MB-' . strtoupper(substr(md5(time()), 0, 8)),
+            'status' => 'paid',
+            'amount' => $totalAmount,
+            'date' => now(),
+            'items' => $items
+        ]);
+    }
+
     public function deposit(Deposit $deposit)
     {
         $deposit->load(['customer.user.appSetting', 'package']);

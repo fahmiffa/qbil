@@ -19,6 +19,10 @@ class CustomerDetail extends Component
     public $payment_date;
     public $selected_months = [];
     public $selected_year;
+    
+    // For printing multiple invoices
+    public $selected_invoices = [];
+    public $select_all = false;
 
     public $month_names = [
         '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
@@ -52,6 +56,23 @@ class CustomerDetail extends Component
     public function calculateTotal()
     {
         $this->total_amount = $this->months_count * $this->amount_per_month;
+    }
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selected_invoices = $this->customer->invoices()->pluck('id')->toArray();
+        } else {
+            $this->selected_invoices = [];
+        }
+    }
+
+    public function printSelected()
+    {
+        if (empty($this->selected_invoices)) return;
+        
+        $ids = implode(',', $this->selected_invoices);
+        return redirect()->route('print.invoices.bulk', ['ids' => $ids]);
     }
 
     public function openModal()
@@ -93,23 +114,23 @@ class CustomerDetail extends Component
                     ->first();
                 
                 if ($invoice) {
-                    // Update status lunas
-                    $newTotal = $this->amount_per_month + $invoice->unique_code;
+                    // Update status lunas tanpa kode unik
                     $invoice->update([
                         'amount' => $this->amount_per_month,
-                        'total_amount' => $newTotal,
+                        'unique_code' => 0,
+                        'total_amount' => $this->amount_per_month,
                         'status' => 'paid',
                         'paid_at' => $this->payment_date,
                     ]);
                 } else {
-                    // Generate baru dan langsung lunas
+                    // Generate baru dan langsung lunas tanpa kode unik
                     $invoice = $invoiceService->generateForCustomer($this->customer, $period);
                     
                     if ($invoice) {
-                        $newTotal = $this->amount_per_month + $invoice->unique_code;
                         $invoice->update([
                             'amount' => $this->amount_per_month,
-                            'total_amount' => $newTotal,
+                            'unique_code' => 0,
+                            'total_amount' => $this->amount_per_month,
                             'status' => 'paid',
                             'paid_at' => $this->payment_date,
                         ]);

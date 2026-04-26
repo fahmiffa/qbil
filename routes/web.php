@@ -41,6 +41,7 @@ Route::get('i/{invoice}/print', [App\Http\Controllers\PrintController::class, 't
 
 // Print Routes (Unified)
 Route::middleware(['auth'])->group(function () {
+    Route::get('print/invoices/bulk', [App\Http\Controllers\PrintController::class, 'bulkInvoices'])->name('print.invoices.bulk');
     Route::get('print/invoice/{invoice}', [App\Http\Controllers\PrintController::class, 'invoice'])->name('print.invoice');
     Route::get('print/deposit/{deposit}', [App\Http\Controllers\PrintController::class, 'deposit'])->name('print.deposit');
     Route::get('print/piutang/{piutang}', [App\Http\Controllers\PrintController::class, 'piutang'])->name('print.piutang');
