@@ -19,7 +19,7 @@ class UserManager extends Component
 
     public function render()
     {
-        $users = User::orderBy('id', 'desc')->paginate(10);
+        $users = User::with('features')->orderBy('id', 'desc')->paginate(10);
         return view('livewire.user-manager', ['users' => $users])
             ->layout('layouts.app');
     }

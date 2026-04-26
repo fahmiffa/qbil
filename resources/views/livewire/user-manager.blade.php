@@ -103,6 +103,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Email</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">No. HP</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Role</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Fitur Tersedia</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aksi</th>
                                 </tr>
                             </thead>
@@ -117,6 +118,21 @@
                                         <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $user->role == 0 ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' }}">
                                             {{ $user->role == 0 ? 'Super Admin' : 'User' }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-normal text-center">
+                                        @if($user->role == 0)
+                                            <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold italic">Semua Akses (Super Admin)</span>
+                                        @else
+                                            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                                @forelse($user->features as $feature)
+                                                    <span class="px-2 py-0.5 bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 text-[11px] font-medium rounded-md whitespace-nowrap shadow-sm">
+                                                        {{ $feature->name }}
+                                                    </span>
+                                                @empty
+                                                    <span class="text-xs text-gray-400 dark:text-slate-500 italic">Belum ada fitur</span>
+                                                @endforelse
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center space-x-2">
                                         <button wire:click="edit({{ $user->id }})" class="inline-flex items-center px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm">Edit</button>
