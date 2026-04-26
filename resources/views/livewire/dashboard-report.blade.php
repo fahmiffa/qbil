@@ -73,6 +73,7 @@
     <!-- Peta Lokasi Pelanggan -->
     @if(auth()->user()->hasFeature('map'))
     <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 transition-colors"
+         data-customers="{{ json_encode($mapData ?? []) }}"
          x-data="{
             init() {
                 window.loadGoogleMaps(() => {
@@ -87,7 +88,13 @@
 
                     const map = new google.maps.Map(mapElement, mapOptions);
                     const bounds = new google.maps.LatLngBounds();
-                    const customers = @json($mapData ?? []);
+                    
+                    let customers = [];
+                    try {
+                        customers = JSON.parse(this.$el.dataset.customers || '[]');
+                    } catch (e) {
+                        console.error('Failed to parse customers data', e);
+                    }
 
                     let hasMarkers = false;
 
