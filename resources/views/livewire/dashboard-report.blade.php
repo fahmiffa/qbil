@@ -71,7 +71,7 @@
     </div>
 
     <!-- Peta Lokasi Pelanggan -->
-    @if(auth()->user()->hasFeature('maps'))
+    @if(auth()->user()->hasFeature('map'))
     <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 transition-colors">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
@@ -140,7 +140,7 @@
         </div>
     </div>
 
-    @if(auth()->user()->hasFeature('maps'))
+    @if(auth()->user()->hasFeature('map'))
     @push('scripts')
     <script>
         document.addEventListener('livewire:initialized', () => {

@@ -172,7 +172,7 @@
                                                     class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors"></textarea>
                                             </div>
 
-                                            @if(auth()->user()->hasFeature('maps'))
+                                            @if(auth()->user()->hasFeature('map'))
                                             <!-- Lokasi Map -->
                                             <div class="sm:col-span-2">
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Koordinat Lokasi</label>
