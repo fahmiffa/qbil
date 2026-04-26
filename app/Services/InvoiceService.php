@@ -64,25 +64,9 @@ class InvoiceService
             $originalDueDate = Carbon::parse($customer->due_date);
             $invoiceDueDate = Carbon::parse($period . '-' . $originalDueDate->format('d'));
 
-            // 5. CHECK FOR ACTIVE DEPOSITS
+            // 5. STATUS DEFAULT
             $status = 'unpaid';
             $paidAt = null;
-
-            $activeDeposit = \App\Models\Deposit::where('customer_id', $customer->id)
-                ->where('status', 'active')
-                ->whereDate('start_date', '<=', $period . '-01')
-                ->whereDate('end_date', '>=', $period . '-01')
-                ->lockForUpdate()
-                ->first();
-
-            if ($activeDeposit) {
-                $activeDeposit->increment('used_months');
-                if ($activeDeposit->used_months >= $activeDeposit->months_count) {
-                    $activeDeposit->update(['status' => 'exhausted']);
-                }
-                $status = 'paid';
-                $paidAt = now();
-            }
 
             // 6. CREATE
             return Invoice::create([
