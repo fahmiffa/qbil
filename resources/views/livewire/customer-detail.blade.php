@@ -148,9 +148,14 @@
 
             {{-- Riwayat Invoice --}}
             <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                <div class="px-6 py-5 border-b border-slate-50 dark:border-slate-700">
-                    <h3 class="text-sm font-black text-slate-800 dark:text-white">Riwayat Invoice & Pembayaran</h3>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">{{ $totalInvoices }} total invoice tercatat</p>
+                <div class="px-6 py-5 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white">Riwayat Invoice & Pembayaran</h3>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">{{ $totalInvoices }} total invoice tercatat</p>
+                    </div>
+                    <button wire:click="openModal" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-blue-500/20">
+                        + Bayar Manual
+                    </button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -227,4 +232,133 @@
 
         </div>
     </div>
+
+    <!-- Modal Form Bayar Manual (Deposit Style) -->
+    <div x-data="{ show: @entangle('isOpen') }" 
+         x-show="show" 
+         x-cloak
+         class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+         style="display: none;">
+        
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+             @click="show = false; $wire.closeModal()"></div>
+
+        <!-- Modal Container -->
+        <div wire:key="manual-payment-modal" 
+             class="relative bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl transform transition-all w-full max-w-xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+            
+            <form wire:submit.prevent="storePayment" class="flex flex-col max-h-[85vh]">
+                <!-- Header -->
+                <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex-shrink-0">
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
+                        Verifikasi Pembayaran Manual
+                    </h3>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Pelanggan: {{ $customer->name }}</p>
+                </div>
+
+                <!-- Body (Scrollable) -->
+                <div class="px-8 py-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                    
+                    <!-- Pemilihan Bulan - Grid Style -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Pilih Bulan Pembayaran</label>
+                            <div class="flex items-center gap-2">
+                                <select wire:model.live="selected_year" class="bg-slate-50 dark:bg-slate-950 border-none rounded-xl px-3 py-1 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white shadow-sm ring-1 ring-slate-100 dark:ring-slate-800">
+                                    @for($y = date('Y')-1; $y <= date('Y')+5; $y++)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                            @foreach($month_names as $num => $name)
+                                @php 
+                                    $monthKey = $selected_year . '-' . $num;
+                                    $isSelected = in_array($monthKey, $selected_months);
+                                @endphp
+                                <button type="button" 
+                                    wire:click="toggleMonth('{{ $num }}')"
+                                    class="py-2 px-1 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border-2
+                                    {{ $isSelected 
+                                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20' 
+                                        : 'bg-white dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 hover:border-blue-400' 
+                                    }}">
+                                    {{ substr($name, 0, 3) }}
+                                </button>
+                            @endforeach
+                        </div>
+                        @error('months_count') <p class="text-red-500 text-[10px] font-bold">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Info & Tanggal Bayar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100/50 dark:border-blue-800/30">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[9px] font-bold text-blue-600/70 uppercase tracking-wider">Durasi</span>
+                                <span class="text-xs font-black text-blue-700 dark:text-blue-300">{{ $months_count }} Bulan</span>
+                            </div>
+                            <div class="text-[9px] text-slate-400 italic truncate">
+                                @if(!empty($selected_months))
+                                    {{ \Carbon\Carbon::parse(min($selected_months))->format('M Y') }} - {{ \Carbon\Carbon::parse(max($selected_months))->format('M Y') }}
+                                @endif
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Tanggal Bayar</label>
+                            <input type="datetime-local" wire:model="payment_date"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-bold h-[40px] shadow-inner ring-1 ring-slate-100 dark:ring-slate-800">
+                        </div>
+                    </div>
+
+                    <!-- Input Harga Per Bulan (Optional Override) -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Biaya Per Bulan (Manual)</label>
+                        <input type="number" wire:model.live.debounce.500ms="amount_per_month" wire:change="calculateTotal"
+                            class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-bold shadow-inner ring-1 ring-slate-100 dark:ring-slate-800">
+                        @error('amount_per_month') <p class="text-red-500 text-[10px] mt-1 font-bold">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Total Calculation -->
+                    <div class="bg-blue-50 dark:bg-slate-950 rounded-3xl p-6 overflow-hidden relative shadow-sm border border-blue-100 dark:border-slate-800">
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-bold text-blue-600/70 dark:text-slate-500 uppercase tracking-[0.2em]">Kalkulasi Total</span>
+                                <span class="text-[10px] text-blue-600/70 dark:text-slate-500 font-bold uppercase tracking-widest">{{ $months_count }} Bln x Rp {{ number_format($amount_per_month, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="text-3xl font-black text-blue-700 dark:text-white flex items-end gap-1">
+                                <span class="text-sm text-blue-500 mb-1.5 font-black uppercase tracking-tighter">Rp</span>
+                                {{ number_format($total_amount, 0, ',', '.') }}
+                            </div>
+                        </div>
+                        <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl"></div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Catatan Internal</label>
+                        <textarea wire:model="notes" rows="2" placeholder="Keterangan tambahan..."
+                            class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium shadow-inner ring-1 ring-slate-100 dark:ring-slate-800"></textarea>
+                    </div>
+                </div>
+
+                <!-- Footer (Stick to Modal) -->
+                <div class="px-8 py-5 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700/50 flex justify-end gap-3 flex-shrink-0">
+                    <button type="button" @click="show = false; $wire.closeModal()" class="px-5 py-2.5 text-[10px] font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 uppercase tracking-widest transition-all">Batal</button>
+                    <button type="submit" wire:loading.attr="disabled"
+                        class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black rounded-2xl transition-all shadow-lg shadow-blue-600/20 uppercase tracking-widest flex items-center justify-center min-w-[150px]">
+                        <span wire:loading.remove wire:target="storePayment">Simpan Pembayaran</span>
+                        <div wire:loading.flex wire:target="storePayment" class="items-center justify-center gap-2 whitespace-nowrap">
+                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>Menyimpan...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+

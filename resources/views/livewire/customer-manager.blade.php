@@ -277,7 +277,55 @@
                                             @elseif(auth()->user()->hasFeature('mikrotik') && $service_type === 'static')
                                                 <!-- STATIC Config -->
                                                 <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-3xl">
+                                                    <div class="sm:col-span-2">
+                                                        <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Konfigurasi DHCP & MAC Binding</p>
+                                                    </div>
 
+                                                    <!-- Row 1: MAC Address | DHCP Server -->
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-2">MAC Address</label>
+                                                        <input type="text" wire:model="mac_address" placeholder="00:00:00:00:00:00"
+                                                            class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono uppercase">
+                                                        @error('mac_address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-2">DHCP Server</label>
+                                                        <select wire:model="dhcp_server" class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                                                            <option value="all">all</option>
+                                                            @foreach($dhcpServers as $server)
+                                                                <option value="{{ $server['name'] }}">{{ $server['name'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('dhcp_server') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                                    </div>
+
+                                                    <!-- Row 2: Pilih IP Pool | IP Address + Search Button -->
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-2">Pilih IP Pool</label>
+                                                        <select wire:model="selectedPool" class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                                                            <option value="">-- Pilih Pool --</option>
+                                                            @foreach($ipPools as $pool)
+                                                                <option value="{{ $pool['name'] }}">{{ $pool['name'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-2">IP Address <span class="text-red-500">*</span></label>
+                                                        <div class="flex gap-2">
+                                                            <input type="text" wire:model="ip_address" placeholder="192.168.x.x"
+                                                                class="flex-1 bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono">
+                                                            <button type="button" wire:click="autoAssignIp" wire:loading.attr="disabled" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all shadow-md flex items-center justify-center min-w-[50px]">
+                                                                <span wire:loading.remove wire:target="autoAssignIp">
+                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                                                </span>
+                                                                <svg wire:loading wire:target="autoAssignIp" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                            </button>
+                                                        </div>
+                                                        @error('ip_address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                                    </div>
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
