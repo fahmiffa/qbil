@@ -39,25 +39,11 @@ class PrintController extends Controller
         $customer = $invoices->first()->customer;
         $totalAmount = $invoices->sum('total_amount');
         
-        \App::setLocale('id');
-        $items = [];
-        foreach ($invoices as $inv) {
-            $monthObj = \Carbon\Carbon::parse($inv->billing_period);
-            $items[] = [
-                'label' => 'Bulan: ' . $monthObj->translatedFormat('F Y'),
-                'value' => $inv->total_amount
-            ];
-        }
-
-        return view('print.unified', [
-            'type' => 'Pembayaran Multi Bulan',
-            'data' => $invoices->first(), // For settings fallback
+        return view('print.bulk-invoice-view', [
+            'invoices' => $invoices,
             'customer' => $customer,
-            'number' => 'MB-' . strtoupper(substr(md5(time()), 0, 8)),
-            'status' => 'paid',
-            'amount' => $totalAmount,
-            'date' => now(),
-            'items' => $items
+            'totalAmount' => $totalAmount,
+            'invoice_number' => 'MB-' . strtoupper(substr(md5(time()), 0, 8)),
         ]);
     }
 
