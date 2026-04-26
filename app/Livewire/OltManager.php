@@ -21,7 +21,7 @@ class OltManager extends Component
     public function mount()
     {
         $this->checkFeature();
-        $this->fetchData();
+        $this->isLoading = true; // tampilkan skeleton saat pertama kali
     }
 
     protected function checkFeature(): void

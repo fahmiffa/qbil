@@ -1,6 +1,7 @@
 <div
     class="min-h-screen"
     x-data="{}"
+    wire:init="fetchData"
     wire:poll.30s="fetchData"
 >
     {{-- Header Stats --}}
