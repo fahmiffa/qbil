@@ -108,12 +108,6 @@ new class extends Component
             </x-sidebar-link>
             @endif
 
-            @if(auth()->user()->hasFeature('olt'))
-            <x-sidebar-link :href="route('olt')" :active="request()->routeIs('olt')" icon="server">
-                OLT
-            </x-sidebar-link>
-            @endif
-
             <div class="pt-4 pb-2">
                 <span x-show="sidebarOpen" class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3">Pengaturan</span>
                 <div x-show="!sidebarOpen" class="border-t border-slate-100 dark:border-slate-800 mx-3"></div>

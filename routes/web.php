@@ -28,7 +28,6 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('invoice', \App\Livewire\InvoiceManager::class)->name('invoice');
     Route::get('deposits', \App\Livewire\DepositManager::class)->name('deposits');
     Route::get('piutangs', \App\Livewire\PiutangManager::class)->name('piutangs');
-    Route::get('olt', \App\Livewire\OltManager::class)->name('olt');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)
