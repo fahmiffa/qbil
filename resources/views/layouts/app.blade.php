@@ -124,30 +124,42 @@
 
         @stack('scripts')
         <script>
+            window.__googleMapsCallbacks = window.__googleMapsCallbacks || [];
+            
+            window.__initGoogleMaps = function() {
+                while (window.__googleMapsCallbacks.length > 0) {
+                    const cb = window.__googleMapsCallbacks.shift();
+                    if (typeof cb === 'function') cb();
+                }
+            };
+
             window.loadGoogleMaps = function(callback) {
                 if (window.google && window.google.maps && window.google.maps.Map) {
                     if (callback) callback();
                     return;
                 }
                 
+                if (callback) {
+                    window.__googleMapsCallbacks.push(callback);
+                }
+                
                 const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
                 if (existingScript) {
+                    // Script is already loading, just wait for __initGoogleMaps to fire
+                    // Or if it's somehow stuck, add a fallback interval
                     const checkInterval = setInterval(() => {
                         if (window.google && window.google.maps && window.google.maps.Map) {
                             clearInterval(checkInterval);
-                            if (callback) callback();
+                            window.__initGoogleMaps();
                         }
-                    }, 100);
+                    }, 500);
                     return;
                 }
 
                 const script = document.createElement('script');
-                script.src = "https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker";
+                script.src = "https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=__initGoogleMaps";
                 script.async = true;
                 script.defer = true;
-                script.onload = () => {
-                    if (callback) callback();
-                };
                 document.head.appendChild(script);
             }
         </script>

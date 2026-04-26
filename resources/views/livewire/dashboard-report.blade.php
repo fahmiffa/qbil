@@ -142,7 +142,73 @@
 
     @if(auth()->user()->hasFeature('maps'))
     @push('scripts')
-    ... (skipping script content for brevity in target but replacing whole block) ...
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            window.loadGoogleMaps(() => {
+                const mapElement = document.getElementById('map');
+                if (!mapElement) return;
+
+                const mapOptions = {
+                    center: { lat: -6.9400, lng: 108.9300 }, // Default center
+                    zoom: 10,
+                    mapTypeId: 'roadmap'
+                };
+
+                const map = new google.maps.Map(mapElement, mapOptions);
+                const bounds = new google.maps.LatLngBounds();
+                const customers = @json($customersForMap ?? []);
+
+                let hasMarkers = false;
+
+                customers.forEach(customer => {
+                    if (customer.latitude && customer.longitude) {
+                        const position = { 
+                            lat: parseFloat(customer.latitude), 
+                            lng: parseFloat(customer.longitude) 
+                        };
+                        
+                        // Marker color based on status
+                        let pinColor = customer.status === 'active' ? '#10b981' : '#ef4444';
+                        
+                        const marker = new google.maps.Marker({
+                            position: position,
+                            map: map,
+                            title: customer.name,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: pinColor,
+                                fillOpacity: 1,
+                                strokeColor: '#ffffff',
+                                strokeWeight: 2,
+                            }
+                        });
+
+                        bounds.extend(position);
+                        hasMarkers = true;
+
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: `
+                                <div style="padding: 5px;">
+                                    <h4 style="font-weight: bold; margin-bottom: 5px; color: #1e293b;">${customer.name}</h4>
+                                    <p style="margin: 0; font-size: 12px; color: #64748b;">${customer.address || 'Tanpa alamat'}</p>
+                                    <p style="margin: 0; font-size: 12px; font-weight: bold; color: ${pinColor}; mt-1">${customer.status.toUpperCase()}</p>
+                                </div>
+                            `
+                        });
+
+                        marker.addListener('click', () => {
+                            infoWindow.open(map, marker);
+                        });
+                    }
+                });
+
+                if (hasMarkers) {
+                    map.fitBounds(bounds);
+                }
+            });
+        });
+    </script>
     @endpush
     @endif
 
