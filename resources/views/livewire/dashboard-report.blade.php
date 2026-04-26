@@ -72,7 +72,73 @@
 
     <!-- Peta Lokasi Pelanggan -->
     @if(auth()->user()->hasFeature('map'))
-    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 transition-colors">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 transition-colors"
+         x-data="{
+            init() {
+                window.loadGoogleMaps(() => {
+                    const mapElement = this.$refs.mapDiv;
+                    if (!mapElement) return;
+
+                    const mapOptions = {
+                        center: { lat: -6.9400, lng: 108.9300 }, // Default center
+                        zoom: 10,
+                        mapTypeId: 'roadmap'
+                    };
+
+                    const map = new google.maps.Map(mapElement, mapOptions);
+                    const bounds = new google.maps.LatLngBounds();
+                    const customers = @json($mapData ?? []);
+
+                    let hasMarkers = false;
+
+                    customers.forEach(customer => {
+                        if (customer.latitude && customer.longitude) {
+                            const position = { 
+                                lat: parseFloat(customer.latitude), 
+                                lng: parseFloat(customer.longitude) 
+                            };
+                            
+                            // Marker color based on status
+                            let pinColor = customer.status === 'active' ? '#10b981' : '#ef4444';
+                            
+                            const marker = new google.maps.Marker({
+                                position: position,
+                                map: map,
+                                title: customer.name,
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    scale: 8,
+                                    fillColor: pinColor,
+                                    fillOpacity: 1,
+                                    strokeColor: '#ffffff',
+                                    strokeWeight: 2,
+                                }
+                            });
+
+                            bounds.extend(position);
+                            hasMarkers = true;
+
+                            const infoWindow = new google.maps.InfoWindow({
+                                content: `
+                                    <div style='padding: 5px;'>
+                                        <h4 style='font-weight: bold; margin-bottom: 5px; color: #1e293b;'>${customer.name}</h4>
+                                        <p style='margin: 0; font-size: 12px; font-weight: bold; color: ${pinColor}; margin-top: 2px;'>${customer.status.toUpperCase()}</p>
+                                    </div>
+                                `
+                            });
+
+                            marker.addListener('click', () => {
+                                infoWindow.open(map, marker);
+                            });
+                        }
+                    });
+
+                    if (hasMarkers) {
+                        map.fitBounds(bounds);
+                    }
+                });
+            }
+         }">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
@@ -85,8 +151,8 @@
             </div>
         </div>
         
-        <div class="rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 h-[400px]" id="map-container" wire:ignore>
-            <div id="map" class="w-full h-full"></div>
+        <div class="rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 h-[400px]" wire:ignore>
+            <div x-ref="mapDiv" class="w-full h-full"></div>
         </div>
     </div>
     @endif
@@ -139,78 +205,6 @@
             </div>
         </div>
     </div>
-
-    @if(auth()->user()->hasFeature('map'))
-    @push('scripts')
-    <script>
-        document.addEventListener('livewire:initialized', () => {
-            window.loadGoogleMaps(() => {
-                const mapElement = document.getElementById('map');
-                if (!mapElement) return;
-
-                const mapOptions = {
-                    center: { lat: -6.9400, lng: 108.9300 }, // Default center
-                    zoom: 10,
-                    mapTypeId: 'roadmap'
-                };
-
-                const map = new google.maps.Map(mapElement, mapOptions);
-                const bounds = new google.maps.LatLngBounds();
-                const customers = @json($customersForMap ?? []);
-
-                let hasMarkers = false;
-
-                customers.forEach(customer => {
-                    if (customer.latitude && customer.longitude) {
-                        const position = { 
-                            lat: parseFloat(customer.latitude), 
-                            lng: parseFloat(customer.longitude) 
-                        };
-                        
-                        // Marker color based on status
-                        let pinColor = customer.status === 'active' ? '#10b981' : '#ef4444';
-                        
-                        const marker = new google.maps.Marker({
-                            position: position,
-                            map: map,
-                            title: customer.name,
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: 8,
-                                fillColor: pinColor,
-                                fillOpacity: 1,
-                                strokeColor: '#ffffff',
-                                strokeWeight: 2,
-                            }
-                        });
-
-                        bounds.extend(position);
-                        hasMarkers = true;
-
-                        const infoWindow = new google.maps.InfoWindow({
-                            content: `
-                                <div style="padding: 5px;">
-                                    <h4 style="font-weight: bold; margin-bottom: 5px; color: #1e293b;">${customer.name}</h4>
-                                    <p style="margin: 0; font-size: 12px; color: #64748b;">${customer.address || 'Tanpa alamat'}</p>
-                                    <p style="margin: 0; font-size: 12px; font-weight: bold; color: ${pinColor}; mt-1">${customer.status.toUpperCase()}</p>
-                                </div>
-                            `
-                        });
-
-                        marker.addListener('click', () => {
-                            infoWindow.open(map, marker);
-                        });
-                    }
-                });
-
-                if (hasMarkers) {
-                    map.fitBounds(bounds);
-                }
-            });
-        });
-    </script>
-    @endpush
-    @endif
 
 </div>
 </div>
