@@ -62,7 +62,12 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ $invoice->package->name ?? 'Internet' }}</td>
+                <td>
+                    {{ $invoice->package->name ?? 'Internet' }}
+                    @if($invoice->package && ($invoice->package->speed_download || $invoice->package->speed_upload))
+                    <br><span style="font-size:9px;">{{ $invoice->package->speed_download ?? '-' }}/{{ $invoice->package->speed_upload ?? '-' }}</span>
+                    @endif
+                </td>
                 <td class="right">{{ number_format($invoice->amount, 0, ',', '.') }}</td>
             </tr>
             @if($invoice->unique_code > 0)

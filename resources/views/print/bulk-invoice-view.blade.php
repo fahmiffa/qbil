@@ -1,4 +1,4 @@
-<x-layouts.guest>
+@extends('layouts.invoice-layout')
 @section('title', "Pembayaran Multi Bulan {$invoice_number} - {$customer->user->name}")
 
 @push('meta')
@@ -11,6 +11,8 @@
     <meta property="og:url" content="{{ request()->fullUrl() }}">
     <meta name="twitter:card" content="summary_large_image">
 @endpush
+
+@section('content')
 
 <div class="py-4 sm:py-10 px-4 max-w-2xl mx-auto print:max-w-none print:p-0">
 
@@ -263,4 +265,4 @@
         }
     </style>
 </div>
-</x-layouts.guest>
+@endsection
