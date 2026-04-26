@@ -86,7 +86,10 @@ $classes = ($active ?? false)
 
     <!-- Tooltip (Visible only when sidebar is collapsed) -->
     <div x-show="!sidebarOpen" 
-         class="absolute left-full ml-4 px-3 py-2 bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-[100] shadow-2xl border border-slate-700/50 pointer-events-none transform translate-x-2 group-hover:translate-x-0">
+         x-data="{ top: 0, left: 0 }"
+         @mouseenter="let rect = $el.parentElement.getBoundingClientRect(); top = rect.top + (rect.height/2); left = rect.right + 10"
+         class="fixed px-3 py-2 bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-[100] shadow-2xl border border-slate-700/50 pointer-events-none transform translate-x-2 group-hover:translate-x-0"
+         :style="'top: ' + top + 'px; left: ' + left + 'px; transform: translateY(-50%)'">
         {{ $slot }}
         <!-- Triangle Arrow -->
         <div class="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900 dark:border-r-slate-800"></div>
