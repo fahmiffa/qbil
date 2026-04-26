@@ -14,20 +14,17 @@
             // Ensure container is ready in DOM for modal
             await new Promise(r => setTimeout(r, 500));
 
-            // Import necessary libraries dynamically
-            const { Map } = await google.maps.importLibrary('maps');
+            const mapOptions = {
+                center: { lat: initLat, lng: initLng },
+                zoom: initZoom,
+                mapTypeId: 'roadmap',
+                fullscreenControl: true,
+                streetViewControl: true
+            };
 
-        const mapOptions = {
-            center: { lat: initLat, lng: initLng },
-            zoom: initZoom,
-            mapTypeId: 'roadmap',
-            fullscreenControl: true,
-            streetViewControl: true
-        };
+            this.map = new google.maps.Map(this.$refs.mapDiv, mapOptions);
 
-        this.map = new Map(this.$refs.mapDiv, mapOptions);
-
-        this.syncMarkerFromCoords = () => {
+            this.syncMarkerFromCoords = () => {
             if (!this.map || !this.lat || !this.lng) return;
             
             const flat = parseFloat(this.lat);
