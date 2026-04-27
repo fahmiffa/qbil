@@ -233,6 +233,13 @@ class MikrotikService
         }
     }
 
+    public function getPppSecretByName(string $username): ?array
+    {
+        $query = (new Query('/ppp/secret/print'))->where('name', $username);
+        $secrets = $this->client->query($query)->read();
+        return !empty($secrets) ? $secrets[0] : null;
+    }
+
     // -------------------------
     // Hotspot Users (Customer Hotspot)
     // -------------------------

@@ -178,8 +178,9 @@ class ProvisionCustomerJob implements ShouldQueue
 
     private function pullDataIfMissing(MikrotikService $mikrotik, Customer $customer): void
     {
-        if ($customer->service_type === 'static' && empty($customer->mac_address) && !empty($customer->ip_address)) {
-            try {
+        try {
+            // Case 1: Static - Pull MAC/Server if missing
+            if ($customer->service_type === 'static' && empty($customer->mac_address) && !empty($customer->ip_address)) {
                 $lease = $mikrotik->findLeaseByIp($customer->ip_address);
                 if ($lease && !empty($lease['mac-address'])) {
                     $customer->update([
@@ -188,9 +189,21 @@ class ProvisionCustomerJob implements ShouldQueue
                     ]);
                     $customer->refresh();
                 }
-            } catch (\Exception $e) {
-                Log::warning("Failed to pull data from Mikrotik for customer #{$customer->id}: " . $e->getMessage());
             }
+            
+            // Case 2: PPPOE - Sync Password from Mikrotik to DB
+            if ($customer->service_type === 'pppoe' && !empty($customer->username)) {
+                $secret = $mikrotik->getPppSecretByName($customer->username);
+                if ($secret && isset($secret['password'])) {
+                    // Update DB if password differs
+                    if ($customer->password !== $secret['password']) {
+                        $customer->update(['password' => $secret['password']]);
+                        $customer->refresh();
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning("Failed to sync data from Mikrotik for customer #{$customer->id}: " . $e->getMessage());
         }
     }
 }
