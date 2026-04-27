@@ -96,46 +96,35 @@
                             <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
                                 <thead class="bg-slate-50/50 dark:bg-slate-900/50">
                                     <tr>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Pelanggan</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Username & Profil</th>
-                                        <th class="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Status</th>
-                                        <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 w-20">Aksi</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Nama Pelanggan</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Alamat</th>
+                                        <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Nomor HP</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                                     @forelse($asset->customers as $customer)
                                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                         <td class="px-6 py-4">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-bold uppercase">
+                                            <a href="{{ route('customers.detail', $customer->id) }}" wire:navigate class="flex items-center gap-3 group">
+                                                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-bold uppercase group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 transition-colors">
                                                     {{ substr($customer->name, 0, 2) }}
                                                 </div>
                                                 <div class="flex flex-col">
-                                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ $customer->name }}</span>
+                                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-blue-600 transition-colors">{{ $customer->name }}</span>
                                                     <span class="text-[10px] text-slate-500 font-mono">{{ $customer->id_pelanggan }}</span>
                                                 </div>
-                                            </div>
+                                            </a>
                                         </td>
                                         <td class="px-6 py-4">
-                                            <div class="flex flex-col">
-                                                <span class="text-sm font-mono text-blue-600 dark:text-blue-400">{{ $customer->username }}</span>
-                                                <span class="text-[10px] text-slate-400">{{ $customer->ppp_profile }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 text-center">
-                                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter {{ $customer->status === 'active' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' }}">
-                                                {{ $customer->status }}
-                                            </span>
+                                            <span class="text-sm text-slate-600 dark:text-slate-400">{{ $customer->address ?? '-' }}</span>
                                         </td>
                                         <td class="px-6 py-4 text-right">
-                                            <a href="{{ route('customers.detail', $customer->id) }}" class="p-2 text-slate-400 hover:text-blue-600 transition-colors block">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                            </a>
+                                            <span class="text-sm font-mono text-slate-700 dark:text-slate-300">{{ $customer->phone ?? '-' }}</span>
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="4" class="px-6 py-12 text-center">
+                                        <td colspan="3" class="px-6 py-12 text-center">
                                             <div class="flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
                                                 <svg class="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 005.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                                 <p class="text-sm italic">Belum ada pelanggan yang terhubung ke aset ini.</p>
