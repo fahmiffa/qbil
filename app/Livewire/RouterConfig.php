@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Router;
+use App\Services\MikrotikService;
 use Livewire\Component;
 use RouterOS\Client;
 use RouterOS\Query;
@@ -83,17 +84,24 @@ class RouterConfig extends Component
         ]);
 
         try {
-            $client = new Client([
-                'host' => $this->host,
-                'user' => $this->username,
-                'pass' => $this->password,
-                'port' => (int) $this->port,
-                'timeout' => 5,
-            ]);
-
-            $this->status_connection = 'Connected';
-            $this->message = 'Koneksi ke MikroTik berhasil!';
-            $this->dispatch('toast', type: 'success', message: $this->message);
+            $router = auth()->user()->router;
+            if (!$router) {
+                // If not saved yet, create a temporary router object for the service
+                $router = new \App\Models\Router([
+                    'host' => $this->host,
+                    'username' => $this->username,
+                    'password' => $this->password,
+                    'port' => $this->port,
+                ]);
+            }
+            $service = MikrotikService::getInstance($router);
+            if ($service->checkConnection()) {
+                $this->status_connection = 'Connected';
+                $this->message = 'Koneksi ke MikroTik berhasil!';
+                $this->dispatch('toast', type: 'success', message: $this->message);
+            } else {
+                throw new \Exception("Gagal melakukan handshake dengan MikroTik.");
+            }
         } catch (\Exception $e) {
             $this->status_connection = 'Error';
             $this->message = 'Koneksi gagal: ' . $e->getMessage();

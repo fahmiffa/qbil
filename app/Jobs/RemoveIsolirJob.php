@@ -38,7 +38,7 @@ class RemoveIsolirJob implements ShouldQueue
                 $router = $user->router;
                 if ($router) {
                     try {
-                        $mikrotik = new MikrotikService($router);
+                        $mikrotik = MikrotikService::getInstance($router);
                         
                         if ($this->customer->ip_address) {
                             $mikrotik->removeFromAddressList($this->customer->ip_address, 'ISOLIR');

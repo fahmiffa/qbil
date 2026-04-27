@@ -10,6 +10,16 @@ class MikrotikService
 {
     protected Client $client;
     protected Router $router;
+    protected static array $instances = [];
+
+    public static function getInstance(Router $router): self
+    {
+        $id = $router->id;
+        if (!isset(self::$instances[$id])) {
+            self::$instances[$id] = new self($router);
+        }
+        return self::$instances[$id];
+    }
 
     public function __construct(Router $router)
     {
@@ -21,6 +31,18 @@ class MikrotikService
             'port'    => (int) $router->port,
             'timeout' => 30,
         ]);
+    }
+
+    public function clearCache(): void
+    {
+        $id = $this->router->id;
+        \Illuminate\Support\Facades\Cache::forget("mk_ppp_profiles_{$id}");
+        \Illuminate\Support\Facades\Cache::forget("mk_hs_profiles_{$id}");
+        \Illuminate\Support\Facades\Cache::forget("mk_interfaces_{$id}");
+        \Illuminate\Support\Facades\Cache::forget("mk_pools_{$id}");
+        \Illuminate\Support\Facades\Cache::forget("mk_queues_{$id}");
+        \Illuminate\Support\Facades\Cache::forget("mk_dhcp_servers_{$id}");
+        \Illuminate\Support\Facades\Cache::forget("mk_dhcp_leases_{$id}");
     }
     public function checkConnection(): bool
     {
@@ -44,8 +66,11 @@ class MikrotikService
 
     public function getPppProfiles(): array
     {
-        $query = new Query('/ppp/profile/print');
-        return $this->client->query($query)->read();
+        $cacheKey = "mk_ppp_profiles_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, function () {
+            $query = new Query('/ppp/profile/print');
+            return $this->client->query($query)->read();
+        });
     }
 
     public function addPppProfile(string $name, string $rateLimit, ?string $localAddress = null, ?string $remoteAddress = null): void
@@ -84,6 +109,7 @@ class MikrotikService
         if (!empty($profiles)) {
             $delQuery = (new Query('/ppp/profile/remove'))->equal('.id', $profiles[0]['.id']);
             $this->client->query($delQuery)->read();
+            $this->clearCache();
         }
     }
 
@@ -93,8 +119,11 @@ class MikrotikService
 
     public function getHotspotProfiles(): array
     {
-        $query = new Query('/ip/hotspot/user/profile/print');
-        return $this->client->query($query)->read();
+        $cacheKey = "mk_hs_profiles_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, function () {
+            $query = new Query('/ip/hotspot/user/profile/print');
+            return $this->client->query($query)->read();
+        });
     }
 
     public function addHotspotProfileFull(string $name, string $rateLimit, string $sharedUsers = '1', string $addressPool = 'none', string $sessionTimeout = '8h'): void
@@ -126,12 +155,14 @@ class MikrotikService
     {
         $query = (new Query('/ip/hotspot/user/profile/remove'))->equal('.id', $id);
         $this->client->query($query)->read();
+        $this->clearCache();
     }
 
     public function removePppProfileById(string $id): void
     {
         $query = (new Query('/ppp/profile/remove'))->equal('.id', $id);
         $this->client->query($query)->read();
+        $this->clearCache();
     }
 
     // -------------------------
@@ -275,8 +306,11 @@ class MikrotikService
 
     public function getInterfaces(): array
     {
-        $query = new Query('/interface/print');
-        return $this->client->query($query)->read();
+        $cacheKey = "mk_interfaces_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () {
+            $query = new Query('/interface/print');
+            return $this->client->query($query)->read();
+        });
     }
 
     public function setInterfaceDisabled(string $id, bool $disabled): void
@@ -329,8 +363,11 @@ class MikrotikService
 
     public function getIpPools(): array
     {
-        $query = new Query('/ip/pool/print');
-        return $this->client->query($query)->read();
+        $cacheKey = "mk_pools_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, function () {
+            $query = new Query('/ip/pool/print');
+            return $this->client->query($query)->read();
+        });
     }
 
     public function addIpPool(string $name, string $ranges, string $nextpool = 'none'): void
@@ -437,8 +474,11 @@ class MikrotikService
 
     public function getSimpleQueues(): array
     {
-        $query = new Query('/queue/simple/print');
-        return $this->client->query($query)->read();
+        $cacheKey = "mk_queues_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () {
+            $query = new Query('/queue/simple/print');
+            return $this->client->query($query)->read();
+        });
     }
 
     public function addSimpleQueue(string $name, string $target, string $maxLimit, string $comment = ''): void
@@ -536,8 +576,11 @@ class MikrotikService
 
     public function getDhcpServers(): array
     {
-        $query = new Query('/ip/dhcp-server/print');
-        return $this->client->query($query)->read();
+        $cacheKey = "mk_dhcp_servers_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () {
+            $query = new Query('/ip/dhcp-server/print');
+            return $this->client->query($query)->read();
+        });
     }
 
     public function addDhcpLease(string $mac, string $ip, string $server = 'all', string $comment = '', string $rateLimit = ''): void
@@ -617,8 +660,11 @@ class MikrotikService
 
     public function getDhcpLeases(): array
     {
-        $query = new Query('/ip/dhcp-server/lease/print');
-        return $this->client->query($query)->read();
+        $cacheKey = "mk_dhcp_leases_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () {
+            $query = new Query('/ip/dhcp-server/lease/print');
+            return $this->client->query($query)->read();
+        });
     }
 
     // -------------------------

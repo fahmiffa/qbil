@@ -35,7 +35,7 @@ class MikrotikInterface extends Component
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
-        return new MikrotikService($router);
+        return MikrotikService::getInstance($router);
     }
 
     public function loadInterfaces(): void

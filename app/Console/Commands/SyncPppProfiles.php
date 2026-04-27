@@ -42,7 +42,7 @@ class SyncPppProfiles extends Command
                 try {
                     $this->info("Syncing PPP Profiles from: {$router->name}");
                     
-                    $mikrotik = new MikrotikService($router);
+                    $mikrotik = MikrotikService::getInstance($router);
                     $profiles = $mikrotik->getPppProfiles();
 
                     DB::transaction(function () use ($router, $profiles) {

@@ -45,7 +45,7 @@ class ProvisionPackageJob implements ShouldQueue
             $router = Router::where('user_id', $this->package->user_id)->first();
             if (!$router) return;
 
-            $mikrotik = new MikrotikService($router);
+            $mikrotik = MikrotikService::getInstance($router);
             $rateLimit = $this->package->speed_upload . '/' . $this->package->speed_download;
 
             if ($this->action === 'delete') {

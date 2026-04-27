@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Package;
+use App\Services\MikrotikService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use RouterOS\Client;
@@ -56,20 +57,14 @@ class PackageManager extends Component
         $this->tipe = 'PPPOE';
     }
 
-    private function getMikrotikClient()
+    private function getMikrotikService(): \App\Services\MikrotikService
     {
         $router = auth()->user()->router;
         if (!$router) {
             throw new \Exception('Silakan konfigurasi Router Mikrotik terlebih dahulu.');
         }
 
-        return new Client([
-            'host' => $router->host,
-            'user' => $router->username,
-            'pass' => $router->password,
-            'port' => (int) $router->port,
-            'timeout' => 5,
-        ]);
+        return MikrotikService::getInstance($router);
     }
 
     public function store()
@@ -182,11 +177,11 @@ class PackageManager extends Component
     public function syncFromMikrotik()
     {
         try {
-            $client = $this->getMikrotikClient();
+            $mikrotik = $this->getMikrotikService();
 
             // Fetch both PPP profiles and Hotspot profiles
-            $pppProfiles     = $client->query(new Query('/ppp/profile/print'))->read();
-            $hotspotProfiles = $client->query(new Query('/ip/hotspot/user/profile/print'))->read();
+            $pppProfiles     = $mikrotik->getPppProfiles();
+            $hotspotProfiles = $mikrotik->getHotspotProfiles();
 
             $synced = 0;
             $skip   = ['default', 'default-encryption'];

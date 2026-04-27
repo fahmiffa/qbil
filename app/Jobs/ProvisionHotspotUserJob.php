@@ -44,7 +44,7 @@ class ProvisionHotspotUserJob implements ShouldQueue
                 return;
             }
 
-            $mikrotik = new MikrotikService($router);
+            $mikrotik = MikrotikService::getInstance($router);
 
             if ($this->action === 'delete') {
                 $mikrotik->removeHotspotUser($this->hotspotUser->username);

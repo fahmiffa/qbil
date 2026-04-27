@@ -44,7 +44,7 @@ class ProvisionCustomerJob implements ShouldQueue
                 return;
             }
 
-            $mikrotik = new MikrotikService($router);
+            $mikrotik = MikrotikService::getInstance($router);
             $package  = $this->customer->package;
             $rateLimit = $package ? ($package->speed_upload . '/' . $package->speed_download) : '0M/0M';
 

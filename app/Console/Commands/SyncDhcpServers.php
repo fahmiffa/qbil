@@ -42,7 +42,7 @@ class SyncDhcpServers extends Command
                 try {
                     $this->info("Syncing DHCP Servers from: {$router->name}");
                     
-                    $mikrotik = new MikrotikService($router);
+                    $mikrotik = MikrotikService::getInstance($router);
                     $servers = $mikrotik->getDhcpServers();
 
                     DB::transaction(function () use ($router, $servers) {

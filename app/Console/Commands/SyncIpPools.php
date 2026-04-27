@@ -45,7 +45,7 @@ class SyncIpPools extends Command
                 try {
                     $this->info("Syncing IP Pools from: {$router->name} ({$router->host})");
                     
-                    $service = new MikrotikService($router);
+                    $service = MikrotikService::getInstance($router);
                     $pools = $service->getIpPools();
 
                     // Using a transaction to ensure data integrity during replace

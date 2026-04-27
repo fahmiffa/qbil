@@ -56,7 +56,7 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
             }
 
             $profile = $package->mikrotik_profile ?: 'default';
-            $mikrotik = new MikrotikService($router);
+            $mikrotik = MikrotikService::getInstance($router);
 
             Log::info("[BulkGenerateHotspotVouchersJob] Starting generation of {$this->quantity} vouchers for user {$this->userId}");
 

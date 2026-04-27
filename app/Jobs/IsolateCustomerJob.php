@@ -46,7 +46,7 @@ class IsolateCustomerJob implements ShouldQueue
                 $router = $user->router;
                 if ($router) {
                     try {
-                        $mikrotik = new MikrotikService($router);
+                        $mikrotik = MikrotikService::getInstance($router);
                         
                         if ($this->customer->service_type === 'static' && $this->customer->ip_address) {
                             $mikrotik->addToAddressList($this->customer->ip_address, 'ISOLIR', 'Jatuh Tempo: ' . $this->customer->name);

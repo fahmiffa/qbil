@@ -41,7 +41,7 @@ class CheckRouterConnectionJob implements ShouldQueue
         $ping = null;
 
         try {
-            $service = new MikrotikService($this->router);
+            $service = MikrotikService::getInstance($this->router);
             if ($service->checkConnection()) {
                 $status = 'online';
                 $ping = round((microtime(true) - $startTime) * 1000);
