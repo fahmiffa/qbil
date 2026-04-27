@@ -645,6 +645,27 @@ class MikrotikService
         }
     }
 
+    public function findLeaseByIp(string $ip): ?array
+    {
+        $query = (new Query('/ip/dhcp-server/lease/print'))->where('address', $ip);
+        $leases = $this->client->query($query)->read();
+        return !empty($leases) ? $leases[0] : null;
+    }
+
+    public function makeLeaseStatic(string $mac): void
+    {
+        $query = (new Query('/ip/dhcp-server/lease/print'))
+            ->where('mac-address', $mac)
+            ->where('dynamic', 'yes');
+        $leases = $this->client->query($query)->read();
+
+        if (!empty($leases)) {
+            $makeQuery = (new Query('/ip/dhcp-server/lease/make-static'))
+                ->equal('.id', $leases[0]['.id']);
+            $this->client->query($makeQuery)->read();
+        }
+    }
+
     public function setDhcpLeaseStateByMac(string $mac, bool $disabled): void
     {
         $query = (new Query('/ip/dhcp-server/lease/print'))->where('mac-address', $mac);

@@ -229,7 +229,7 @@ class CustomerManager extends Component
             'ppp_profile'  => 'nullable|string|max:100',
             'service_type' => 'required|in:static,pppoe',
             'ip_address'   => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
-            'mac_address'  => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
+            'mac_address'  => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50|regex:/^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$/',
             'dhcp_server'  => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
             'latitude'     => 'nullable|string|max:50',
             'longitude'    => 'nullable|string|max:50',

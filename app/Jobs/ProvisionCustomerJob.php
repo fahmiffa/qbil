@@ -16,6 +16,9 @@ class ProvisionCustomerJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 3;
+    public int $backoff = 60;
+
     /**
      * Create a new job instance.
      */
@@ -45,6 +48,10 @@ class ProvisionCustomerJob implements ShouldQueue
             }
 
             $mikrotik = MikrotikService::getInstance($router);
+            
+            // PULL DATA: Jika MAC kosong tapi ada IP, coba tarik dari MikroTik
+            $this->pullDataIfMissing($mikrotik, $this->customer);
+
             $package  = $this->customer->package;
             $rateLimit = $package ? ($package->speed_upload . '/' . $package->speed_download) : '0M/0M';
 
@@ -66,19 +73,19 @@ class ProvisionCustomerJob implements ShouldQueue
 
     private function provisionCreate(MikrotikService $mikrotik, Customer $customer, string $rateLimit): void
     {
-        if ($customer->service_type === 'static') {
-            if ($customer->mac_address) $mikrotik->removeDhcpLeaseByMac($customer->mac_address);
-            if ($customer->ip_address) $mikrotik->removeDhcpLeaseByIp($customer->ip_address);
-
-            if ($customer->mac_address && $customer->ip_address) {
-                $mikrotik->addDhcpLease(
-                    $customer->mac_address, 
-                    $customer->ip_address, 
-                    $customer->dhcp_server ?: 'all', 
-                    $customer->name, 
-                    $rateLimit
-                );
-            }
+        if ($customer->service_type === 'static' && $customer->mac_address && $customer->ip_address) {
+            // Coba ubah dynamic menjadi static dulu jika ada
+            $mikrotik->makeLeaseStatic($customer->mac_address);
+            
+            // Kemudian update atau create lease static-nya
+            $mikrotik->updateDhcpLeaseByMac(
+                $customer->mac_address, 
+                $customer->mac_address, 
+                $customer->ip_address, 
+                $customer->dhcp_server ?: 'all', 
+                $customer->name, 
+                $rateLimit
+            );
         } else {
             // pppoe
             if ($customer->username) $mikrotik->removePppSecret($customer->username);
@@ -165,6 +172,24 @@ class ProvisionCustomerJob implements ShouldQueue
             $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, false);
             if ($customer->ip_address) {
                 $mikrotik->removeFromAddressList($customer->ip_address, 'ISOLIR');
+            }
+        }
+    }
+
+    private function pullDataIfMissing(MikrotikService $mikrotik, Customer $customer): void
+    {
+        if ($customer->service_type === 'static' && empty($customer->mac_address) && !empty($customer->ip_address)) {
+            try {
+                $lease = $mikrotik->findLeaseByIp($customer->ip_address);
+                if ($lease && !empty($lease['mac-address'])) {
+                    $customer->update([
+                        'mac_address' => $lease['mac-address'],
+                        'dhcp_server' => $lease['server'] ?? $customer->dhcp_server
+                    ]);
+                    $customer->refresh();
+                }
+            } catch (\Exception $e) {
+                Log::warning("Failed to pull data from Mikrotik for customer #{$customer->id}: " . $e->getMessage());
             }
         }
     }

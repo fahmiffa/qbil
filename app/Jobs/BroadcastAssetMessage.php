@@ -48,19 +48,19 @@ class BroadcastAssetMessage implements ShouldQueue
                 continue;
             }
 
-            // Prepare custom message if needed (placeholders)
+            // Prepare custom message
             $formattedMessage = $waService->formatMessage($this->message, [
                 'name' => $customer->name,
                 'id_pelanggan' => $customer->id_pelanggan,
                 'address' => $customer->address,
             ]);
 
-            $waService->sendMessage($senderPhone, $customer->phone, $formattedMessage);
-
-            // Delay 10 seconds between messages, except for the last one
-            if ($index < count($customers) - 1) {
-                sleep(10);
-            }
+            // Dispatch individual job with 10-second delay increments
+            SendWhatsAppMessageJob::dispatch(
+                $senderPhone,
+                $customer->phone,
+                $formattedMessage
+            )->delay(now()->addSeconds($index * 10));
         }
     }
 }

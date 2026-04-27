@@ -121,15 +121,14 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 'user_name'      => $user->name,
             ]);
 
-            $success = $whatsappService->sendMessage(
+            // Dispatch individual job with 10-second delay increments to avoid blocking
+            SendWhatsAppMessageJob::dispatch(
                 $user->phone ?? '',
                 $customer->phone,
                 $message
-            );
+            )->delay(now()->addSeconds($sentCount * 10));
 
-            if ($success) {
-                $sentCount++;
-            }
+            $sentCount++;
         }
 
         Log::info("[SendInvoiceRemindersJob] Selesai. Total pengingat dikirim: {$sentCount}");
