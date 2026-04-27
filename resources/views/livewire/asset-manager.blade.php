@@ -171,6 +171,9 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
+                                    <a href="{{ route('assets.detail', $asset->id) }}" wire:navigate class="inline-flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-all shadow-sm text-xs font-semibold">
+                                        Detail
+                                    </a>
                                     <button wire:click="edit({{ $asset->id }})" class="inline-flex items-center px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm text-xs font-semibold">
                                         Edit
                                     </button>
