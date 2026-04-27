@@ -10,6 +10,7 @@ use App\Models\DhcpServer;
 use App\Models\PppProfile;
 use App\Services\MikrotikService;
 use App\Services\ExcelImportService;
+use App\Jobs\SyncAllCustomersJob;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
@@ -328,6 +329,18 @@ class CustomerManager extends Component
 
         $this->closeModal();
         $this->resetInputFields();
+    }
+
+    public function syncAll()
+    {
+        if (!auth()->user()->hasFeature('mikrotik')) {
+            $this->dispatch('toast', type: 'error', message: 'Fitur MikroTik tidak aktif untuk akun Anda.');
+            return;
+        }
+
+        SyncAllCustomersJob::dispatch(auth()->user());
+
+        $this->dispatch('toast', type: 'success', message: 'Sinkronisasi seluruh pelanggan telah dijadwalkan ke antrean.');
     }
 
 
