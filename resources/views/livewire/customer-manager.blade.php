@@ -367,7 +367,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">ID Pelanggan</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Nama</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Paket</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">User / IP</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">IP</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Jatuh Tempo</th>
                                 @if(auth()->user()->hasFeature('mikrotik'))
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Layanan</th>
@@ -405,7 +405,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-slate-400">
-                                    {{ $customer->service_type === 'static' ? ($customer->ip_address ?? '-') : ($customer->username ?? '-') }}
+                                    {{ $customer->service_type === 'static' ? ($customer->ip_address ?? '-') : '-' }}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500 dark:text-slate-400">
                                     {{ $customer->due_date ? $customer->due_date->format('d/m/Y') : '-' }}
