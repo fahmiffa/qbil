@@ -13,6 +13,7 @@ class RouterConfig extends Component
     public $status_connection = 'Disconnected';
     public $ping_ms, $last_checked_at, $connection_error;
     public $message = '';
+    public $showPassword = false;
 
     public function mount()
     {
@@ -98,5 +99,10 @@ class RouterConfig extends Component
             $this->message = 'Koneksi gagal: ' . $e->getMessage();
             $this->dispatch('toast', type: 'error', message: $this->message);
         }
+    }
+
+    public function togglePassword()
+    {
+        $this->showPassword = !$this->showPassword;
     }
 }
