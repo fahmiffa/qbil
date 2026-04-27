@@ -70,7 +70,7 @@ class SyncPppProfiles extends Command
                         }
                     });
 
-                    $this->info("Successfully synced " . count($profiles) . " PPP profiles.");
+                    // $this->info("Successfully synced " . count($profiles) . " PPP profiles.");
 
                 } catch (\Exception $e) {
                     $this->error("Error syncing router {$router->name}: " . $e->getMessage());
@@ -78,7 +78,7 @@ class SyncPppProfiles extends Command
             }
 
             if ($loop) {
-                sleep(5);
+                sleep(60);
             }
 
         } while ($loop);

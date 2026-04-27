@@ -70,7 +70,7 @@ class SyncIpPools extends Command
                         }
                     });
 
-                    $this->info("Successfully synced " . count($pools) . " pools.");
+                    // $this->info("Successfully synced " . count($pools) . " pools.");
 
                 } catch (\Exception $e) {
                     $this->error("Error syncing router {$router->name}: " . $e->getMessage());
@@ -78,8 +78,8 @@ class SyncIpPools extends Command
             }
 
             if ($loop) {
-                $this->info("Sleeping for 5 seconds...");
-                sleep(5);
+                // $this->info("Sleeping for 5 seconds...");
+                sleep(60);
             }
 
         } while ($loop);

@@ -67,7 +67,7 @@ class SyncDhcpServers extends Command
                         }
                     });
 
-                    $this->info("Successfully synced " . count($servers) . " DHCP servers.");
+                    // $this->info("Successfully synced " . count($servers) . " DHCP servers.");
 
                 } catch (\Exception $e) {
                     $this->error("Error syncing router {$router->name}: " . $e->getMessage());
@@ -75,7 +75,7 @@ class SyncDhcpServers extends Command
             }
 
             if ($loop) {
-                sleep(5);
+                sleep(60);
             }
 
         } while ($loop);
