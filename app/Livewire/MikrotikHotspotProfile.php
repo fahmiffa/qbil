@@ -65,7 +65,7 @@ class MikrotikHotspotProfile extends Component
 
             // Get packages from DB
             $this->profiles = \App\Models\Package::where('user_id', auth()->id())
-                              ->where('tipe', 'hotspot')
+                              ->where('tipe', 'HOTSPOT')
                               ->get()->toArray();
 
         } catch (\Exception $e) {
@@ -169,8 +169,16 @@ class MikrotikHotspotProfile extends Component
             if ($this->sync_mode === 'sync') {
                 $mProfile = collect($this->mikrotik_profiles_list)->firstWhere('name', $this->selected_mikrotik_profile);
                 if ($mProfile) {
-                    if (!empty($mProfile['rate-limit']) && str_contains($mProfile['rate-limit'], '/')) {
-                        [$upload, $download] = explode('/', $mProfile['rate-limit'], 2);
+                    if (!empty($mProfile['rate-limit'])) {
+                        if (str_contains($mProfile['rate-limit'], '/')) {
+                            $parts = explode('/', $mProfile['rate-limit'], 2);
+                            $upload = $parts[0] ?? '10M';
+                            $download = $parts[1] ?? '10M';
+                        } else {
+                            // Jika hanya ada satu nilai, asumsikan itu download, upload default
+                            $download = $mProfile['rate-limit'];
+                            $upload = '1M'; 
+                        }
                     }
                     $shusers = $mProfile['shared-users'] ?? '1';
                     $pool = $mProfile['address-pool'] ?? 'none';
@@ -205,7 +213,7 @@ class MikrotikHotspotProfile extends Component
             } else {
                 $package = \App\Models\Package::create([
                     'user_id' => auth()->id(),
-                    'tipe' => 'hotspot',
+                    'tipe' => 'HOTSPOT',
                     'name' => $this->name,
                     'mikrotik_profile' => $profileName,
                     'price' => $this->price ?: 0,

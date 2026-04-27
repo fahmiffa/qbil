@@ -71,9 +71,9 @@ class ProvisionPackageJob implements ShouldQueue
             $sessionTimeout = $this->extraData['session_timeout'] ?? '8h';
 
             if ($existing) {
-                $mikrotik->updateHotspotProfileFull($existing['.id'], $this->package->name, $rateLimit, $sharedUsers, $addressPool, $sessionTimeout);
+                $mikrotik->updateHotspotProfileFull($existing['.id'], $this->package->mikrotik_profile, $rateLimit, $sharedUsers, $addressPool, $sessionTimeout);
             } else {
-                $mikrotik->addHotspotProfileFull($this->package->name, $rateLimit, $sharedUsers, $addressPool, $sessionTimeout);
+                $mikrotik->addHotspotProfileFull($this->package->mikrotik_profile, $rateLimit, $sharedUsers, $addressPool, $sessionTimeout);
             }
         } else {
             // PPPOE / PPP
@@ -84,9 +84,9 @@ class ProvisionPackageJob implements ShouldQueue
             $remoteAddress = $this->extraData['remote_address'] ?? null;
 
             if ($existing) {
-                $mikrotik->updatePppProfileFull($existing['.id'], $this->package->name, $rateLimit, $localAddress, $remoteAddress);
+                $mikrotik->updatePppProfileFull($existing['.id'], $this->package->mikrotik_profile, $rateLimit, $localAddress, $remoteAddress);
             } else {
-                $mikrotik->addPppProfile($this->package->name, $rateLimit, $localAddress, $remoteAddress);
+                $mikrotik->addPppProfile($this->package->mikrotik_profile, $rateLimit, $localAddress, $remoteAddress);
             }
         }
     }
