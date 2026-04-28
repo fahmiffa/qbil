@@ -48,7 +48,7 @@
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
                     @if($invoice->customer->user->photo)
-                        <img src="{{ Storage::url($invoice->customer->user->photo) }}" class="h-auto max-h-20 sm:max-h-28 w-auto max-w-[200px] sm:max-w-[300px] rounded-xl object-contain transition-all">
+                        <img src="{{ Storage::url($invoice->customer->user->photo) }}" class="h-16 w-16 rounded-2xl object-cover shadow-lg border border-slate-100 dark:border-slate-800">
                     @else
                         <div class="h-16 w-16 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                             <span class="text-2xl font-black text-white uppercase">{{ substr($invoice->customer->user->name, 0, 1) }}</span>
@@ -241,9 +241,9 @@
                 margin-top: 5px !important;
             }
 
-            .h-auto.max-h-20 {
-                max-height: 35px !important;
-                width: auto !important;
+            .h-16 {
+                height: 30px !important;
+                width: 30px !important;
             }
 
             .text-2xl {
