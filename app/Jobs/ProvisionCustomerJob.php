@@ -150,6 +150,7 @@ class ProvisionCustomerJob implements ShouldQueue
     {
         if ($customer->service_type === 'pppoe') {
             $mikrotik->disablePppSecret($customer->username);
+            $mikrotik->removePppActive($customer->username);
             if ($customer->ip_address) {
                 $mikrotik->addToAddressList($customer->ip_address, 'ISOLIR', 'Suspended: ' . $customer->name);
             }

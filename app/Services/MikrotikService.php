@@ -233,6 +233,18 @@ class MikrotikService
         }
     }
 
+    public function removePppActive(string $username): void
+    {
+        $query = (new Query('/ppp/active/print'))->where('name', $username);
+        $actives = $this->client->query($query)->read();
+        if (!empty($actives)) {
+            foreach ($actives as $active) {
+                $delQuery = (new Query('/ppp/active/remove'))->equal('.id', $active['.id']);
+                $this->client->query($delQuery)->read();
+            }
+        }
+    }
+
     public function getPppSecretByName(string $username): ?array
     {
         $query = (new Query('/ppp/secret/print'))->where('name', $username);

@@ -243,6 +243,19 @@ class CustomerManager extends Component
         $normMac = $this->mac_address ? strtoupper(trim(str_replace(['-', ' '], ':', $this->mac_address))) : null;
         $normIp  = $this->ip_address ? trim($this->ip_address) : null;
 
+        // Cek apakah username sudah ada di MikroTik (Adopsi/Sinkronisasi)
+        $isExistingOnMikrotik = false;
+        if ($this->service_type === 'pppoe' && auth()->user()->hasFeature('mikrotik') && $this->username) {
+            try {
+                $mk = $this->getMikrotikService();
+                if ($mk->getPppSecretByName($this->username)) {
+                    $isExistingOnMikrotik = true;
+                }
+            } catch (\Exception $e) {
+                // Abaikan error koneksi untuk pengecekan ini
+            }
+        }
+
         $data = [
             'id_pelanggan' => $this->id_pelanggan,
             'name'         => $this->name,
@@ -295,13 +308,24 @@ class CustomerManager extends Component
             } else {
                 $customer = Customer::create($data);
 
-                // Generate Invoice Pertama (untuk pendaftaran baru)
-                $firstInvoice = null;
-                try {
-                    $invoiceService = new \App\Services\InvoiceService();
-                    $firstInvoice = $invoiceService->generateForCustomer($customer, now()->format('Y-m'));
-                } catch (\Exception $e) {
-                    Log::error("Gagal generate invoice pertama untuk {$customer->name}: " . $e->getMessage());
+                // Jika data BELUM ada di MikroTik, jalankan alur pendaftaran baru (Invoice + Notif)
+                if (!$isExistingOnMikrotik) {
+                    // Generate Invoice Pertama (untuk pendaftaran baru)
+                    $firstInvoice = null;
+                    try {
+                        $invoiceService = new \App\Services\InvoiceService();
+                        $firstInvoice = $invoiceService->generateForCustomer($customer, now()->format('Y-m'));
+                    } catch (\Exception $e) {
+                        Log::error("Gagal generate invoice pertama untuk {$customer->name}: " . $e->getMessage());
+                    }
+
+                    // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
+                    \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
+
+                    // Dispatch Job untuk Notifikasi WhatsApp Tagihan (Invoice) Pertama
+                    if ($firstInvoice) {
+                        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($firstInvoice);
+                    }
                 }
 
                 // Dispatch Job untuk provisioning create
@@ -309,17 +333,8 @@ class CustomerManager extends Component
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
                 }
 
-
-                // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
-                \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
-
-                // Dispatch Job untuk Notifikasi WhatsApp Tagihan (Invoice) Pertama
-                if ($firstInvoice) {
-                    \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($firstInvoice);
-                }
-
-                // TRIAL 30 MENIT: Jika belum bayar dalam 30 menit, otomatis isolir
-                if (auth()->user()->hasFeature('mikrotik')) {
+                // TRIAL 30 MENIT: Jika belum bayar dalam 30 menit, otomatis isolir (Hanya untuk pendaftaran baru)
+                if (!$isExistingOnMikrotik && auth()->user()->hasFeature('mikrotik')) {
                     \App\Jobs\IsolateCustomerJob::dispatch($customer)->delay(now()->addMinutes(30));
                 }
 
