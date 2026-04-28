@@ -735,4 +735,82 @@ class MikrotikService
 
         return !empty($items);
     }
+
+    // -------------------------
+    // DB Synchronization
+    // -------------------------
+
+    public function syncPoolsToDb(): void
+    {
+        $this->clearCache();
+        $pools = $this->getIpPools();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($pools) {
+            \App\Models\IpPool::where('router_id', $this->router->id)->delete();
+            $data = [];
+            foreach ($pools as $pool) {
+                $data[] = [
+                    'user_id'    => $this->router->user_id,
+                    'router_id'  => $this->router->id,
+                    'name'       => $pool['name'],
+                    'address'    => $pool['ranges'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            if (!empty($data)) {
+                \App\Models\IpPool::insert($data);
+            }
+        });
+    }
+
+    public function syncDhcpServersToDb(): void
+    {
+        $this->clearCache();
+        $servers = $this->getDhcpServers();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($servers) {
+            \App\Models\DhcpServer::where('router_id', $this->router->id)->delete();
+            $data = [];
+            foreach ($servers as $server) {
+                $data[] = [
+                    'user_id'      => $this->router->user_id,
+                    'router_id'    => $this->router->id,
+                    'name'         => $server['name'] ?? 'unknown',
+                    'interface'    => $server['interface'] ?? 'unknown',
+                    'address_pool' => $server['address-pool'] ?? 'none',
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
+                ];
+            }
+            if (!empty($data)) {
+                \App\Models\DhcpServer::insert($data);
+            }
+        });
+    }
+
+    public function syncPppProfilesToDb(): void
+    {
+        $this->clearCache();
+        $profiles = $this->getPppProfiles();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($profiles) {
+            \App\Models\PppProfile::where('router_id', $this->router->id)->delete();
+            $data = [];
+            foreach ($profiles as $profile) {
+                $data[] = [
+                    'user_id'        => $this->router->user_id,
+                    'router_id'      => $this->router->id,
+                    'name'           => $profile['name'] ?? 'unknown',
+                    'local_address'  => $profile['local-address'] ?? null,
+                    'remote_address' => $profile['remote-address'] ?? null,
+                    'rate_limit'     => $profile['rate-limit'] ?? null,
+                    'only_one'       => $profile['only-one'] ?? 'yes',
+                    'dns_server'     => $profile['dns-server'] ?? null,
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ];
+            }
+            if (!empty($data)) {
+                \App\Models\PppProfile::insert($data);
+            }
+        });
+    }
 }

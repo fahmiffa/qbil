@@ -54,7 +54,7 @@ class CustomerManager extends Component
         if ($this->filterService) {
             $query->where('service_type', $this->filterService);
         }
-        
+
         if ($this->filterStatus) {
             $query->where('status', $this->filterStatus);
         }
@@ -103,6 +103,12 @@ class CustomerManager extends Component
     {
         $this->resetInputFields();
         $this->generateIdPelanggan();
+
+        // Sync Network Resources via Job (Background)
+        if (auth()->user()->hasFeature('mikrotik') && auth()->user()->router) {
+            \App\Jobs\SyncMikrotikResourcesJob::dispatch(auth()->user());
+        }
+
         $this->openModal();
     }
 
@@ -228,9 +234,10 @@ class CustomerManager extends Component
             'password'     => 'required_if:service_type,pppoe|nullable|string|max:100',
             'ppp_profile'  => 'nullable|string|max:100',
             'service_type' => 'required|in:static,pppoe',
-            'ip_address'   => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
-            'mac_address'  => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50|regex:/^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$/',
-            'dhcp_server'  => (auth()->user()->hasFeature('mikrotik') ? 'required_if:service_type,static' : 'nullable') . '|nullable|string|max:50',
+            'ip_address'   => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50' : 'nullable',
+            'mac_address'  => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50|regex:/^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$/' : 'nullable',
+            'dhcp_server'  => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50' : 'nullable',
+            'latitude'     => 'nullable|string|max:50',
             'latitude'     => 'nullable|string|max:50',
             'longitude'    => 'nullable|string|max:50',
             'package_id'   => 'nullable|exists:packages,id',
@@ -306,7 +313,7 @@ class CustomerManager extends Component
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
                 }
 
-                
+
                 // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
                 \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
 
@@ -385,11 +392,11 @@ class CustomerManager extends Component
             // Atau DispatchSync jika ingin sinkron.
             // Tapi user minta "Job saja", jadi saya asumsikan async. 
             // Saya akan pass array data ke Job daripada model jika ingin hapus DB segera.
-            
+
             // Pilihan terbaik: Soft delete atau DispatchSync. 
             // Namun di sistem billing ini sepertinya tidak ada soft delete.
             // Saya akan dispatch job dengan data yang dibutuhkan.
-            
+
             if (auth()->user()->hasFeature('mikrotik')) {
                 \App\Jobs\ProvisionCustomerJob::dispatchSync($customer, 'delete');
             }

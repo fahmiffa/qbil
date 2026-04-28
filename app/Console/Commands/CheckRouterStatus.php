@@ -41,7 +41,6 @@ class CheckRouterStatus extends Command
 
 
             if ($loop) {
-                // $this->info('Router status check dispatched. Sleeping for 60 seconds...');
                 sleep(60);
             }
         } while ($loop);

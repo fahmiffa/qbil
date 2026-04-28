@@ -14,14 +14,8 @@ Schedule::command('invoice:remind')->hourly();
 Schedule::command('billing:check-due')->hourly();
 
 
-// Sync IP Pools from Mikrotik. Handled by Supervisor in Production.
-// Schedule::command('mikrotik:sync-pools --loop')->everyMinute()->withoutOverlapping();
-
-// Sync DHCP Servers from Mikrotik. Handled by Supervisor in Production.
-// Schedule::command('mikrotik:sync-dhcp --loop')->everyMinute()->withoutOverlapping();
-
-// Sync PPP Profiles from Mikrotik. Handled by Supervisor in Production.
-// Schedule::command('mikrotik:sync-ppp-profiles --loop')->everyMinute()->withoutOverlapping();
+// Sync network resources is now handled on-demand via SyncMikrotikResourcesJob
+// triggered when opening the add customer modal in CustomerManager.
 
 // Check Router Connection Status. Handled by Supervisor in Production.
 // Schedule::command('router:check-status --loop')->everyMinute()->withoutOverlapping();
