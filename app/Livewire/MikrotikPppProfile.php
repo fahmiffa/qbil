@@ -55,8 +55,8 @@ class MikrotikPppProfile extends Component
             // Get IP Pools from Mikrotik (Cached)
             $this->ip_pools = Cache::remember("mk_pools_{$routerId}", 300, fn() => $mikrotik->getIpPools());
 
-            // Get PPP Profiles from local DB (Synced from Mikrotik)
-            $allM = \App\Models\PppProfile::where('user_id', auth()->id())->get()->toArray();
+            // Get PPP Profiles from Mikrotik (Cached)
+            $allM = Cache::remember("mk_ppp_profiles_{$routerId}", 300, fn() => $mikrotik->getPppProfiles());
             
             $this->mikrotik_profiles_list = collect($allM)
                 ->filter(fn($p) => !in_array(strtolower($p['name'] ?? ''), ['default', 'default-encryption']))

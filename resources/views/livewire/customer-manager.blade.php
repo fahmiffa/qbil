@@ -249,17 +249,6 @@
                                                         <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Konfigurasi PPPoE</p>
                                                     </div>
 
-                                                    <div class="sm:col-span-2">
-                                                        <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Profile Mikrotik</label>
-                                                        <select wire:model="ppp_profile" class="w-full bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                                                            <option value="">-- Default Paket --</option>
-                                                            @foreach($pppProfiles as $profile)
-                                                                <option value="{{ $profile['name'] }}">{{ $profile['name'] }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        @error('ppp_profile') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
-                                                    </div>
-
                                                     <div>
                                                         <label class="block text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Username PPPoE</label>
                                                         <input type="text" wire:model="username" placeholder="user@ebilling"

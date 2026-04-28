@@ -20,7 +20,7 @@ class CustomerManager extends Component
     use WithPagination;
 
     public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'active', $customer_id, $due_date;
-    public $package_id, $ppp_profile, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
+    public $package_id, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $latitude, $longitude;
     public $asset_id;
@@ -82,7 +82,6 @@ class CustomerManager extends Component
         if ($this->isOpen) {
             $this->ipPools = IpPool::where('user_id', auth()->id())->get()->toArray();
             $this->dhcpServers = DhcpServer::where('user_id', auth()->id())->get()->toArray();
-            $this->pppProfiles = PppProfile::where('user_id', auth()->id())->get()->toArray();
         }
 
         // Assets dikelompokkan per kategori untuk dropdown
@@ -232,12 +231,10 @@ class CustomerManager extends Component
             'due_date'     => 'nullable|date',
             'username'     => 'required_if:service_type,pppoe|nullable|string|max:100',
             'password'     => 'required_if:service_type,pppoe|nullable|string|max:100',
-            'ppp_profile'  => 'nullable|string|max:100',
             'service_type' => 'required|in:static,pppoe',
             'ip_address'   => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50' : 'nullable',
             'mac_address'  => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50|regex:/^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$/' : 'nullable',
             'dhcp_server'  => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50' : 'nullable',
-            'latitude'     => 'nullable|string|max:50',
             'latitude'     => 'nullable|string|max:50',
             'longitude'    => 'nullable|string|max:50',
             'package_id'   => 'nullable|exists:packages,id',
@@ -255,7 +252,6 @@ class CustomerManager extends Component
             'status'       => $this->status,
             'due_date'     => $this->due_date ?: null,
             'package_id'   => $this->package_id ?: null,
-            'ppp_profile'  => $this->ppp_profile ?: null,
             'username'     => $this->username ?: null,
             'password'     => $this->password ?: null,
             'service_type' => $this->service_type,
@@ -365,7 +361,6 @@ class CustomerManager extends Component
         $this->status       = $customer->status;
         $this->due_date     = $customer->due_date ? $customer->due_date->format('Y-m-d') : '';
         $this->package_id   = $customer->package_id;
-        $this->ppp_profile  = $customer->ppp_profile;
         $this->username     = $customer->username;
         $this->password     = $customer->password;
         $this->service_type = $customer->service_type;
