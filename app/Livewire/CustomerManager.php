@@ -308,8 +308,10 @@ class CustomerManager extends Component
             } else {
                 $customer = Customer::create($data);
 
-                // Jika data BELUM ada di MikroTik, jalankan alur pendaftaran baru (Invoice + Notif)
-                if (!$isExistingOnMikrotik) {
+                $isPascaBayar = auth()->user()->hasFeature('pasca');
+
+                // Jika data BELUM ada di MikroTik DAN bukan pasca bayar, jalankan alur pra bayar (Invoice + Notif)
+                if (!$isExistingOnMikrotik && !$isPascaBayar) {
                     // Generate Invoice Pertama (untuk pendaftaran baru)
                     $firstInvoice = null;
                     try {
@@ -333,13 +335,16 @@ class CustomerManager extends Component
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
                 }
 
-                // TRIAL 30 MENIT: Jika belum bayar dalam 30 menit, otomatis isolir (Hanya untuk pendaftaran baru)
-                if (!$isExistingOnMikrotik && auth()->user()->hasFeature('mikrotik')) {
+                // TRIAL 30 MENIT: Hanya untuk pra bayar + pendaftaran baru
+                if (!$isExistingOnMikrotik && !$isPascaBayar && auth()->user()->hasFeature('mikrotik')) {
                     \App\Jobs\IsolateCustomerJob::dispatch($customer)->delay(now()->addMinutes(30));
                 }
 
-
-                session()->flash('message', 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
+                if ($isPascaBayar) {
+                    session()->flash('message', 'Pelanggan berhasil ditambahkan (Pasca Bayar — tanpa invoice dan notifikasi).');
+                } else {
+                    session()->flash('message', 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
+                }
             }
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal Memproses Data: ' . $e->getMessage());
