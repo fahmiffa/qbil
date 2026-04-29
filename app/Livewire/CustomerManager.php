@@ -341,7 +341,7 @@ class CustomerManager extends Component
                 }
 
                 if ($isPascaBayar) {
-                    session()->flash('message', 'Pelanggan berhasil ditambahkan (Pasca Bayar — tanpa invoice dan notifikasi).');
+                    session()->flash('message', 'Pelanggan berhasil ditambahkan');
                 } else {
                     session()->flash('message', 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
                 }
