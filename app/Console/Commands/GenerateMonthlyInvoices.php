@@ -26,7 +26,8 @@ class GenerateMonthlyInvoices extends Command
      */
     public function handle(): void
     {
-        $period = $this->argument('period') ?: now()->format('Y-m');
+        // Kosongkan default period agar Job bisa menghitung dinamis (bulan depan/bulan ini)
+        $period = $this->argument('period') ?: '';
 
         GenerateMonthlyInvoicesJob::dispatch($period);
 
