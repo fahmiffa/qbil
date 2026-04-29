@@ -99,11 +99,12 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 if ($calculatedDueDate->format('d') !== $dueDay) {
                     continue;
                 }
-                Log::info("[customer: {$user->name} {$customer->name} {$customer->due_date}  {$customer->status}]");
-
+                
                 // Tentukan periode billing berdasarkan tanggal jatuh tempo yang dihitung
                 $targetPeriod = $this->period ?: $calculatedDueDate->format('Y-m');
-
+                
+                Log::info("[customer: {$user->name} {$customer->name} {$customer->due_date}  {$targetPeriod}]");
+                
                 try {
                     $invoiceService = new \App\Services\InvoiceService();
                     $invoice = $invoiceService->generateForCustomer($customer, $targetPeriod);
