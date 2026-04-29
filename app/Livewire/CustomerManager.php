@@ -95,7 +95,7 @@ class CustomerManager extends Component
             'packages'      => $packages,
             'allPackages'   => $allPackages,
             'groupedAssets' => $groupedAssets,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['header' => 'Pelanggan']);
     }
 
     public function create()

@@ -10,34 +10,48 @@
             margin: 0; 
         }
         body { 
-            width: 54mm; /* Slightly smaller than 58mm to account for margins */
-            margin: 0 auto; 
-            padding: 2mm;
+            width: 58mm;
+            margin: 0; 
+            padding: 3mm;
             font-family: 'Courier New', Courier, monospace;
             font-size: 11px;
-            line-height: 1.2;
+            line-height: 1.1;
             color: #000;
+            background-color: #fff;
+            -webkit-print-color-adjust: exact;
         }
         .center { text-align: center; }
         .right { text-align: right; }
+        .left { text-align: left; }
         .bold { font-weight: bold; }
-        .border-top { border-top: 1px dashed #000; margin-top: 4px; padding-top: 4px; }
-        .border-bottom { border-bottom: 1px dashed #000; margin-bottom: 4px; padding-bottom: 4px; }
+        .uppercase { text-transform: uppercase; }
+        
+        /* High contrast solid borders for thermal sharpness */
+        .border-top { border-top: 1px solid #000; margin-top: 6px; padding-top: 4px; }
+        .border-bottom { border-bottom: 1px solid #000; margin-bottom: 6px; padding-bottom: 4px; }
+        .border-double { border-top: 3px double #000; margin-top: 6px; padding-top: 4px; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 4px; margin-bottom: 4px; }
+        th { font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px; }
+        td { padding: 2px 0; vertical-align: top; }
+        
         .mb-1 { margin-bottom: 4px; }
         .mb-2 { margin-bottom: 8px; }
+        
         .status-badge {
             display: inline-block;
-            padding: 2px 6px;
-            border: 1px solid #000;
-            font-size: 10px;
-            margin-top: 4px;
+            padding: 3px 10px;
+            border: 2px solid #000;
+            font-size: 12px;
+            margin-top: 8px;
+            font-weight: 900;
         }
-        .footer { font-size: 9px; margin-top: 10px; }
+        .footer { font-size: 9px; margin-top: 12px; line-height: 1.3; }
+        .logo-text { font-size: 16px; letter-spacing: 1px; }
     </style>
 </head>
 <body onload="window.print(); setTimeout(window.close, 500);">
-    <div class="center bold mb-1" style="font-size: 14px;">
+    <div class="center bold mb-1 logo-text uppercase">
         {{ $invoice->customer->user->name }}
     </div>
     @if($invoice->customer->user->appSetting->address)
@@ -46,18 +60,18 @@
     </div>
     @endif
 
-    <div class="border-top">
+    <div class="border-top uppercase" style="font-size: 10px;">
         ID Pel : {{ $invoice->customer->id_pelanggan }}<br>
         Nama   : {{ $invoice->customer->name }}<br>
-        Invoice: {{ $invoice->invoice_number }}<br>
-        Tanggal: {{ $invoice->created_at->format('d/m/Y H:i') }}
+        Inv    : {{ $invoice->invoice_number }}<br>
+        Tgl    : {{ $invoice->created_at->format('d/m/y H:i') }}
     </div>
 
     <table class="border-top">
         <thead>
             <tr>
-                <th class="left" style="text-align: left;">LAYANAN</th>
-                <th class="right">TOTAL</th>
+                <th class="left uppercase">Layanan</th>
+                <th class="right uppercase">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -86,8 +100,8 @@
     </table>
 
     <div class="center border-top">
-        <div class="status-badge bold">
-            {{ $invoice->status === 'paid' ? 'LUNAS' : 'BELUM BAYAR' }}
+        <div class="status-badge uppercase">
+            {{ $invoice->status === 'paid' ? 'LUNAS' : 'BELUM LUNAS' }}
         </div>
     </div>
 

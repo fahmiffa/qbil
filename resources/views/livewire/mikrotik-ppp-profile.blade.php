@@ -1,8 +1,4 @@
 <div>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">PPP Profile</h2>
-    </x-slot>
-
     <div class="w-full">
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-slate-700 transition-colors">
             <div class="p-4 sm:p-6">

@@ -250,6 +250,6 @@ class MikrotikPppProfile extends Component
     public function render()
     {
         return view('livewire.mikrotik-ppp-profile')
-            ->layout('layouts.app', ['header' => 'PPP Profile']);
+            ->layout('layouts.app', ['header' => 'PPPOE']);
     }
 }

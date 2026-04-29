@@ -1,11 +1,4 @@
 <div>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ auth()->user()->hasFeature('mikrotik') ? __('Master Paket Static') : __('Master Paket') }}
-        </h2>
-    </x-slot>
-
-
     <div class="w-full">
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-slate-700 transition-colors">
             <div class="p-4 sm:p-6 text-gray-900 dark:text-gray-100">

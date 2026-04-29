@@ -1,10 +1,4 @@
 <div>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Pelanggan') }}
-        </h2>
-    </x-slot>
-
     <div class="w-full">
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg transition-colors">
             <div class="p-4 sm:p-6 text-gray-900 dark:text-gray-100">
@@ -281,7 +275,18 @@
                                                     <!-- Row 1: MAC Address | DHCP Server -->
                                                     <div>
                                                         <label class="block text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-2">MAC Address</label>
-                                                        <input type="text" wire:model="mac_address" placeholder="00:00:00:00:00:00"
+                                                        <input type="text" 
+                                                            oninput="
+                                                                let val = this.value.toUpperCase().replace(/[^0-9A-F]/g, '');
+                                                                let formatted = '';
+                                                                for(let i=0; i<val.length && i<12; i++) {
+                                                                    if(i > 0 && i % 2 === 0) formatted += ':';
+                                                                    formatted += val[i];
+                                                                }
+                                                                this.value = formatted;
+                                                                this.dispatchEvent(new Event('input'));
+                                                            "
+                                                            wire:model="mac_address" placeholder="00:00:00:00:00:00"
                                                             class="w-full bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono uppercase">
                                                         @error('mac_address') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                                     </div>

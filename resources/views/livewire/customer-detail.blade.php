@@ -1,9 +1,6 @@
 <div>
     <x-slot name="header">
         <div class="flex items-center gap-3">
-            <a href="{{ route('customers') }}" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </a>
             <div>
                 <h2 class="font-black text-xl text-slate-800 dark:text-white tracking-tight">Detail Pelanggan</h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">{{ $customer->id_pelanggan }}</p>

@@ -23,7 +23,7 @@ class StaticPackageManager extends Component
             ->paginate(10);
             
         return view('livewire.static-package-manager', ['packages' => $packages])
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['header' => 'Static']);
     }
 
     public function create()

@@ -124,6 +124,6 @@ class DashboardReport extends Component
             'stats' => $stats,
             'serviceBreakdown' => $serviceBreakdown,
             'mapData' => $mapData
-        ])->layout('layouts.app', ['header' => 'Ringkasan Laporan']);
+        ])->layout('layouts.app', ['header' => 'Dashboard']);
     }
 }

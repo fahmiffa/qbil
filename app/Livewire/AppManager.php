@@ -147,6 +147,6 @@ class AppManager extends Component
     public function render()
     {
         return view('livewire.app-manager')
-            ->layout('layouts.app', ['header' => 'Pengaturan Aplikasi']);
+            ->layout('layouts.app', ['header' => 'Pengaturan']);
     }
 }

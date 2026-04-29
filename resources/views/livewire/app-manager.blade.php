@@ -1,8 +1,4 @@
 <div>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">Pengaturan Aplikasi</h2>
-    </x-slot>
-
     <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-2xl border border-slate-100 dark:border-slate-700 transition-colors">
             <div class="p-6 border-b border-gray-200 dark:border-slate-700">

@@ -1,6 +1,6 @@
 <div>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">Manajemen Invoice</h2>
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">Invoice</h2>
     </x-slot>
 
     <div class="w-full">

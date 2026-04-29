@@ -1,6 +1,6 @@
 <div>
     <x-slot name="header">
-        <h2 class="font-black text-2xl text-slate-800 dark:text-white tracking-tight">Daftar Piutang (Hutang) Pelanggan</h2>
+        <h2 class="font-black text-2xl text-slate-800 dark:text-white tracking-tight">Piutang</h2>
     </x-slot>
 
     <div class="py-6">
