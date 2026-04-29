@@ -93,6 +93,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 $originalDueDate = Carbon::parse($customer->due_date);
                 $dueDay = $originalDueDate->format('d');
                 
+                 Log::info("[customer: {$customer->name} {$customer->due_date}  {$customer->status}]");
                 // Hitung kapan jatuh tempo seharusnya jika invoice digenerate hari ini
                 $calculatedDueDate = $now->copy()->subDays($offsetDays);
 
