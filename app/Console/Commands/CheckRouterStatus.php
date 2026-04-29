@@ -45,6 +45,5 @@ class CheckRouterStatus extends Command
             }
         } while ($loop);
 
-        $this->info('Router status check jobs dispatched successfully.');
     }
 }
