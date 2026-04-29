@@ -74,11 +74,11 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            if (!$customer->due_date) {
+            if (!$invoice->due_date) {
                 continue;
             }
 
-            $dueDate = Carbon::parse($customer->due_date);
+            $dueDate = Carbon::parse($invoice->due_date);
             $shouldSend = false;
 
             // Logika Notifikasi Pertama
