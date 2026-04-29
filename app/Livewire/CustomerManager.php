@@ -33,6 +33,7 @@ class CustomerManager extends Component
     public $filterPackage = '';
     public $filterService = '';
     public $filterStatus = '';
+    public $filterDueDate = '';
     public $perPage = 10;
     public $isOpen = false;
 
@@ -57,6 +58,10 @@ class CustomerManager extends Component
 
         if ($this->filterStatus) {
             $query->where('status', $this->filterStatus);
+        }
+
+        if ($this->filterDueDate) {
+            $query->whereDay('due_date', $this->filterDueDate);
         }
 
         $totalCount = $query->count();
@@ -140,6 +145,11 @@ class CustomerManager extends Component
     }
 
     public function updatedFilterStatus()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterDueDate()
     {
         $this->resetPage();
     }

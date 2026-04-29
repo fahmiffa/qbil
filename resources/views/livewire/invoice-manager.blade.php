@@ -32,11 +32,11 @@
                     <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         <div class="flex items-center gap-2">
                              <select wire:model.live="perPage" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                                <option value="10">10 Baris</option>
-                                <option value="50">50 Baris</option>
-                                <option value="100">100 Baris</option>
-                                <option value="1000">1000 Baris</option>
-                                <option value="all">Semua</option>
+                                <option value="10">Tampil 10</option>
+                                <option value="50">Tampil 50</option>
+                                <option value="100">Tampil 100</option>
+                                <option value="1000">Tampil 1000</option>
+                                <option value="all">Tampil Semua</option>
                             </select>
                         </div>
 

@@ -49,10 +49,10 @@
                         <!-- Show per page -->
                         <div class="relative w-full sm:w-32">
                             <select wire:model.live="perPage" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
-                                <option value="10">Show 10</option>
-                                <option value="50">Show 50</option>
-                                <option value="100">Show 100</option>
-                                <option value="all">Show All</option>
+                                <option value="10">Tampil 10</option>
+                                <option value="50">Tampil 50</option>
+                                <option value="100">Tampil 100</option>
+                                <option value="all">Tampil Semua</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -93,6 +93,19 @@
                                 <option value="">Semua Status</option>
                                 <option value="active">ACTIVE</option>
                                 <option value="suspended">SUSPENDED</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+
+                        <!-- Filter Jatuh Tempo -->
+                        <div class="relative w-full sm:w-40">
+                            <select wire:model.live="filterDueDate" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
+                                <option value="">Semua Tanggal</option>
+                                @for($i = 1; $i <= 31; $i++)
+                                    <option value="{{ $i }}">Tanggal {{ $i }}</option>
+                                @endfor
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
