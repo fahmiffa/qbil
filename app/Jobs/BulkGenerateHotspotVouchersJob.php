@@ -96,6 +96,14 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
             }
 
             Log::info("[BulkGenerateHotspotVouchersJob] Successfully generated {$this->quantity} vouchers.");
+
+            // 3. Send WhatsApp Notification if it's an order
+            if ($this->voucherOrderId) {
+                $order = VoucherOrder::find($this->voucherOrderId);
+                if ($order) {
+                    SendVoucherOrderWhatsappJob::dispatch($order);
+                }
+            }
         } catch (\Exception $e) {
             Log::error("[BulkGenerateHotspotVouchersJob] Error: " . $e->getMessage());
         }
