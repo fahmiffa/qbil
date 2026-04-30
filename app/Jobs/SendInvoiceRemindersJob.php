@@ -66,7 +66,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $customer   = $invoice->customer;
             $user       = $customer->user;
             
-            if ($user && !$user->hasFeature('whatsapp')) {
+            if (!$user || !$user->hasFeature('whatsapp')) {
                 continue;
             }
 
@@ -141,7 +141,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $userSentCounts[$userId]['count']++;
 
             // Notify admin about each reminder sent
-            $u->notify(new \App\Notifications\SystemReportNotification(
+            $user->notify(new \App\Notifications\SystemReportNotification(
                 'Pengingat Terkirim',
                 "Pengingat tagihan dikirim ke {$customer->name}. Isi pesan: \"" . Str::limit($message, 50) . "\"",
                 'notif'

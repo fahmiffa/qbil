@@ -124,6 +124,10 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                             'invoice'
                         ));
                     }
+                } catch (\Exception $e) {
+                    Log::error("[GenerateMonthlyInvoicesJob] Gagal generate invoice untuk {$customer->name}: " . $e->getMessage());
+                }
+            }
         }
 
         Log::info("[GenerateMonthlyInvoicesJob] Selesai. Total invoice dibuat: {$totalGenerated}");
