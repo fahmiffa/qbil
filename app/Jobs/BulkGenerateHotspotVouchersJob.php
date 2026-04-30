@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\HotspotUser;
 use App\Models\Router;
 use App\Models\Package;
+use App\Models\VoucherOrder;
 use App\Services\MikrotikService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,7 +30,8 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
     public function __construct(
         public int $userId,
         public int $packageId,
-        public int $quantity
+        public int $quantity,
+        public ?int $voucherOrderId = null
     ) {}
 
     /**
@@ -76,16 +78,21 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                 }
                 
                 // 1. Save to Database
-                $hotspotUser = HotspotUser::create([
-                    'user_id'    => $this->userId,
-                    'username'   => $code,
-                    'password'   => $code,
-                    'profile'    => $profile,
-                    'package_id' => $this->packageId,
+                HotspotUser::create([
+                    'user_id'          => $this->userId,
+                    'username'         => $code,
+                    'password'         => $code,
+                    'profile'          => $profile,
+                    'package_id'       => $this->packageId,
+                    'voucher_order_id' => $this->voucherOrderId,
                 ]);
 
                 // 2. Provision to Mikrotik
-                $mikrotik->addHotspotUser($code, $code, $profile, 'ebilling');
+                try {
+                    $mikrotik->addHotspotUser($code, $code, $profile, 'order-' . $this->voucherOrderId);
+                } catch (\Exception $e) {
+                    Log::error("[BulkGenerateHotspotVouchersJob] MikroTik Provisioning Error: " . $e->getMessage());
+                }
             }
 
             Log::info("[BulkGenerateHotspotVouchersJob] Successfully generated {$this->quantity} vouchers.");

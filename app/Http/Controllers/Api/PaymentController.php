@@ -5,6 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\Invoice;
+use App\Models\VoucherOrder;
+use App\Jobs\BulkGenerateHotspotVouchersJob;
+use App\Jobs\RemoveIsolirJob;
+use App\Jobs\SendManualInvoiceWhatsappJob;
 
 class PaymentController extends Controller
 {
@@ -34,7 +39,7 @@ class PaymentController extends Controller
         preg_match_all('/(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)/', $textToParse, $matches);
         
         $verified = false;
-        $processedInvoice = null;
+        $processedItem = null;
 
         if (!empty($matches[1])) {
             foreach ($matches[1] as $matchedAmount) {
@@ -49,8 +54,9 @@ class PaymentController extends Controller
 
                 // Skip if there is no unique code (reads as 000) or nominal is too small
                 if ($nominal > 0 && $uniqueCode > 0) {
-                    // Match as primary against unique_code and total_amount
-                    $invoice = \App\Models\Invoice::where('status', 'unpaid')
+                    
+                    // 1. Check Standard Invoices
+                    $invoice = Invoice::where('status', 'unpaid')
                         ->where('unique_code', $uniqueCode)
                         ->where('total_amount', $nominal)
                         ->first();
@@ -63,15 +69,40 @@ class PaymentController extends Controller
 
                         Log::info("Auto-Verified Invoice ID: {$invoice->invoice_number} detected payment: Rp {$nominal} with unique code: {$uniqueCode}");
                         
-                        // Dispatch job untuk menghapus IP pelanggan dari address-list ISLOR di Mikrotik
-                        \App\Jobs\RemoveIsolirJob::dispatch($invoice->customer);
-
-                        // Dispatch job untuk mengirim notifikasi WhatsApp pembayaran (Lunas)
-                        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
+                        RemoveIsolirJob::dispatch($invoice->customer);
+                        SendManualInvoiceWhatsappJob::dispatch($invoice);
 
                         $verified = true;
-                        $processedInvoice = $invoice;
-                        break; // Stop after successfully matching & updating the invoice
+                        $processedItem = $invoice;
+                        break;
+                    }
+
+                    // 2. Check Voucher Orders
+                    // Note: VoucherOrder matches total_price + unique_amount
+                    $voucherOrder = VoucherOrder::where('payment_status', 'unpaid')
+                        ->where('unique_amount', $uniqueCode)
+                        ->whereRaw('(total_price + unique_amount) = ?', [$nominal])
+                        ->first();
+
+                    if ($voucherOrder) {
+                        $voucherOrder->update([
+                            'payment_status' => 'paid',
+                            'paid_at' => now(),
+                        ]);
+
+                        Log::info("Auto-Verified Voucher Order: {$voucherOrder->order_code} detected payment: Rp {$nominal} with unique code: {$uniqueCode}");
+
+                        // Dispatch Job for Generation & MikroTik Sync
+                        BulkGenerateHotspotVouchersJob::dispatch(
+                            $voucherOrder->user_id,
+                            $voucherOrder->package_id,
+                            $voucherOrder->quantity,
+                            $voucherOrder->id
+                        );
+
+                        $verified = true;
+                        $processedItem = $voucherOrder;
+                        break;
                     }
                 }
             }
@@ -79,13 +110,14 @@ class PaymentController extends Controller
 
         if ($verified) {
             return response()->json([
-                'message' => 'Payment verified and invoice updated automatically',
-                'data' => $processedInvoice
+                'message' => 'Payment verified and item updated automatically',
+                'type' => isset($processedItem->invoice_number) ? 'invoice' : 'voucher_order',
+                'data' => $processedItem
             ], 200);
         }
 
         return response()->json([
-            'message' => 'Payment notification received, but no matching unpaid invoice found.',
+            'message' => 'Payment notification received, but no matching unpaid item found.',
             'data' => $payload
         ], 200);
     }

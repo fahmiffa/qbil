@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\HotspotUser;
+use App\Jobs\BulkGenerateHotspotVouchersJob;
+use App\Jobs\ProvisionHotspotUserJob;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Str;
@@ -21,6 +23,11 @@ class HotspotManager extends Component
     // Selection
     public $selectedIds = [];
     public $selectAll = false;
+
+    protected $listeners = [
+        'confirmDelete' => 'delete',
+        'confirmBulkDelete' => 'deleteSelected'
+    ];
 
 
     public function mount()
@@ -144,7 +151,7 @@ class HotspotManager extends Component
 
             if ($this->type === 'voucher') {
                 // Dispatch Job untuk proses background (Insert DB + API Mikrotik)
-                \App\Jobs\BulkGenerateHotspotVouchersJob::dispatch(
+                BulkGenerateHotspotVouchersJob::dispatch(
                     auth()->id(),
                     $this->package_id,
                     (int) $this->quantity
@@ -174,7 +181,7 @@ class HotspotManager extends Component
                 }
 
                 // Dispatch Job untuk single user
-                \App\Jobs\ProvisionHotspotUserJob::dispatch($hotspotUser, $action, $oldUsername);
+                ProvisionHotspotUserJob::dispatch($hotspotUser, $action, $oldUsername);
                 session()->flash('message', 'User Hotspot berhasil disimpan.');
             }
 
@@ -198,19 +205,61 @@ class HotspotManager extends Component
         $this->openModal();
     }
 
+    public function requestDelete($id)
+    {
+        $this->dispatch('swal:confirm', [
+            'type' => 'warning',
+            'title' => 'Hapus User Hotspot?',
+            'text' => 'Data akan dihapus dari database dan MikroTik.',
+            'id' => $id,
+            'callback' => 'confirmDelete'
+        ]);
+    }
+
     public function delete($id)
     {
         try {
             $user = HotspotUser::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
-            
-            // Dispatch sync for delete to ensure it happens before DB record is gone 
-            // OR use dispatch and accept risk OR pass values
-            \App\Jobs\ProvisionHotspotUserJob::dispatchSync($user, 'delete');
-
+            ProvisionHotspotUserJob::dispatchSync($user, 'delete');
             $user->delete();
             session()->flash('message', 'User Hotspot dihapus.');
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
+        }
+    }
+
+    public function requestBulkDelete()
+    {
+        if (empty($this->selectedIds)) return;
+
+        $this->dispatch('swal:confirm', [
+            'type' => 'danger',
+            'title' => 'Hapus Masal?',
+            'text' => count($this->selectedIds) . ' data akan dihapus permanen dari database dan MikroTik.',
+            'id' => null,
+            'callback' => 'confirmBulkDelete'
+        ]);
+    }
+
+    public function deleteSelected()
+    {
+        if (empty($this->selectedIds)) return;
+
+        try {
+            $users = HotspotUser::whereIn('id', $this->selectedIds)
+                ->where('user_id', auth()->id())
+                ->get();
+
+            foreach ($users as $user) {
+                ProvisionHotspotUserJob::dispatchSync($user, 'delete');
+                $user->delete();
+            }
+
+            $this->selectedIds = [];
+            $this->selectAll = false;
+            session()->flash('message', 'Berhasil menghapus ' . count($users) . ' data.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal hapus masal: ' . $e->getMessage());
         }
     }
 }

@@ -13,6 +13,7 @@ class VoucherOrder extends Model
         'whatsapp',
         'quantity',
         'total_price',
+        'unique_amount',
         'payment_status',
         'paid_at',
     ];
@@ -25,5 +26,10 @@ class VoucherOrder extends Model
     public function package()
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function hotspotUsers()
+    {
+        return $this->hasMany(HotspotUser::class);
     }
 }

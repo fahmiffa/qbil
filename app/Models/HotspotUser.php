@@ -10,7 +10,7 @@ class HotspotUser extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'username', 'password', 'profile', 'package_id'
+        'user_id', 'username', 'password', 'profile', 'package_id', 'voucher_order_id'
     ];
 
     public function user()
@@ -21,5 +21,10 @@ class HotspotUser extends Model
     public function package()
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function voucherOrder()
+    {
+        return $this->belongsTo(VoucherOrder::class);
     }
 }

@@ -20,18 +20,25 @@
                         </div>
                     @endif
 
-                    <div class="flex justify-between items-center mb-4">
+                            <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center gap-2">
-                            <button wire:click="create()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            <button wire:click="create()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors shadow-lg shadow-blue-600/20">
                                 Tambah Hotspot
                             </button>
 
                             @if(count($selectedIds) > 0)
-                                <a href="{{ route('hotspot.print-vouchers', ['ids' => implode(',', $selectedIds)]) }}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                                <button wire:click="requestBulkDelete" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Hapus ({{ count($selectedIds) }})
+                                </button>
+                                
+                                <a href="{{ route('hotspot.print-vouchers', ['ids' => implode(',', $selectedIds)]) }}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                     </svg>
-                                    Cetak Voucher ({{ count($selectedIds) }})
+                                    Cetak ({{ count($selectedIds) }})
                                 </a>
                             @endif
                         </div>
@@ -148,7 +155,7 @@
                                         <button wire:click="edit({{ $hu->id }})" class="inline-flex items-center px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm">
                                             Edit
                                         </button>
-                                        <button wire:click="delete({{ $hu->id }})" wire:confirm="Yakin ingin menghapus user ini?" class="inline-flex items-center px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition-all shadow-sm text-sm">
+                                        <button wire:click="requestDelete({{ $hu->id }})" class="inline-flex items-center px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition-all shadow-sm text-sm">
                                             Hapus
                                         </button>
                                     </td>
@@ -168,3 +175,28 @@
         </div>
     </div>
 </div>
+
+<script>
+    window.addEventListener('swal:confirm', event => {
+        const data = event.detail[0];
+        Swal.fire({
+            title: data.title,
+            text: data.text,
+            icon: data.type,
+            showCancelButton: true,
+            confirmButtonColor: data.type === 'danger' ? '#ef4444' : '#2563eb',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Lanjutkan!',
+            cancelButtonText: 'Batal',
+            customClass: {
+                popup: 'rounded-[2rem]',
+                confirmButton: 'rounded-xl font-black uppercase tracking-widest text-[10px] px-6 py-3',
+                cancelButton: 'rounded-xl font-black uppercase tracking-widest text-[10px] px-6 py-3'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Livewire.dispatch(data.callback, { id: data.id });
+            }
+        });
+    });
+</script>

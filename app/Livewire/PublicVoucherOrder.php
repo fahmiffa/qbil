@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\User;
 use App\Models\Package;
+use App\Models\VoucherOrder;
 use App\Services\QrisLogic;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -23,7 +24,10 @@ class PublicVoucherOrder extends Component
     public $showCheckout = false;
     public $qris_payload;
     public $total_amount = 0;
+    public $unique_amount = 0;
+    public $final_amount = 0;
     public $selectedPackage;
+    public $orderCode;
 
     public function mount($uri)
     {
@@ -33,6 +37,20 @@ class PublicVoucherOrder extends Component
         $this->packages = Package::where('user_id', $this->user->id)
             ->where('tipe', 'hotspot')
             ->get();
+    }
+
+    public function increment()
+    {
+        $this->quantity++;
+        $this->calculateTotal();
+    }
+
+    public function decrement()
+    {
+        if ($this->quantity > 1) {
+            $this->quantity--;
+            $this->calculateTotal();
+        }
     }
 
     public function updatedSelectedPackageId($id)
@@ -74,23 +92,28 @@ class PublicVoucherOrder extends Component
         $appSetting = $this->user->appSetting;
         if ($appSetting && $appSetting->qr) {
             try {
+                // Generate Unique Nominal (Random 1-999)
+                $this->unique_amount = rand(1, 499); // Keeping it under 500 for fairness
+                $this->final_amount = $this->total_amount + $this->unique_amount;
+                
                 // Generate Unique Order Code (VCHR-timestamp-random)
-                $orderCode = 'VCHR-' . strtoupper(substr(uniqid(), -6)) . '-' . date('is');
+                $this->orderCode = 'VCHR-' . strtoupper(substr(uniqid(), -6)) . '-' . date('is');
 
                 // Create Order in Database
-                $order = \App\Models\VoucherOrder::create([
-                    'order_code' => $orderCode,
+                VoucherOrder::create([
+                    'order_code' => $this->orderCode,
                     'user_id' => $this->user->id,
                     'package_id' => $this->selectedPackageId,
                     'whatsapp' => $this->whatsapp,
                     'quantity' => $this->quantity,
                     'total_price' => $this->total_amount,
+                    'unique_amount' => $this->unique_amount,
                     'payment_status' => 'unpaid',
                 ]);
 
                 $this->qris_payload = QrisLogic::generateDynamicQris(
                     $appSetting->qr, 
-                    $this->total_amount
+                    $this->final_amount
                 );
                 $this->showCheckout = true;
             } catch (\Exception $e) {

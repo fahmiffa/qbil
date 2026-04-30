@@ -1,148 +1,174 @@
-<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
-    <!-- Header Branding -->
-    <div class="text-center mb-10">
-        @if($user->photo)
-            <img src="{{ Storage::url($user->photo) }}" alt="{{ $user->name }}" class="w-20 h-20 rounded-full mx-auto mb-4 shadow-lg border-2 border-white dark:border-slate-800">
-        @else
-            <div class="w-20 h-20 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                {{ substr($user->name, 0, 1) }}
-            </div>
-        @endif
-        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ $user->name }}</h1>
-        <p class="text-slate-500 dark:text-slate-400">Order Voucher WiFi Online</p>
-    </div>
-
-    @if (session()->has('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="text-sm font-medium">{{ session('error') }}</span>
-        </div>
-    @endif
-
-    @if(!$showCheckout)
-        <!-- Step 1: Selection & Input -->
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-blue-500/10 border border-slate-100 dark:border-slate-800 overflow-hidden">
-            <div class="p-6 sm:p-8 space-y-6">
-                <!-- Package Selection -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Pilih Paket Hotspot</label>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        @foreach($packages as $package)
-                            <label class="relative flex flex-col p-4 cursor-pointer rounded-2xl border-2 transition-all duration-200 {{ $selectedPackageId == $package->id ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-slate-700' }}">
-                                <input type="radio" wire:model.live="selectedPackageId" value="{{ $package->id }}" class="sr-only">
-                                <span class="text-lg font-bold text-slate-900 dark:text-white">{{ $package->name }}</span>
-                                <span class="text-blue-600 dark:text-blue-400 font-extrabold mt-1">Rp {{ number_format($package->price, 0, ',', '.') }}</span>
-                                <div class="mt-2 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    {{ $package->speed_upload }} / {{ $package->speed_download }}
-                                </div>
-                                @if($selectedPackageId == $package->id)
-                                    <div class="absolute top-3 right-3 text-blue-600">
-                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                    </div>
-                                @endif
-                            </label>
-                        @endforeach
-                    </div>
-                    @error('selectedPackageId') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                </div>
-
-                <!-- WhatsApp Input -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Nomor WhatsApp</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                            <span class="text-sm font-bold">+62</span>
-                        </div>
-                        <input type="text" wire:model="whatsapp" placeholder="8123456789" class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 dark:text-white transition-all text-lg font-medium">
-                    </div>
-                    <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 italic">Voucher akan dikirim otomatis ke nomor ini.</p>
-                    @error('whatsapp') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                </div>
-
-                <!-- Quantity -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Jumlah Voucher</label>
-                    <div class="flex items-center gap-4">
-                        <button type="button" wire:click="$set('quantity', Math.max(1, quantity - 1))" class="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
-                        </button>
-                        <input type="number" wire:model.live="quantity" class="w-20 text-center py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 dark:text-white text-lg font-bold">
-                        <button type="button" wire:click="$set('quantity', quantity + 1)" class="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        </button>
-                    </div>
-                    @error('quantity') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                </div>
-            </div>
-
-            <!-- Summary Footer -->
-            <div class="bg-slate-50 dark:bg-slate-900/50 p-6 sm:p-8 border-t border-slate-100 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-6">
-                    <span class="text-slate-500 dark:text-slate-400 font-medium text-lg">Total Bayar</span>
-                    <span class="text-3xl font-black text-blue-600 dark:text-blue-400">Rp {{ number_format($total_amount, 0, ',', '.') }}</span>
-                </div>
-                <button wire:click="checkout" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 text-lg group">
-                    Checkout Sekarang
-                    <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </button>
-            </div>
-        </div>
-    @else
-        <!-- Step 2: QRIS Checkout -->
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-blue-500/10 border border-slate-100 dark:border-slate-800 overflow-hidden text-center">
-            <div class="p-6 sm:p-8">
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Pembayaran QRIS</h2>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Scan QRIS di bawah untuk menyelesaikan pesanan</p>
-
-                <!-- QRIS Canvas -->
-                <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mb-6">
-                    @if($qris_payload)
-                        {!! QrCode::size(250)->generate($qris_payload) !!}
+<div class="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] py-8 px-4 flex flex-col items-center">
+    <div class="w-full max-w-md space-y-8">
+        
+        @if(!$showCheckout)
+            <!-- Header (Minimalist & Circle) -->
+            <div class="text-center animate-fade-in-down pt-4">
+                <div class="relative inline-block group">
+                    <div class="absolute inset-0 bg-blue-600 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                    @if($user->photo)
+                        <img src="{{ Storage::url($user->photo) }}" alt="{{ $user->name }}" class="relative w-24 h-24 rounded-full mx-auto shadow-2xl border-4 border-white dark:border-slate-800 object-cover">
                     @else
-                        <div class="w-[250px] h-[250px] bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-slate-400 italic">
-                            Gagal memuat QRIS
+                        <div class="relative w-24 h-24 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-full mx-auto flex items-center justify-center text-white text-3xl font-black shadow-2xl border-4 border-white dark:border-slate-800">
+                            {{ substr($user->name, 0, 1) }}
                         </div>
                     @endif
                 </div>
+                <h1 class="mt-6 text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">{{ $user->name }}</h1>
+                <p class="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-1">Order Voucher WiFi</p>
+            </div>
 
-                <div class="space-y-4 text-left bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-slate-500 dark:text-slate-400">Merchant</span>
-                        <span class="font-bold text-slate-900 dark:text-white">{{ \App\Services\QrisLogic::parseMerchantName($user->appSetting->qr ?? '') }}</span>
+            <!-- Package Selection (Horizontal Scroll) -->
+            <div class="space-y-4 pt-4">
+                <div class="flex items-center justify-between px-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Pilih Paket</label>
+                    <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest animate-pulse">Swipe &rsaquo;</span>
+                </div>
+                
+                <div class="flex overflow-x-auto pb-6 gap-4 no-scrollbar snap-x">
+                    @foreach($packages as $package)
+                        <div wire:click="$set('selectedPackageId', {{ $package->id }})" 
+                            class="flex-shrink-0 w-44 snap-center relative p-5 rounded-[2.5rem] border-2 transition-all duration-300 cursor-pointer {{ $selectedPackageId == $package->id ? 'border-blue-600 bg-white dark:bg-slate-800 shadow-xl shadow-blue-600/10' : 'border-white dark:border-slate-800/50 bg-white dark:bg-slate-900 shadow-sm' }}">
+                            
+                            <div class="w-10 h-10 bg-gradient-to-br {{ $selectedPackageId == $package->id ? 'from-blue-600 to-indigo-600' : 'from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700' }} rounded-2xl flex items-center justify-center text-white mb-4 transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+
+                            <h3 class="text-sm font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight truncate">{{ $package->name }}</h3>
+                            <p class="text-[10px] font-bold text-slate-400 mb-2">Up to {{ $package->speed_download }}</p>
+                            <span class="text-base font-black text-blue-600 dark:text-blue-400 tracking-tighter">Rp {{ number_format($package->price, 0, ',', '.') }}</span>
+
+                            @if($selectedPackageId == $package->id)
+                                <div class="absolute top-4 right-4 bg-blue-600 text-white p-1 rounded-full shadow-lg scale-90">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Main Input Card (Mobile Focused) -->
+            <div class="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl border border-white dark:border-slate-800 overflow-hidden relative animate-fade-in">
+                <div class="p-8 space-y-8 relative z-10">
+                    <!-- WhatsApp -->
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">WhatsApp (Format 08)</label>
+                        <input type="text" wire:model="whatsapp" 
+                            placeholder="081234567890" 
+                            class="w-full px-7 py-5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-blue-600 focus:bg-white dark:focus:bg-slate-800 rounded-[2rem] focus:ring-0 dark:text-white transition-all text-xl font-black tracking-wider placeholder:text-slate-300 dark:placeholder:text-slate-700 shadow-inner">
+                        @error('whatsapp') <span class="text-red-500 text-[9px] block font-black uppercase tracking-widest pl-4">{{ $message }}</span> @enderror
                     </div>
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-slate-500 dark:text-slate-400">Total Tagihan</span>
-                        <span class="font-black text-blue-600 dark:text-blue-400 text-lg">Rp {{ number_format($total_amount, 0, ',', '.') }}</span>
+
+                    <!-- Quantity -->
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Jumlah</label>
+                        <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-[2rem] shadow-inner">
+                            <button type="button" wire:click="decrement" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-slate-700 rounded-full shadow-md active:scale-90 transition-all text-slate-900 dark:text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M20 12H4"></path></svg>
+                            </button>
+                            <span class="text-2xl font-black text-slate-900 dark:text-white">{{ $quantity }}</span>
+                            <button type="button" wire:click="increment" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-slate-700 rounded-full shadow-md active:scale-90 transition-all text-slate-900 dark:text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M12 4v16m8-8H4"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Total & Checkout -->
+                    <div class="pt-6 border-t border-slate-50 dark:border-slate-800">
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <p class="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Total Bayar</p>
+                                <h4 class="text-3xl font-black text-blue-600 tracking-tighter leading-none">Rp {{ number_format($total_amount, 0, ',', '.') }}</h4>
+                            </div>
+                            <span class="text-[9px] bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-black uppercase italic shadow-sm">Verified</span>
+                        </div>
+                        <button wire:click="checkout" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4 text-xl group active:scale-[0.98]">
+                            Checkout
+                            <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </button>
                     </div>
                 </div>
+            </div>
+        @else
+            <!-- Step 2: Mobile Focused Checkout -->
+            <div class="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl border border-white dark:border-slate-800 overflow-hidden text-center animate-fade-in">
+                <div class="p-8 sm:p-10">
+                    <div class="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                        Secure Payment
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase tracking-wider">Aktivasi QRIS</h2>
 
-                <div class="mt-8 space-y-3">
-                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold mb-4 italic">Instruksi Pembayaran</p>
-                    <ul class="text-xs text-slate-500 dark:text-slate-400 text-left space-y-2 list-disc pl-4">
-                        <li>Buka aplikasi pembayaran (Gopay, OVO, Dana, LinkAja, atau Mobile Banking).</li>
-                        <li>Scan kode QR di atas.</li>
-                        <li>Pastikan jumlah pembayaran sesuai.</li>
-                        <li>Klik Bayar. Voucher akan dikirim via WhatsApp setelah verifikasi (Manual/Auto).</li>
-                    </ul>
-                </div>
+                    <!-- QR Wrapper -->
+                    <div class="relative inline-block mb-10 p-6 bg-white rounded-[3rem] shadow-2xl border border-slate-100">
+                        @if($qris_payload)
+                            {!! QrCode::size(240)->generate($qris_payload) !!}
+                        @else
+                            <div class="w-[240px] h-[240px] flex items-center justify-center">
+                                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        @endif
+                    </div>
 
-                <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-                    <button wire:click="back" class="text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-white transition-colors flex items-center justify-center gap-2 mx-auto">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    <!-- Compact Bill -->
+                    <div class="bg-blue-600 rounded-[2.5rem] p-6 text-white text-left shadow-lg mb-8 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 -mt-6 -mr-6 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
+                        <div class="relative z-10 space-y-3">
+                            <div class="flex justify-between items-center opacity-70">
+                                <span class="text-[9px] font-black uppercase tracking-widest">Order ID</span>
+                                <span class="text-xs font-black">{{ $orderCode }}</span>
+                            </div>
+                            <div class="h-px bg-white/10"></div>
+                            <div class="flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="text-[9px] font-black uppercase tracking-widest opacity-60">Total</span>
+                                    <span class="text-3xl font-black tracking-tighter leading-none">Rp {{ number_format($final_amount, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="text-[10px] font-black uppercase opacity-40">Verified</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Short Instructions -->
+                    <div class="space-y-3 text-left mb-10">
+                        <div class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                            <span class="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-[10px] font-black">01</span>
+                            <p class="text-[10px] text-slate-500 font-bold">Screenshot & bayar dengan E-Wallet Anda.</p>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                            <span class="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-[10px] font-black">02</span>
+                            <p class="text-[10px] text-slate-500 font-bold">Voucher otomatis dikirim via WhatsApp.</p>
+                        </div>
+                    </div>
+
+                    <button wire:click="back" class="text-slate-400 hover:text-blue-600 font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 mx-auto transition-all active:scale-95 group">
+                        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         Ganti Pesanan
                     </button>
                 </div>
             </div>
-        </div>
-    @endif
+        @endif
 
-    <!-- Footer Security -->
-    <div class="mt-10 text-center flex flex-col items-center gap-4">
-        <div class="flex items-center gap-4 opacity-30 grayscale contrast-125">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" class="h-6">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/GPN_Logo.svg" alt="GPN" class="h-6">
+        <!-- Minimal Footer -->
+        <div class="mt-8 text-center opacity-30">
+            <p class="text-[8px] text-slate-400 font-black uppercase tracking-[0.5em]">&copy; {{ date('Y') }} Secured by {{ $user->name }}</p>
         </div>
-        <p class="text-xs text-slate-400 font-medium">&copy; {{ date('Y') }} {{ config('app.name') }}. Secured by {{ $user->name }} Infrastructure.</p>
     </div>
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes fade-in-down {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .animate-fade-in-down { animation: fade-in-down 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .animate-fade-in { animation: fade-in 1s ease-out; }
+    </style>
 </div>
