@@ -86,7 +86,7 @@
 
         @if($notifications->count() > 0)
             <div class="p-3 border-t border-gray-100 dark:border-slate-700 bg-gray-50/30 dark:bg-slate-900/30">
-                <a href="#" class="block text-center text-xs font-semibold text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200">
+                <a href="{{ route('activities') }}" wire:navigate class="block text-center text-xs font-semibold text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200">
                     Lihat Semua Aktivitas
                 </a>
             </div>

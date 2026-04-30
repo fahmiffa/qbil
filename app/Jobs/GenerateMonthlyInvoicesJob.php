@@ -116,20 +116,14 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                     if ($invoice) {
                         $totalGenerated++;
                         $userGenerated++;
-                    }
-                } catch (\Exception $e) {
-                    Log::error("GenerateMonthlyInvoicesJob Error for customer {$customer->id}: " . $e->getMessage());
-                }
-            }
 
-            if ($userGenerated > 0) {
-                $msg = "Sistem berhasil membuat {$userGenerated} tagihan otomatis untuk periode {$lastTargetPeriod} pada jam {$configHour}:00.";
-                $user->notify(new \App\Notifications\SystemReportNotification(
-                    'Tagihan Otomatis Dibuat',
-                    $msg,
-                    'invoice'
-                ));
-            }
+                        // Notify admin about each generated invoice
+                        $user->notify(new \App\Notifications\SystemReportNotification(
+                            'Tagihan Dibuat',
+                            "Tagihan otomatis berhasil dibuat untuk pelanggan: {$customer->name} (Periode: {$targetPeriod}).",
+                            'invoice'
+                        ));
+                    }
         }
 
         Log::info("[GenerateMonthlyInvoicesJob] Selesai. Total invoice dibuat: {$totalGenerated}");

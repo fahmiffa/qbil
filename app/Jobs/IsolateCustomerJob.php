@@ -42,6 +42,15 @@ class IsolateCustomerJob implements ShouldQueue
                 
             if (!$hasUnpaid) {
                 Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan periode {$currentPeriod} sudah dibayar.");
+                
+                // Notify admin about cancellation
+                $user = $this->customer->user;
+                $user->notify(new \App\Notifications\SystemReportNotification(
+                    'Isolir Dibatalkan',
+                    "Isolir otomatis untuk {$this->customer->name} dibatalkan karena tagihan periode {$currentPeriod} telah lunas.",
+                    'notif'
+                ));
+
                 return;
             }
 
@@ -74,6 +83,13 @@ class IsolateCustomerJob implements ShouldQueue
                     'status' => 'suspended',
                     'isolated_at' => now(),
                 ]);
+
+                // Notify admin about successful isolation
+                $user->notify(new \App\Notifications\SystemReportNotification(
+                    'Pelanggan Terisolir',
+                    "Layanan pelanggan {$this->customer->name} telah diisolir otomatis karena tunggakan tagihan periode {$currentPeriod}",
+                    'notif'
+                ));
             }
 
         } catch (\Exception $e) {

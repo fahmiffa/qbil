@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Invoice;
 use App\Services\WhatsappService;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -139,20 +140,14 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             }
             $userSentCounts[$userId]['count']++;
 
-            $sentCount++;
-        }
-
-        foreach ($userSentCounts as $data) {
-            $u = $data['user'];
-            $c = $data['count'];
-            $h = $data['hour'];
-            
-            $msg = "Sistem berhasil mengirim {$c} pesan pengingat tagihan otomatis kepada pelanggan Anda pada jam {$h}:00.";
+            // Notify admin about each reminder sent
             $u->notify(new \App\Notifications\SystemReportNotification(
-                'Pengingat Tagihan Terkirim',
-                $msg,
+                'Pengingat Terkirim',
+                "Pengingat tagihan dikirim ke {$customer->name}. Isi pesan: \"" . Str::limit($message, 50) . "\"",
                 'notif'
             ));
+
+            $sentCount++;
         }
 
         Log::info("[SendInvoiceRemindersJob] Selesai. Total pengingat dikirim: {$sentCount}");

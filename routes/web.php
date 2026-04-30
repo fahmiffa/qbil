@@ -28,6 +28,7 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('app-settings', \App\Livewire\AppManager::class)->name('app-settings');
     Route::get('invoice', \App\Livewire\InvoiceManager::class)->name('invoice');
     Route::get('piutangs', \App\Livewire\PiutangManager::class)->name('piutangs');
+    Route::get('activities', \App\Livewire\Activities\ActivityLog::class)->name('activities');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)

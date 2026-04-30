@@ -67,23 +67,12 @@ class CheckDueInvoices extends Command
                 continue;
             }
 
-            $isolatedCount = 0;
             foreach ($customers as $customer) {
                 // Tambahan: Pastikan memang belum bayar tagihan di periode jatuh tempo tersebut
                 // Jika sudah bayar, status biasanya tetap active dan tidak masuk kriteria isolir.
                 
                 IsolateCustomerJob::dispatch($customer);
                 $this->line(" - Dispatching isolir: {$customer->name} (User: {$user->name})");
-                $isolatedCount++;
-            }
-
-            if ($isolatedCount > 0) {
-                $msg = "Sistem berhasil memicu isolir otomatis untuk {$isolatedCount} pelanggan yang menunggak pada jam {$configHour}:00.";
-                $user->notify(new \App\Notifications\SystemReportNotification(
-                    'Isolir Otomatis Dijalankan',
-                    $msg,
-                    'notif'
-                ));
             }
         }
 

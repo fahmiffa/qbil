@@ -217,6 +217,10 @@ new class extends Component
             </x-sidebar-link>
             @endif
 
+            <x-sidebar-link :href="route('activities')" :active="request()->routeIs('activities')" icon="clock">
+                Log Aktivitas
+            </x-sidebar-link>
+
             <x-sidebar-link :href="route('profile')" :active="request()->routeIs('profile')" icon="user">
                 Profile
             </x-sidebar-link>
