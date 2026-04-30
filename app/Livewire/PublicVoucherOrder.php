@@ -74,13 +74,27 @@ class PublicVoucherOrder extends Component
         $appSetting = $this->user->appSetting;
         if ($appSetting && $appSetting->qr) {
             try {
+                // Generate Unique Order Code (VCHR-timestamp-random)
+                $orderCode = 'VCHR-' . strtoupper(substr(uniqid(), -6)) . '-' . date('is');
+
+                // Create Order in Database
+                $order = \App\Models\VoucherOrder::create([
+                    'order_code' => $orderCode,
+                    'user_id' => $this->user->id,
+                    'package_id' => $this->selectedPackageId,
+                    'whatsapp' => $this->whatsapp,
+                    'quantity' => $this->quantity,
+                    'total_price' => $this->total_amount,
+                    'payment_status' => 'unpaid',
+                ]);
+
                 $this->qris_payload = QrisLogic::generateDynamicQris(
                     $appSetting->qr, 
                     $this->total_amount
                 );
                 $this->showCheckout = true;
             } catch (\Exception $e) {
-                session()->flash('error', 'Gagal membuat kode pembayaran: ' . $e->getMessage());
+                session()->flash('error', 'Gagal membuat pesanan: ' . $e->getMessage());
             }
         } else {
             session()->flash('error', 'Metode pembayaran QRIS belum dikonfigurasi oleh penjual.');
