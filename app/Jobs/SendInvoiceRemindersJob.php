@@ -82,25 +82,43 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 
             $dueDate = Carbon::parse($invoice->due_date);
             $shouldSend = false;
+            $reminderType = null;
 
             // Logika Notifikasi Pertama
             $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days);
             $r1Hour = Carbon::parse($appSetting->reminder_1_time)->format('H');
             
-            if ($now->isSameDay($r1Date) && $currentHour == $r1Hour) {
-                $shouldSend = true;
+            if ($now->isSameDay($r1Date) && $currentHour >= $r1Hour) {
+                // Cek apakah sudah pernah dikirim hari ini
+                if (!$invoice->reminder_1_sent_at || !$invoice->reminder_1_sent_at->isSameDay($now)) {
+                    $shouldSend = true;
+                    $reminderType = 1;
+                }
             }
 
             // Logika Notifikasi Kedua
-            $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days);
-            $r2Hour = Carbon::parse($appSetting->reminder_2_time)->format('H');
-            
-            if ($now->isSameDay($r2Date) && $currentHour == $r2Hour) {
-                $shouldSend = true;
+            if (!$shouldSend) {
+                $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days);
+                $r2Hour = Carbon::parse($appSetting->reminder_2_time)->format('H');
+                
+                if ($now->isSameDay($r2Date) && $currentHour >= $r2Hour) {
+                    // Cek apakah sudah pernah dikirim hari ini
+                    if (!$invoice->reminder_2_sent_at || !$invoice->reminder_2_sent_at->isSameDay($now)) {
+                        $shouldSend = true;
+                        $reminderType = 2;
+                    }
+                }
             }
 
             if (!$shouldSend) {
                 continue;
+            }
+
+            // Update tracking agar tidak terkirim dua kali
+            if ($reminderType === 1) {
+                $invoice->update(['reminder_1_sent_at' => now()]);
+            } elseif ($reminderType === 2) {
+                $invoice->update(['reminder_2_sent_at' => now()]);
             }
 
             Log::info("[SendInvoiceRemindersJob] Mengirim pengingat untuk {$customer->name}...");

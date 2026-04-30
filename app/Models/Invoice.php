@@ -21,6 +21,8 @@ class Invoice extends Model
         'due_date',
         'paid_at',
         'package_id',
+        'reminder_1_sent_at',
+        'reminder_2_sent_at',
     ];
 
     protected $casts = [
@@ -28,6 +30,8 @@ class Invoice extends Model
         'paid_at' => 'datetime',
         'amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'reminder_1_sent_at' => 'datetime',
+        'reminder_2_sent_at' => 'datetime',
     ];
 
     public function customer()
