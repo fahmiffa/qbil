@@ -59,6 +59,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
         $sentCount = 0;
         $now = now();
         $currentHour = $now->format('H');
+        $userSentCounts = [];
 
         foreach ($invoices as $invoice) {
             $customer   = $invoice->customer;
@@ -128,7 +129,30 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 $message
             )->delay(now()->addSeconds($sentCount * 10));
 
+            $userId = $user->id;
+            if (!isset($userSentCounts[$userId])) {
+                $userSentCounts[$userId] = [
+                    'user' => $user,
+                    'count' => 0,
+                    'hour' => $currentHour
+                ];
+            }
+            $userSentCounts[$userId]['count']++;
+
             $sentCount++;
+        }
+
+        foreach ($userSentCounts as $data) {
+            $u = $data['user'];
+            $c = $data['count'];
+            $h = $data['hour'];
+            
+            $msg = "Sistem berhasil mengirim {$c} pesan pengingat tagihan otomatis kepada pelanggan Anda pada jam {$h}:00.";
+            $u->notify(new \App\Notifications\SystemReportNotification(
+                'Pengingat Tagihan Terkirim',
+                $msg,
+                'notif'
+            ));
         }
 
         Log::info("[SendInvoiceRemindersJob] Selesai. Total pengingat dikirim: {$sentCount}");

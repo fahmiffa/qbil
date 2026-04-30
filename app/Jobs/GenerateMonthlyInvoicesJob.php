@@ -84,6 +84,9 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 ->whereNotNull('due_date')
                 ->get();
 
+            $userGenerated = 0;
+            $lastTargetPeriod = '';
+
             if ($customers->isEmpty()) {
                 continue;
             }
@@ -102,6 +105,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 
                 // Tentukan periode billing berdasarkan tanggal jatuh tempo yang dihitung
                 $targetPeriod = $this->period ?: $calculatedDueDate->format('Y-m');
+                $lastTargetPeriod = $targetPeriod;
                 
                 Log::info("[customer: {$user->name} {$customer->name} {$customer->due_date}  {$targetPeriod}]");
                 
@@ -111,10 +115,20 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
 
                     if ($invoice) {
                         $totalGenerated++;
+                        $userGenerated++;
                     }
                 } catch (\Exception $e) {
                     Log::error("GenerateMonthlyInvoicesJob Error for customer {$customer->id}: " . $e->getMessage());
                 }
+            }
+
+            if ($userGenerated > 0) {
+                $msg = "Sistem berhasil membuat {$userGenerated} tagihan otomatis untuk periode {$lastTargetPeriod} pada jam {$configHour}:00.";
+                $user->notify(new \App\Notifications\SystemReportNotification(
+                    'Tagihan Otomatis Dibuat',
+                    $msg,
+                    'invoice'
+                ));
             }
         }
 

@@ -26,6 +26,9 @@ new class extends Component
 }; ?>
 
 <div class="flex items-center space-x-2 sm:space-x-4">
+    <!-- Notifications -->
+    <livewire:layout.notification-bell />
+
     <!-- Dark Mode Toggle -->
     <button @click="darkMode = !darkMode" 
             class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
