@@ -30,7 +30,7 @@
           }" 
           x-init="$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value)); $watch('darkMode', value => localStorage.setItem('darkMode', value))"
           :class="{ 'dark': darkMode, 'bg-gray-50': !darkMode, 'bg-slate-900': darkMode }">
-        <div class="min-h-screen flex overflow-x-hidden">
+        <div class="h-screen flex overflow-hidden">
             <!-- Sidebar -->
             <livewire:layout.sidebar />
 
@@ -38,7 +38,7 @@
             <div class="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out" 
                  :class="sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'">
                 <!-- Top Header -->
-                <header class="h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-30 shadow-sm w-full transition-colors">
+                <header class="h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 z-10 shadow-sm w-full transition-colors shrink-0">
                     <div class="flex items-center gap-4">
                         <!-- Sidebar Toggle Button -->
                         <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-gray-500 dark:text-slate-400">
@@ -116,7 +116,7 @@
                 </div>
 
                 <!-- Page Content -->
-                <main class="p-4 sm:p-6 overflow-x-auto min-w-0 transition-colors">
+                <main class="flex-1 p-4 sm:p-6 overflow-y-auto min-w-0 transition-colors no-scrollbar">
                     {{ $slot }}
                 </main>
             </div>
