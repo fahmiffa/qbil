@@ -75,6 +75,12 @@ new class extends Component
                 Piutang
             </x-sidebar-link>
 
+            @if(auth()->user()->hasFeature('voucher'))
+            <x-sidebar-link :href="route('vouchers')" :active="request()->routeIs('vouchers')" icon="voucher">
+                Voucher
+            </x-sidebar-link>
+            @endif
+
             <div class="pt-4 pb-2">
                 <span x-show="sidebarOpen" class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3">Master</span>
                 <div x-show="!sidebarOpen" class="border-t border-slate-100 dark:border-slate-800 mx-3"></div>

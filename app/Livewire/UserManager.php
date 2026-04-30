@@ -11,7 +11,7 @@ class UserManager extends Component
 {
     use WithPagination;
 
-    public $name, $email, $phone, $password, $role = 1, $user_id;
+    public $name, $email, $phone, $password, $role = 1, $user_id, $uri;
     public $isOpen = false;
     public $selectedFeatures = [];
     public $allFeatures = [];
@@ -52,6 +52,7 @@ class UserManager extends Component
         $this->role = 1;
         $this->user_id = '';
         $this->selectedFeatures = [];
+        $this->uri = '';
     }
 
 
@@ -62,6 +63,7 @@ class UserManager extends Component
             'email' => 'required|email|unique:users,email' . ($this->user_id ? ',' . $this->user_id : ''),
             'phone' => 'nullable|string|max:20',
             'role' => 'required|in:0,1',
+            'uri' => 'nullable|string|max:255',
         ];
 
         if (!$this->user_id) {
@@ -75,6 +77,7 @@ class UserManager extends Component
             'email' => $this->email,
             'phone' => $this->phone,
             'role' => $this->role,
+            'uri' => $this->uri,
         ];
 
         if ($this->password) {
@@ -107,6 +110,7 @@ class UserManager extends Component
         $this->email = $user->email;
         $this->phone = $user->phone;
         $this->role = $user->role;
+        $this->uri = $user->uri;
         $this->selectedFeatures = $user->features->pluck('id')->map(fn($id) => (string)$id)->toArray();
         
         $this->openModal();

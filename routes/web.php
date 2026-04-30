@@ -29,15 +29,17 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('invoice', \App\Livewire\InvoiceManager::class)->name('invoice');
     Route::get('piutangs', \App\Livewire\PiutangManager::class)->name('piutangs');
     Route::get('activities', \App\Livewire\Activities\ActivityLog::class)->name('activities');
+    Route::get('vouchers', \App\Livewire\VoucherManager::class)->name('vouchers');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)
     ->middleware(['auth'])
     ->name('router');
 
-// Public Invoice View
+// Public Invoice & Order Views
 Route::get('i/{invoice}', \App\Livewire\PublicInvoiceView::class)->name('public.invoice');
 Route::get('i/{invoice}/print', [App\Http\Controllers\PrintController::class, 'thermal'])->name('public.print-thermal');
+Route::get('voucher/{uri}', \App\Livewire\PublicVoucherOrder::class)->name('public.voucher.order');
 
 
 // Print Routes (Unified)

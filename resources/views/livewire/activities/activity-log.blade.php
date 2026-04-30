@@ -63,9 +63,6 @@
                     @endforelse
                 </div>
 
-                <div class="mt-6">
-                    {{ $notifications->links() }}
-                </div>
             </div>
         </div>
     </div>

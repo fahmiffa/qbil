@@ -53,6 +53,11 @@
                                                 @error('phone') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
                                             <div>
+                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">URI (Subdomain/Path):</label>
+                                                <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukan URI" wire:model="uri">
+                                                @error('uri') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                            </div>
+                                            <div>
                                                  <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Role:</label>
                                                  <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors dark:bg-slate-900 dark:text-slate-100" wire:model="role">
                                                      <option value="1">User</option>
@@ -101,6 +106,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">No</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Nama</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">URI</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">No. HP</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Role</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Fitur Tersedia</th>
@@ -111,8 +117,9 @@
                                 @forelse($users as $idx => $user)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400 text-center">{{ $users->firstItem() + $idx }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ $user->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $user->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{{ $user->email }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{{ $user->uri ?? '-' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{{ $user->phone ?? '-' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $user->role == 0 ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' }}">

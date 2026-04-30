@@ -6,12 +6,12 @@ use Livewire\Component;
 
 class ActivityLog extends Component
 {
-    use \Livewire\WithPagination;
 
     public function render()
     {
         $notifications = auth()->user()->notifications()
-            ->paginate(20);
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view('livewire.activities.activity-log', [
             'notifications' => $notifications
