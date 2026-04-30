@@ -35,6 +35,8 @@ class CheckDueInvoices extends Command
 
         $users = \App\Models\User::with('appSetting')->get();
 
+        $currentPeriod = $now->format('Y-m');
+
         foreach ($users as $user) {
             if (!$user->hasFeature('mikrotik')) continue;
             
@@ -50,13 +52,14 @@ class CheckDueInvoices extends Command
 
             // Cari pelanggan yang due_date-nya sudah mencapai ambang batas isolir
             // Dan statusnya masih aktif (belum isolir)
-            // SERTA memiliki invoice yang belum lunas (unpaid)
+            // SERTA memiliki invoice bulan ini yang belum lunas (unpaid)
             $customers = Customer::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->whereNotNull('due_date')
                 ->whereDate('due_date', '<=', $targetDate)
-                ->whereHas('invoices', function($query) {
-                    $query->where('status', 'unpaid');
+                ->whereHas('invoices', function($query) use ($currentPeriod) {
+                    $query->where('status', 'unpaid')
+                        ->where('billing_period', $currentPeriod);
                 })
                 ->get();
 

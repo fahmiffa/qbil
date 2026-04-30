@@ -33,10 +33,15 @@ class IsolateCustomerJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            // Pengecekan: Jika pelanggan sudah membayar tagihannya, batalkan isolir (Trial 30 Menit)
-            $hasUnpaid = $this->customer->invoices()->where('status', 'unpaid')->exists();
+            // Pengecekan: Jika pelanggan sudah membayar tagihan bulan ini, batalkan isolir
+            $currentPeriod = now()->format('Y-m');
+            $hasUnpaid = $this->customer->invoices()
+                ->where('billing_period', $currentPeriod)
+                ->where('status', 'unpaid')
+                ->exists();
+                
             if (!$hasUnpaid) {
-                Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan sudah dibayar.");
+                Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan periode {$currentPeriod} sudah dibayar.");
                 return;
             }
 
@@ -50,10 +55,10 @@ class IsolateCustomerJob implements ShouldQueue
                         
                         if ($this->customer->service_type === 'static' && $this->customer->ip_address) {
                             $mikrotik->addToAddressList($this->customer->ip_address, 'ISOLIR', 'Jatuh Tempo: ' . $this->customer->name);
-                            Log::info("Customer {$this->customer->name} (Static) added to ISOLIR address list.");
+                            Log::info("Customer {$this->customer->name} (Static) added to ISOLIR address list FROM {$this->customer->user->name}");
                         } elseif ($this->customer->service_type === 'pppoe' && $this->customer->username) {
                             $mikrotik->disablePppSecret($this->customer->username);
-                            Log::info("Customer {$this->customer->name} (PPPoE) disabled due to expiration.");
+                            Log::info("Customer {$this->customer->name} (PPPoE) disabled due to expiration FROM {$this->customer->user->name}");
                         }
                     } catch (\Exception $e) {
                         Log::error("Failed to isolate customer {$this->customer->name} on Mikrotik: " . $e->getMessage());
