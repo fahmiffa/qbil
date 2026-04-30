@@ -174,6 +174,17 @@
                                             <div>
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">WhatsApp</label>
                                                 <input type="text" wire:model="phone" placeholder="08..."
+                                                    oninput="
+                                                        let original = this.value;
+                                                        let val = original.replace(/\D/g, '');
+                                                        if (val.startsWith('62')) {
+                                                            val = '0' + val.substring(2);
+                                                        }
+                                                        if (original !== val) {
+                                                            this.value = val;
+                                                            this.dispatchEvent(new Event('input'));
+                                                        }
+                                                    "
                                                     class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
                                                 @error('phone') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>
