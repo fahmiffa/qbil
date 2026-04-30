@@ -48,7 +48,7 @@ class CheckRouterConnectionJob implements ShouldQueue
             }
         } catch (\Exception $e) {
             $error = $e->getMessage();
-            Log::error("Router Connection Check Failed for ID {$this->router->id}: " . $error);
+            Log::error("Router Connection Check Failed for {$user->name}: " . $error);
         }
 
         $this->router->update([
