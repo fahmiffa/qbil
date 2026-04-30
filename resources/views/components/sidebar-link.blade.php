@@ -84,6 +84,10 @@ $classes = ($active ?? false)
             <rect width="16" height="20" x="4" y="2" rx="2"/>
             <path d="M16 2v20"/>
         </svg>
+        @elseif($icon == 'clock')
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
         @endif
     </div>
     
