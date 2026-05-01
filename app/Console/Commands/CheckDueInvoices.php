@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Jobs\IsolateCustomerJob;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class CheckDueInvoices extends Command
 {
@@ -30,6 +31,7 @@ class CheckDueInvoices extends Command
     {
         $now = now();
         
+        Log::info("[CheckDueInvoices] Memulai pengecekan isolir otomatis...");
         $this->info("Memulai pengecekan isolir otomatis...");
 
         $users = \App\Models\User::with('appSetting')->get();
@@ -71,10 +73,20 @@ class CheckDueInvoices extends Command
                 // Jika sudah bayar, status biasanya tetap active dan tidak masuk kriteria isolir.
                 
                 IsolateCustomerJob::dispatch($customer);
-                $this->line(" - Dispatching isolir: {$customer->name} (User: {$user->name})");
+                
+                $msg = "[CheckDueInvoices] Dispatching isolir: {$customer->name} (User: {$user->name})";
+                $this->line(" - " . $msg);
+                Log::info($msg);
+
+                // Log khusus ke isolir.log
+                Log::build([
+                    'driver' => 'single',
+                    'path' => storage_path('logs/isolir.log'),
+                ])->info("PELANGGAN TERISOLIR: {$customer->name} | ID: {$customer->id_pelanggan} | Username: {$customer->username} | User Admin: {$user->name}");
             }
         }
 
+        Log::info("[CheckDueInvoices] Selesai.");
         $this->info("Selesai.");
     }
 }
