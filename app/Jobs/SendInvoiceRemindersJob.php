@@ -59,7 +59,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 
         $sentCount = 0;
         $now = now();
-        $currentHour = $now->format('H');
         $userSentCounts = [];
 
         foreach ($invoices as $invoice) {
@@ -86,9 +85,9 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 
             // Logika Notifikasi Pertama
             $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days);
-            $r1Hour = Carbon::parse($appSetting->reminder_1_time)->format('H');
+            $r1Time = Carbon::parse($appSetting->reminder_1_time)->format('H:i');
             
-            if ($now->isSameDay($r1Date) && $currentHour >= $r1Hour) {
+            if ($now->isSameDay($r1Date) && $now->format('H:i') === $r1Time) {
                 // Cek apakah sudah pernah dikirim hari ini
                 if (!$invoice->reminder_1_sent_at || !$invoice->reminder_1_sent_at->isSameDay($now)) {
                     $shouldSend = true;
@@ -99,9 +98,9 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             // Logika Notifikasi Kedua
             if (!$shouldSend) {
                 $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days);
-                $r2Hour = Carbon::parse($appSetting->reminder_2_time)->format('H');
+                $r2Time = Carbon::parse($appSetting->reminder_2_time)->format('H:i');
                 
-                if ($now->isSameDay($r2Date) && $currentHour >= $r2Hour) {
+                if ($now->isSameDay($r2Date) && $now->format('H:i') === $r2Time) {
                     // Cek apakah sudah pernah dikirim hari ini
                     if (!$invoice->reminder_2_sent_at || !$invoice->reminder_2_sent_at->isSameDay($now)) {
                         $shouldSend = true;

@@ -59,7 +59,6 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
 
         $totalGenerated = 0;
         $now = now();
-        $currentHour = $now->format('H');
 
         $users = User::with('appSetting')->get();
 
@@ -70,9 +69,9 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            // Cek apakah jam sekarang sesuai dengan konfigurasi jam eksekusi
-            $configHour = Carbon::parse($setting->invoice_gen_time)->format('H');
-            if ($currentHour != $configHour) {
+            // Cek apakah waktu sekarang sesuai dengan konfigurasi waktu eksekusi (Jam & Menit)
+            $configTime = Carbon::parse($setting->invoice_gen_time)->format('H:i');
+            if ($now->format('H:i') !== $configTime) {
                 continue;
             }
 

@@ -29,7 +29,6 @@ class CheckDueInvoices extends Command
     public function handle()
     {
         $now = now();
-        $currentHour = $now->format('H');
         
         $this->info("Memulai pengecekan isolir otomatis...");
 
@@ -43,9 +42,9 @@ class CheckDueInvoices extends Command
             $setting = $user->appSetting;
             if (!$setting) continue;
 
-            // Cek jam eksekusi
-            $configHour = Carbon::parse($setting->isolate_time)->format('H');
-            if ($currentHour != $configHour) continue;
+            // Cek waktu eksekusi (Jam & Menit)
+            $configTime = Carbon::parse($setting->isolate_time)->format('H:i');
+            if ($now->format('H:i') !== $configTime) continue;
 
             $offsetDays = (int) $setting->isolate_days;
             $targetDate = $now->copy()->subDays($offsetDays);
