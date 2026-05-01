@@ -319,25 +319,42 @@ class InvoiceManager extends Component
         if ($settings && $settings->isolate_days && $settings->isolate_time) {
             $now = now();
             $isolateTime = Carbon::parse($settings->isolate_time);
-            
-            // Logic match with CheckDueInvoices command
             $offsetDays = (int) $settings->isolate_days;
-            $targetDate = $now->copy()->subDays($offsetDays);
-            
-            if ($now->format('H:i') < $isolateTime->format('H:i')) {
-                $isBeforeIsolation = true;
-                $diff = $now->diff($isolateTime);
-                $isolationTimeRemaining = $diff->format('%h jam %i menit');
 
-                $customersToIsolate = Customer::where('user_id', auth()->id())
-                    ->where('status', 'active')
-                    ->whereNotNull('due_date')
-                    ->whereDate('due_date', '=', $targetDate)
-                    ->whereHas('invoices', function($query) {
-                        $query->where('status', 'unpaid')
-                            ->where('billing_period', now()->format('Y-m'));
-                    })
-                    ->get();
+            // 1. Pelanggan yang isolir HARI INI
+            $isTodayBefore = $now->format('H:i') < $isolateTime->format('H:i');
+            $targetToday = $now->copy()->subDays($offsetDays);
+            
+            // 2. Pelanggan yang isolir BESOK (Peringatan H-1)
+            $targetTomorrow = $now->copy()->addDay()->subDays($offsetDays);
+
+            $customersToIsolate = Customer::where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->whereNotNull('due_date')
+                ->where(function($q) use ($targetToday, $targetTomorrow, $isTodayBefore) {
+                    if ($isTodayBefore) {
+                        $q->whereDate('due_date', '=', $targetToday)
+                          ->orWhereDate('due_date', '=', $targetTomorrow);
+                    } else {
+                        $q->whereDate('due_date', '=', $targetTomorrow);
+                    }
+                })
+                ->whereHas('invoices', function($query) {
+                    $query->where('status', 'unpaid')
+                        ->where('billing_period', now()->format('Y-m'));
+                })
+                ->get();
+            
+            if ($customersToIsolate->isNotEmpty()) {
+                $isBeforeIsolation = true;
+                if ($isTodayBefore && $customersToIsolate->contains('due_date', $targetToday->format('Y-m-d'))) {
+                    $diff = $now->diff($isolateTime);
+                    $isolationTimeRemaining = $diff->format('%h jam %i menit');
+                } else {
+                    $nextIsolation = $now->copy()->addDay()->setTimeFrom($isolateTime);
+                    $diff = $now->diff($nextIsolation);
+                    $isolationTimeRemaining = ($diff->days > 0 ? $diff->format('%d hari %h jam') : $diff->format('%h jam %i menit'));
+                }
             }
         }
 
