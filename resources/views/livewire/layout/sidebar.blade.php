@@ -28,7 +28,7 @@ new class extends Component
 
     <!-- Sidebar Inner Container -->
     <div :class="sidebarOpen ? 'w-64' : 'w-20'"
-         class="h-screen bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-2xl border-r border-gray-100 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out pointer-events-auto overflow-visible">
+        class="h-screen bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-2xl border-r border-gray-100 dark:border-slate-800 flex flex-col transition-all duration-300 ease-in-out pointer-events-auto overflow-visible">
 
         <!-- Sidebar Header -->
         <div class="h-16 flex items-center px-4 border-b border-gray-100 dark:border-slate-700/80 bg-white dark:bg-slate-900 transition-colors">
@@ -67,7 +67,7 @@ new class extends Component
             @endif
 
             <x-sidebar-link :href="route('invoice')" :active="request()->routeIs('invoice')" icon="interface">
-                Invoice
+                Tagihan
             </x-sidebar-link>
 
 
@@ -99,7 +99,7 @@ new class extends Component
 
             {{-- Collapsible Paket Group --}}
             @php
-                $paketActive = request()->routeIs('static-packages') || request()->routeIs('ppp-profiles') || request()->routeIs('hotspot-profiles');
+            $paketActive = request()->routeIs('static-packages') || request()->routeIs('ppp-profiles') || request()->routeIs('hotspot-profiles');
             @endphp
             <div x-data="{
                     open: {{ $paketActive ? 'true' : 'false' }} || JSON.parse(localStorage.getItem('paketOpen') || 'false'),
@@ -119,7 +119,7 @@ new class extends Component
                     <span class="shrink-0 w-6 h-6 flex items-center justify-center">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                     </span>
 
@@ -136,12 +136,12 @@ new class extends Component
                         :class="open ? 'rotate-180' : ''"
                         class="w-4 h-4 transition-transform duration-200 shrink-0"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                     {{-- Tooltip (Visible only when sidebar is collapsed) --}}
-                    <div :class="sidebarOpen ? 'hidden' : ''" 
-                         class="fixed px-3 py-2 bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-[9999] shadow-2xl border border-slate-700/50 pointer-events-none"
-                         :style="`top: ${tipTop}px; left: ${tipLeft}px; transform: translateY(-50%)`">
+                    <div :class="sidebarOpen ? 'hidden' : ''"
+                        class="fixed px-3 py-2 bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-[9999] shadow-2xl border border-slate-700/50 pointer-events-none"
+                        :style="`top: ${tipTop}px; left: ${tipLeft}px; transform: translateY(-50%)`">
                         Paket
                         <!-- Triangle Arrow -->
                         <div class="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900 dark:border-r-slate-800"></div>
@@ -167,7 +167,7 @@ new class extends Component
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 font-medium' }}">
                         <div class="shrink-0 w-6 h-6">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
                             </svg>
                         </div>
                         <span class="whitespace-nowrap">Static</span>
@@ -183,7 +183,7 @@ new class extends Component
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 font-medium' }}">
                         <div class="shrink-0 w-6 h-6">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <span class="whitespace-nowrap">PPPoE</span>
@@ -198,7 +198,7 @@ new class extends Component
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 font-medium' }}">
                         <div class="shrink-0 w-6 h-6">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                             </svg>
                         </div>
                         <span class="whitespace-nowrap">Hotspot</span>
@@ -278,7 +278,7 @@ new class extends Component
                 <span x-show="sidebarOpen" class="font-medium whitespace-nowrap">Logout</span>
 
                 <!-- Tooltip -->
-                <div x-show="!sidebarOpen" 
+                <div x-show="!sidebarOpen"
                     x-data="{ top: 0, left: 0 }"
                     @mouseenter="let rect = $el.parentElement.getBoundingClientRect(); top = rect.top + (rect.height/2); left = rect.right + 10"
                     class="fixed px-3 py-2 bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-[100] shadow-2xl border border-slate-700/50 pointer-events-none transform translate-x-2 group-hover:translate-x-0"
