@@ -4,6 +4,31 @@
     </x-slot>
 
     <div class="w-full">
+        @if($isBeforeIsolation && $customersToIsolate->isNotEmpty())
+            <div class="mb-6 group">
+                <div @click="$wire.set('showIsolationModal', true)" class="cursor-pointer bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-900/50 rounded-2xl p-4 flex items-center justify-between transition-all hover:shadow-lg hover:shadow-rose-500/10">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-rose-500 rounded-full animate-ping opacity-25"></div>
+                            <div class="relative w-12 h-12 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-rose-500/20">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-rose-700 dark:text-rose-400 font-black tracking-tight">PERINGATAN ISOLIR OTOMATIS</h3>
+                            <p class="text-sm text-rose-600/80 dark:text-rose-500/80 font-medium">
+                                Ada <span class="font-bold underline">{{ $customersToIsolate->count() }} pelanggan</span> yang akan diisolir otomatis dalam <span class="font-bold text-rose-700 dark:text-rose-300">{{ $isolationTimeRemaining }}</span>.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md">
+                        <span>Lihat Daftar</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-2xl border border-gray-100 dark:border-slate-700 transition-colors">
             <div class="p-4 sm:p-6">
                 
@@ -380,6 +405,80 @@
                             class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-black py-3 px-8 rounded-2xl transition-all shadow-lg shadow-blue-600/20 uppercase tracking-widest">
                         Konfirmasi Generate
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Isolation List Modal -->
+    <div x-data="{ show: @entangle('showIsolationModal') }" 
+         x-show="show" 
+         x-cloak
+         class="fixed inset-0 z-[60] overflow-y-auto"
+         style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="show = false">
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-slate-200 dark:border-slate-700">
+                <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Daftar Antrean Isolir</h3>
+                        <p class="text-sm text-slate-500 mt-1">Pelanggan di bawah ini akan diisolir otomatis hari ini</p>
+                    </div>
+                    <button @click="show = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="p-0 max-h-[60vh] overflow-y-auto">
+                    <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
+                        <thead class="bg-slate-50/50 dark:bg-slate-900/40 sticky top-0 z-10 backdrop-blur-md">
+                            <tr>
+                                <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Pelanggan</th>
+                                <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Username</th>
+                                <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Tagihan</th>
+                                <th class="px-8 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                            @foreach($customersToIsolate as $c)
+                                @php
+                                    $unpaidInvoice = $c->invoices()->where('status', 'unpaid')->where('billing_period', now()->format('Y-m'))->first();
+                                @endphp
+                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                                    <td class="px-8 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-slate-900 dark:text-white">{{ $c->name }}</span>
+                                            <span class="text-[10px] text-slate-400 font-medium">{{ $c->id_pelanggan }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-8 py-4 font-mono text-xs text-slate-600 dark:text-slate-400">
+                                        {{ $c->username }}
+                                    </td>
+                                    <td class="px-8 py-4">
+                                        @if($unpaidInvoice)
+                                            <span class="font-bold text-rose-600 dark:text-rose-400">Rp {{ number_format($unpaidInvoice->total_amount, 0, ',', '.') }}</span>
+                                        @else
+                                            <span class="text-slate-400 italic text-xs">Data tidak sinkron</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-8 py-4 text-right">
+                                        @if($unpaidInvoice)
+                                            <button wire:click="openVerifyModal('{{ $unpaidInvoice->id }}')" @click="show = false" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-sm transition-all uppercase">Verifikasi</button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-8 py-6 bg-slate-50 dark:bg-slate-900/30 text-center border-t border-slate-50 dark:border-slate-700">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Lakukan verifikasi pembayaran untuk membatalkan isolir otomatis.</p>
                 </div>
             </div>
         </div>

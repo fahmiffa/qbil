@@ -112,7 +112,9 @@
     @endif
 
     <div class="footer center border-top">
-        Terima Kasih Atas Kepercayaan Anda
+        Terima Kasih Atas kerjasamanya, pemasangan dan perbaikan hubungi nomor {{ $invoice->customer->user->phone }}
+        <br>
+       {{ $invoice->customer->user->appSetting->payment_instruction }}
     </div>
     
     <div style="height: 10mm;"></div> <!-- Padding bottom for manual tear -->

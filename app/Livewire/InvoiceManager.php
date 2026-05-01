@@ -23,6 +23,8 @@ class InvoiceManager extends Component
     public $perPage = 10;
     public $paid_at;
 
+    public $showIsolationModal = false;
+
     protected $queryString = ['search', 'filter_status', 'billing_period', 'perPage'];
 
 
@@ -301,7 +303,6 @@ class InvoiceManager extends Component
                 ->limit(8)
                 ->get();
         }
-
         // Get selected customer objects for display
         $selectedCustomerObjects = [];
         if (!empty($this->selectedCustomers)) {
@@ -310,7 +311,37 @@ class InvoiceManager extends Component
                 ->get();
         }
 
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects'))
+        $settings = AppSetting::where('user_id', auth()->id())->first();
+        $customersToIsolate = collect();
+        $isolationTimeRemaining = '';
+        $isBeforeIsolation = false;
+
+        if ($settings && $settings->isolate_days && $settings->isolate_time) {
+            $now = now();
+            $isolateTime = Carbon::parse($settings->isolate_time);
+            
+            // Logic match with CheckDueInvoices command
+            $offsetDays = (int) $settings->isolate_days;
+            $targetDate = $now->copy()->subDays($offsetDays);
+            
+            if ($now->format('H:i') < $isolateTime->format('H:i')) {
+                $isBeforeIsolation = true;
+                $diff = $now->diff($isolateTime);
+                $isolationTimeRemaining = $diff->format('%h jam %i menit');
+
+                $customersToIsolate = Customer::where('user_id', auth()->id())
+                    ->where('status', 'active')
+                    ->whereNotNull('due_date')
+                    ->whereDate('due_date', '=', $targetDate)
+                    ->whereHas('invoices', function($query) {
+                        $query->where('status', 'unpaid')
+                            ->where('billing_period', now()->format('Y-m'));
+                    })
+                    ->get();
+            }
+        }
+
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }

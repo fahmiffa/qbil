@@ -67,6 +67,7 @@ class IsolateCustomerJob implements ShouldQueue
                             Log::info("Customer {$this->customer->name} (Static) added to ISOLIR address list FROM {$this->customer->user->name}");
                         } elseif ($this->customer->service_type === 'pppoe' && $this->customer->username) {
                             $mikrotik->disablePppSecret($this->customer->username);
+                            $mikrotik->removePppActive($this->customer->username);
                             Log::info("Customer {$this->customer->name} (PPPoE) disabled due to expiration FROM {$this->customer->user->name}");
                         }
                     } catch (\Exception $e) {

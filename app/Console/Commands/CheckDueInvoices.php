@@ -55,7 +55,7 @@ class CheckDueInvoices extends Command
             $customers = Customer::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->whereNotNull('due_date')
-                ->whereDate('due_date', '<=', $targetDate)
+                ->whereDate('due_date', '=', $targetDate)
                 ->whereHas('invoices', function($query) use ($currentPeriod) {
                     $query->where('status', 'unpaid')
                         ->where('billing_period', $currentPeriod);

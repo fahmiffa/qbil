@@ -32,6 +32,7 @@ class PaymentController extends Controller
             'postTime' => 'required'
         ]);
 
+        Log::channel('payment')->info(json_encode($payload));
         // Extract number from text. Also include title just in case the amount is there
         $textToParse = $payload['title'] . ' ' . $payload['text'];
         
