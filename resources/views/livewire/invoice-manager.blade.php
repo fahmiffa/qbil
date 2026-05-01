@@ -23,7 +23,7 @@
                                 @endfor
                             </select>
                         </div>
-                        <button wire:click="generateInvoices" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/20">
+                        <button wire:click="openGenerateModal" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/20">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                             Generate Tagihan ({{ \Carbon\Carbon::parse($billing_period)->translatedFormat('F Y') }})
                         </button>
@@ -260,4 +260,129 @@
             @endif
         </div>
     </div>
+
+    <!-- Generate Invoice Modal (Bulk/Selection) -->
+    <div x-data="{ show: @entangle('showGenerateModal') }" 
+         x-show="show" 
+         x-cloak
+         class="fixed inset-0 z-[60] overflow-y-auto"
+         style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="show = false">
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200 dark:border-slate-700">
+                <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-700">
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Generate Tagihan</h3>
+                    <p class="text-sm text-slate-500 mt-1">Periode: {{ \Carbon\Carbon::parse($billing_period)->translatedFormat('F Y') }}</p>
+                </div>
+
+                <div class="px-8 py-6 space-y-6">
+                    <div x-data="{ openSuggest: false }" @click.away="openSuggest = false">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Pilih Pelanggan (Kosongkan untuk SEMUA)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </span>
+                            <input 
+                                x-ref="searchInput"
+                                wire:model.live.debounce.300ms="customerSearch" 
+                                @input="openSuggest = true"
+                                type="text" 
+                                placeholder="Cari nama/ID/Username..." 
+                                class="w-full pl-10 bg-slate-50 dark:bg-slate-900 dark:text-slate-200 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm shadow-inner"
+                                autocomplete="off"
+                                x-init="$watch('show', value => { if(value) setTimeout(() => $refs.searchInput.focus(), 100) })"
+                            >
+                            
+                            {{-- Loading Indicator --}}
+                            <div wire:loading wire:target="customerSearch" class="absolute right-4 top-1/2 -translate-y-1/2">
+                                <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        {{-- Search Results / Suggestions --}}
+                        <div x-show="openSuggest && $wire.customerSearch.length >= 2" class="relative">
+                            <div class="absolute z-[70] mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-2xl max-h-64 overflow-y-auto ring-1 ring-black ring-opacity-5">
+                                @if(!empty($modalCustomers))
+                                    @foreach($modalCustomers as $c)
+                                        <button 
+                                            wire:click="toggleCustomer('{{ $c->id }}')" 
+                                            @click="openSuggest = false; $wire.customerSearch = ''"
+                                            class="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between group transition-colors">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
+                                                    {{ substr($c->name, 0, 1) }}
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-blue-600 transition-colors">{{ $c->name }}</span>
+                                                    <span class="text-[10px] text-slate-400 font-medium">{{ $c->id_pelanggan }} | {{ $c->username }}</span>
+                                                </div>
+                                            </div>
+                                            @if(in_array($c->id, $selectedCustomers))
+                                                <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            @else
+                                                <svg class="w-5 h-5 text-slate-200 dark:text-slate-700 group-hover:text-blue-200" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
+                                            @endif
+                                        </button>
+                                    @endforeach
+                                @else
+                                    <div class="px-4 py-8 text-center" wire:loading.remove wire:target="customerSearch">
+                                        <svg class="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <p class="text-xs text-slate-400 font-bold">Pelanggan tidak ditemukan</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Selected Customers Chips --}}
+                    @if(!empty($selectedCustomerObjects))
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pelanggan Terpilih ({{ count($selectedCustomers) }})</label>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($selectedCustomerObjects as $sc)
+                                    <span class="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-100 dark:border-blue-800/50">
+                                        {{ $sc->name }}
+                                        <button wire:click="toggleCustomer('{{ $sc->id }}')" class="hover:text-red-500 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-100 dark:border-amber-800/30">
+                        <div class="flex gap-3">
+                            <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <p class="text-xs text-amber-700 dark:text-amber-400 leading-relaxed font-medium">
+                                @if(empty($selectedCustomers))
+                                    Sistem akan membuat tagihan untuk <strong>SEMUA</strong> pelanggan aktif yang belum memiliki tagihan di periode ini.
+                                @else
+                                    Sistem akan membuat tagihan hanya untuk <strong>{{ count($selectedCustomers) }}</strong> pelanggan terpilih di atas.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-8 py-6 bg-slate-50 dark:bg-slate-900/30 flex items-center justify-between border-t border-slate-50 dark:border-slate-700">
+                    <button @click="show = false" class="text-xs font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-all">Batal</button>
+                    
+                    <button wire:click="generateInvoices" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-black py-3 px-8 rounded-2xl transition-all shadow-lg shadow-blue-600/20 uppercase tracking-widest">
+                        Konfirmasi Generate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+

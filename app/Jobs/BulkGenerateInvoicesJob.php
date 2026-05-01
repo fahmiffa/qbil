@@ -11,7 +11,8 @@ class BulkGenerateInvoicesJob implements ShouldQueue
 
     public function __construct(
         public int $userId,
-        public string $period
+        public string $period,
+        public ?array $customerIds = null
     ) {}
 
     /**
@@ -19,10 +20,15 @@ class BulkGenerateInvoicesJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $customers = \App\Models\Customer::where('user_id', $this->userId)
+        $query = \App\Models\Customer::where('user_id', $this->userId)
             ->where('status', 'active')
-            ->whereNotNull('package_id')
-            ->get();
+            ->whereNotNull('package_id');
+
+        if (!empty($this->customerIds)) {
+            $query->whereIn('id', $this->customerIds);
+        }
+
+        $customers = $query->get();
 
         if ($customers->isEmpty()) {
             return;

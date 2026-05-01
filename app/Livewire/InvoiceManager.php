@@ -28,22 +28,38 @@ class InvoiceManager extends Component
 
 
     public $showVerifyModal = false;
+    public $showGenerateModal = false;
     public $selectedInvoice = null;
+    public $customerSearch = '';
+    public $selectedCustomers = [];
 
     public function mount()
     {
         $this->billing_period = now()->format('Y-m');
     }
 
+    public function openGenerateModal()
+    {
+        $this->showGenerateModal = true;
+        $this->selectedCustomers = [];
+        $this->customerSearch = '';
+    }
+
     public function generateInvoices()
     {
         $currentPeriod = $this->billing_period;
+        $customerIds = !empty($this->selectedCustomers) ? $this->selectedCustomers : null;
 
         // Dispatch job untuk generate bulk
-        \App\Jobs\BulkGenerateInvoicesJob::dispatch(auth()->id(), $currentPeriod);
+        \App\Jobs\BulkGenerateInvoicesJob::dispatch(auth()->id(), $currentPeriod, $customerIds);
 
-        $this->dispatch('toast', type: 'info', message: "Proses generate invoice untuk periode $currentPeriod telah dimulai di latar belakang.");
+        $msg = $customerIds 
+            ? "Proses generate invoice untuk " . count($customerIds) . " pelanggan terpilih telah dimulai di latar belakang."
+            : "Proses generate invoice untuk SEMUA pelanggan telah dimulai di latar belakang.";
 
+        $this->dispatch('toast', type: 'info', message: $msg);
+
+        $this->showGenerateModal = false;
         $this->resetPage();
     }
 
@@ -58,6 +74,16 @@ class InvoiceManager extends Component
     {
         $this->showVerifyModal = false;
         $this->selectedInvoice = null;
+    }
+
+    public function toggleCustomer($customerId)
+    {
+        if (in_array($customerId, $this->selectedCustomers)) {
+            $this->selectedCustomers = array_diff($this->selectedCustomers, [$customerId]);
+        } else {
+            $this->selectedCustomers[] = $customerId;
+        }
+        $this->selectedCustomers = array_values($this->selectedCustomers);
     }
 
     public function markAsPaid($invoiceId = null)
@@ -262,7 +288,29 @@ class InvoiceManager extends Component
         $invoices = $query->orderBy('created_at', 'desc')->paginate($limit);
 
 
-        return view('livewire.invoice-manager', compact('invoices'))
+        $modalCustomers = [];
+        if ($this->showGenerateModal && strlen($this->customerSearch) >= 2) {
+            $modalCustomers = Customer::where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->where(function ($q) {
+                    $q->where('name', 'like', '%' . $this->customerSearch . '%')
+                        ->orWhere('id_pelanggan', 'like', '%' . $this->customerSearch . '%')
+                        ->orWhere('username', 'like', '%' . $this->customerSearch . '%');
+                })
+                ->orderBy('name', 'asc')
+                ->limit(8)
+                ->get();
+        }
+
+        // Get selected customer objects for display
+        $selectedCustomerObjects = [];
+        if (!empty($this->selectedCustomers)) {
+            $selectedCustomerObjects = Customer::whereIn('id', $this->selectedCustomers)
+                ->orderBy('name', 'asc')
+                ->get();
+        }
+
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }
