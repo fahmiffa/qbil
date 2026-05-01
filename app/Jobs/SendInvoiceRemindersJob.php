@@ -152,7 +152,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 $userSentCounts[$userId] = [
                     'user' => $user,
                     'count' => 0,
-                    'hour' => $currentHour
                 ];
             }
             $userSentCounts[$userId]['count']++;
