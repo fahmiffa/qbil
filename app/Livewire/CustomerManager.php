@@ -314,7 +314,7 @@ class CustomerManager extends Component
                 }
 
 
-                session()->flash('message', 'Pelanggan berhasil diperbarui (Sinkronisasi Antrian).');
+                $this->dispatch('toast', type: 'success', message: 'Pelanggan berhasil diperbarui (Sinkronisasi Antrian).');
             } else {
                 $customer = Customer::create($data);
 
@@ -351,13 +351,16 @@ class CustomerManager extends Component
                 }
 
                 if ($isPascaBayar) {
-                    session()->flash('message', 'Pelanggan berhasil ditambahkan');
+                    $this->dispatch('toast', type: 'success', message: 'Pelanggan berhasil ditambahkan');
                 } else {
-                    session()->flash('message', 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
+                    $this->dispatch('toast', type: 'success', message: 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
                 }
+                
+                // Refresh table (kembali ke halaman 1 agar pelanggan baru yang diurutkan 'latest' terlihat)
+                $this->resetPage();
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal Memproses Data: ' . $e->getMessage());
+            $this->dispatch('toast', type: 'error', message: 'Gagal Memproses Data: ' . $e->getMessage());
         }
 
         $this->closeModal();

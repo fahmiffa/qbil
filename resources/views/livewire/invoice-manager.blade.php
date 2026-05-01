@@ -56,7 +56,7 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 transition-colors">
+                <div wire:poll.keep-alive.10s class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 transition-colors">
                     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                         <thead class="bg-slate-50/50 dark:bg-slate-900/40">
                             <tr>
