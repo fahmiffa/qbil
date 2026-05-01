@@ -24,6 +24,7 @@ class InvoiceManager extends Component
     public $paid_at;
 
     public $showIsolationModal = false;
+    public $isAlertDismissed = false;
 
     protected $queryString = ['search', 'filter_status', 'billing_period', 'perPage'];
 
