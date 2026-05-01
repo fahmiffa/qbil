@@ -5,8 +5,8 @@
 
     <div class="w-full">
         @if($isBeforeIsolation && $customersToIsolate->isNotEmpty())
-            <div class="mb-6 group">
-                <div @click="$wire.set('showIsolationModal', true)" class="cursor-pointer bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-900/50 rounded-2xl p-4 flex items-center justify-between transition-all hover:shadow-lg hover:shadow-rose-500/10">
+            <div x-show="!$wire.isAlertDismissed" class="mb-6 group relative">
+                <div @click="$wire.set('showIsolationModal', true)" class="cursor-pointer bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 flex items-center justify-between transition-all hover:shadow-lg hover:shadow-rose-500/10">
                     <div class="flex items-center gap-4">
                         <div class="relative">
                             <div class="absolute inset-0 bg-rose-500 rounded-full animate-ping opacity-25"></div>
@@ -16,14 +16,19 @@
                         </div>
                         <div>
                             <h3 class="text-rose-700 dark:text-rose-400 font-black tracking-tight">PERINGATAN ISOLIR OTOMATIS</h3>
-                            <p class="text-sm text-rose-600/80 dark:text-rose-500/80 font-medium">
-                                Ada <span class="font-bold underline">{{ $customersToIsolate->count() }} pelanggan</span> yang akan diisolir otomatis dalam <span class="font-bold text-rose-700 dark:text-rose-300">{{ $isolationTimeRemaining }}</span>.
+                            <p class="text-sm text-rose-600/90 dark:text-rose-200/90 font-medium">
+                                Ada <span class="font-bold underline text-rose-800 dark:text-rose-100">{{ $customersToIsolate->count() }} pelanggan</span> yang akan diisolir otomatis dalam <span class="font-bold text-rose-700 dark:text-rose-300">{{ $isolationTimeRemaining }}</span>.
                             </p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md">
-                        <span>Lihat Daftar</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md">
+                            <span>Lihat Daftar</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                        <button @click.stop="$wire.set('isAlertDismissed', true)" class="p-2 text-rose-400 hover:text-rose-600 dark:hover:text-rose-200 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -439,7 +444,6 @@
                         <thead class="bg-slate-50/50 dark:bg-slate-900/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
                                 <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Pelanggan</th>
-                                <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Username</th>
                                 <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Tagihan</th>
                                 <th class="px-8 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Aksi</th>
                             </tr>
@@ -456,9 +460,6 @@
                                             <span class="text-[10px] text-slate-400 font-medium">{{ $c->id_pelanggan }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-8 py-4 font-mono text-xs text-slate-600 dark:text-slate-400">
-                                        {{ $c->username }}
-                                    </td>
                                     <td class="px-8 py-4">
                                         @if($unpaidInvoice)
                                             <span class="font-bold text-rose-600 dark:text-rose-400">Rp {{ number_format($unpaidInvoice->total_amount, 0, ',', '.') }}</span>
@@ -468,7 +469,10 @@
                                     </td>
                                     <td class="px-8 py-4 text-right">
                                         @if($unpaidInvoice)
-                                            <button wire:click="openVerifyModal('{{ $unpaidInvoice->id }}')" @click="show = false" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-sm transition-all uppercase">Verifikasi</button>
+                                            <button wire:click="sendWhatsappNotification('{{ $unpaidInvoice->id }}')" class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-4 py-2 rounded-xl shadow-sm transition-all uppercase">
+                                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.394 0 12.03c0 2.119.552 4.188 1.598 6.049L0 24l6.104-1.602a11.834 11.834 0 005.937 1.57h.005c6.632 0 12.028-5.391 12.03-12.028a11.85 11.85 0 00-3.529-8.52"/></svg>
+                                                Kirim WA
+                                            </button>
                                         @endif
                                     </td>
                                 </tr>
