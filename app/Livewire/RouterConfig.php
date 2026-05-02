@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Router;
+use App\Models\ActivityLog;
 use App\Services\MikrotikService;
 use Livewire\Component;
 use RouterOS\Client;
@@ -69,6 +70,14 @@ class RouterConfig extends Component
             );
 
             $this->dispatch('toast', type: 'success', message: 'Konfigurasi router berhasil disimpan.');
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'UPDATE ROUTER',
+                'message' => "Memperbarui konfigurasi router: {$this->name} ({$this->host})",
+                'type' => 'router_crud'
+            ]);
         } catch (\Exception $e) {
             $this->dispatch('toast', type: 'error', message: 'Gagal menyimpan konfigurasi: ' . $e->getMessage());
         }

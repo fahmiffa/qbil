@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\ActivityLog;
 use App\Models\Piutang;
 use App\Models\Deposit;
 use App\Models\AppSetting;
@@ -61,6 +62,14 @@ class InvoiceManager extends Component
             : "Proses generate invoice untuk SEMUA pelanggan telah dimulai di latar belakang.";
 
         $this->dispatch('toast', type: 'info', message: $msg);
+
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'GENERATE INVOICE',
+            'message' => $msg,
+            'type' => 'invoice_crud'
+        ]);
 
         $this->showGenerateModal = false;
         $this->resetPage();
@@ -138,6 +147,15 @@ class InvoiceManager extends Component
         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
 
         $this->dispatch('toast', type: 'success', message: "Invoice {$invoice->invoice_number} ditandai sebagai LUNAS.");
+        
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'VERIFIKASI INVOICE',
+            'message' => "Verifikasi pembayaran lunas: {$invoice->invoice_number} ({$invoice->customer->name})",
+            'type' => 'invoice_crud'
+        ]);
+
         $this->closeVerifyModal();
     }
 
@@ -190,6 +208,15 @@ class InvoiceManager extends Component
         });
 
         $this->dispatch('toast', type: 'info', message: "Invoice {$invoice->invoice_number} dimasukkan ke daftar PIUTANG. Internet dibuka.");
+        
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'INVOICE KE PIUTANG',
+            'message' => "Memasukkan invoice {$invoice->invoice_number} ({$invoice->customer->name}) ke daftar piutang",
+            'type' => 'invoice_crud'
+        ]);
+
         $this->closeVerifyModal();
     }
 
@@ -198,13 +225,30 @@ class InvoiceManager extends Component
         $invoice = Invoice::findOrFail($invoiceId);
         $invoice->update(['status' => 'canceled']);
         $this->dispatch('toast', type: 'warning', message: "Invoice {$invoice->invoice_number} telah dibatalkan.");
+
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'BATALKAN INVOICE',
+            'message' => "Membatalkan invoice: {$invoice->invoice_number}",
+            'type' => 'invoice_crud'
+        ]);
     }
 
     public function deleteInvoice($invoiceId)
     {
         $invoice = Invoice::findOrFail($invoiceId);
+        $invoiceNum = $invoice->invoice_number;
         $invoice->delete();
         $this->dispatch('toast', type: 'error', message: "Invoice telah dihapus permanen.");
+
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'HAPUS INVOICE',
+            'message' => "Menghapus invoice secara permanen: {$invoiceNum}",
+            'type' => 'invoice_crud'
+        ]);
     }
 
     public function sendWhatsappNotification($invoiceId)

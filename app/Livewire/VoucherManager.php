@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\VoucherOrder;
+use App\Models\ActivityLog;
 use App\Models\HotspotUser;
 use App\Jobs\BulkGenerateHotspotVouchersJob;
 use Livewire\Component;
@@ -59,6 +60,14 @@ class VoucherManager extends Component
         );
 
         session()->flash('message', 'Pembayaran sedang diproses. Voucher akan segera muncul.');
+
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'VOUCHER TERBAYAR',
+            'message' => "Verifikasi pembayaran voucher: {$order->order_code} (Rp. " . number_format($order->total_amount, 0, ',', '.') . ")",
+            'type' => 'hotspot_crud'
+        ]);
     }
 
     public function render()

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Package;
+use App\Models\ActivityLog;
 use App\Services\MikrotikService;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -105,10 +106,22 @@ class PackageManager extends Component
                 $oldProfileName = $package->mikrotik_profile;
                 $package->update($data);
                 $action = 'update';
+                $actionTitle = 'UPDATE PAKET';
+                $actionMsg = "Memperbarui paket: {$package->name} ({$package->tipe})";
             } else {
                 $package = Package::create($data);
                 $action = 'create';
+                $actionTitle = 'TAMBAH PAKET';
+                $actionMsg = "Menambahkan paket baru: {$package->name} ({$package->tipe})";
             }
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => $actionTitle,
+                'message' => $actionMsg,
+                'type' => 'package_crud'
+            ]);
 
             // Sync ke Mikrotik via Job (Kecuali STATIC)
             if ($this->tipe !== 'STATIC') {
@@ -167,8 +180,17 @@ class PackageManager extends Component
                 \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'delete');
             }
 
+            $packageName = $package->name;
             $package->delete();
             session()->flash('message', 'Paket berhasil dihapus.');
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'HAPUS PAKET',
+                'message' => "Menghapus paket: {$packageName}",
+                'type' => 'package_crud'
+            ]);
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
         }

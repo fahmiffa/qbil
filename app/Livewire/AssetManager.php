@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Asset;
+use App\Models\ActivityLog;
 
 class AssetManager extends Component
 {
@@ -68,6 +69,14 @@ class AssetManager extends Component
 
             $this->dispatch('toast', type: 'success', message: $this->asset_id ? 'Asset berhasil diperbarui' : 'Asset baru berhasil ditambahkan');
             
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => $this->asset_id ? 'UPDATE ASSET' : 'TAMBAH ASSET',
+                'message' => ($this->asset_id ? 'Memperbarui' : 'Menambahkan') . " asset: {$this->name} ({$category})",
+                'type' => 'asset_crud'
+            ]);
+            
             $this->closeModal();
             $this->resetInputFields();
         } catch (\Exception $e) {
@@ -78,8 +87,18 @@ class AssetManager extends Component
     public function delete($id)
     {
         try {
-            Asset::findOrFail($id)->delete();
+            $asset = Asset::findOrFail($id);
+            $assetName = $asset->name;
+            $asset->delete();
             $this->dispatch('toast', type: 'success', message: 'Asset berhasil dihapus');
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'HAPUS ASSET',
+                'message' => "Menghapus asset: {$assetName}",
+                'type' => 'asset_crud'
+            ]);
         } catch (\Exception $e) {
             $this->dispatch('toast', type: 'error', message: 'Gagal menghapus data: ' . $e->getMessage());
         }

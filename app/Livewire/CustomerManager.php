@@ -14,6 +14,7 @@ use App\Jobs\SyncAllCustomersJob;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
+use App\Models\ActivityLog;
 
 class CustomerManager extends Component
 {
@@ -315,6 +316,15 @@ class CustomerManager extends Component
 
 
                 $this->dispatch('toast', type: 'success', message: 'Pelanggan berhasil diperbarui (Sinkronisasi Antrian).');
+
+                // Log Activity
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'title' => 'UPDATE PELANGGAN',
+                    'message' => "Memperbarui data pelanggan: {$customer->name} ({$customer->id_pelanggan})",
+                    'type' => 'customer_update',
+                    'data' => ['customer_id' => $customer->id]
+                ]);
             } else {
                 $customer = Customer::create($data);
 
@@ -355,6 +365,15 @@ class CustomerManager extends Component
                 } else {
                     $this->dispatch('toast', type: 'success', message: 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
                 }
+
+                // Log Activity
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'title' => 'PELANGGAN BARU',
+                    'message' => "Menambahkan pelanggan baru: {$customer->name} ({$customer->id_pelanggan})",
+                    'type' => 'customer_create',
+                    'data' => ['customer_id' => $customer->id]
+                ]);
                 
                 // Refresh table (kembali ke halaman 1 agar pelanggan baru yang diurutkan 'latest' terlihat)
                 $this->resetPage();
@@ -430,8 +449,18 @@ class CustomerManager extends Component
             }
 
 
+            $customerName = $customer->name;
+            $customerIdPel = $customer->id_pelanggan;
             $customer->delete();
             session()->flash('message', 'Pelanggan berhasil dihapus.');
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'HAPUS PELANGGAN',
+                'message' => "Menghapus pelanggan: {$customerName} ({$customerIdPel})",
+                'type' => 'customer_delete'
+            ]);
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
         }

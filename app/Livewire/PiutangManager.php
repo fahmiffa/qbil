@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Piutang;
+use App\Models\ActivityLog;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -53,12 +54,31 @@ class PiutangManager extends Component
 
         if ($updatedRows > 0) {
             $this->dispatch('toast', type: 'success', message: 'Seluruh piutang pelanggan ini telah ditandai lunas.');
+
+            $customer = \App\Models\Customer::find($customerId);
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'LUNASI PIUTANG',
+                'message' => "Melunasi seluruh piutang pelanggan: " . ($customer->name ?? $customerId),
+                'type' => 'piutang_crud'
+            ]);
         }
     }
 
     public function delete($id)
     {
-        Piutang::findOrFail($id)->delete();
+        $piutang = Piutang::findOrFail($id);
+        $piutangMsg = "Menghapus data piutang periode: {$piutang->billing_period} - Rp. " . number_format($piutang->amount, 0, ',', '.');
+        $piutang->delete();
         $this->dispatch('toast', type: 'warning', message: 'Data piutang telah dihapus.');
+
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'HAPUS PIUTANG',
+            'message' => $piutangMsg,
+            'type' => 'piutang_crud'
+        ]);
     }
 }

@@ -102,6 +102,46 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsToMany(Feature::class);
     }
 
+    public function assets()
+    {
+        return $this->hasMany(Asset::class);
+    }
+
+    public function piutangs()
+    {
+        return $this->hasMany(Piutang::class);
+    }
+
+    public function deposits()
+    {
+        return $this->hasMany(Deposit::class);
+    }
+
+    public function pppProfiles()
+    {
+        return $this->hasMany(PppProfile::class);
+    }
+
+    public function ipPools()
+    {
+        return $this->hasMany(IpPool::class);
+    }
+
+    public function dhcpServers()
+    {
+        return $this->hasMany(DhcpServer::class);
+    }
+
+    public function voucherOrders()
+    {
+        return $this->hasMany(VoucherOrder::class);
+    }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
     public function hasFeature(string $parameter): bool
     {
         // Super Admin (role 0) can access everything
@@ -110,5 +150,29 @@ class User extends Authenticatable implements JWTSubject
         }
 
         return $this->features->contains('parameter', $parameter);
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($user) {
+            // Delete related models one by one to trigger their own deleting hooks (e.g. Customer -> Invoices)
+            $user->customers->each->delete();
+            
+            // Bulk delete other related models
+            $user->packages()->delete();
+            $user->router()->delete();
+            $user->hotspotUsers()->delete();
+            $user->appSetting()->delete();
+            $user->assets()->delete();
+            $user->piutangs()->delete();
+            $user->deposits()->delete();
+            $user->pppProfiles()->delete();
+            $user->ipPools()->delete();
+            $user->dhcpServers()->delete();
+            $user->voucherOrders()->delete();
+            
+            // Detach features
+            $user->features()->detach();
+        });
     }
 }

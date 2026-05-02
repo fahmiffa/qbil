@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\AppSetting;
+use App\Models\ActivityLog;
 use Livewire\Component;
 
 class AppManager extends Component
@@ -139,6 +140,14 @@ class AppManager extends Component
 
             $this->dispatch('toast', type: 'success', message: 'Pengaturan Aplikasi berhasil disimpan.');
             session()->flash('success', 'Pengaturan Aplikasi berhasil disimpan.');
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'UPDATE SETTING',
+                'message' => "Memperbarui pengaturan aplikasi (Template & Billing)",
+                'type' => 'app_crud'
+            ]);
         } catch (\Exception $e) {
             $this->dispatch('toast', type: 'error', message: 'Gagal menyimpan pengaturan: ' . $e->getMessage());
         }

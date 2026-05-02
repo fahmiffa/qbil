@@ -54,8 +54,10 @@ class Customer extends Model
     protected static function booted()
     {
         static::deleting(function ($customer) {
-            // Hapus semua invoice terkait saat pelanggan dihapus
+            // Hapus semua invoice, deposit, dan piutang terkait saat pelanggan dihapus
             $customer->invoices()->delete();
+            $customer->deposits()->delete();
+            $customer->piutangs()->delete();
         });
     }
 }

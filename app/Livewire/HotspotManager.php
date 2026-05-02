@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\HotspotUser;
+use App\Models\ActivityLog;
 use App\Jobs\BulkGenerateHotspotVouchersJob;
 use App\Jobs\ProvisionHotspotUserJob;
 use Livewire\Component;
@@ -158,6 +159,14 @@ class HotspotManager extends Component
                 );
                 
                 session()->flash('message', 'Proses generate ' . $this->quantity . ' voucher sedang berjalan di background.');
+
+                // Log Activity
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'title' => 'GENERATE VOUCHER',
+                    'message' => "Men-generate {$this->quantity} voucher hotspot baru (Proses Background)",
+                    'type' => 'hotspot_crud'
+                ]);
             } else {
                 if ($this->hotspot_user_id) {
                     $hotspotUser = HotspotUser::findOrFail($this->hotspot_user_id);
@@ -178,7 +187,17 @@ class HotspotManager extends Component
                         'package_id' => $this->package_id,
                     ]);
                     $action = 'create';
+                    $actionTitle = 'TAMBAH USER HOTSPOT';
+                    $actionMsg = "Menambahkan user hotspot: {$hotspotUser->username}";
                 }
+
+                // Log Activity
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'title' => $actionTitle ?? ($this->hotspot_user_id ? 'UPDATE USER HOTSPOT' : 'TAMBAH USER HOTSPOT'),
+                    'message' => $actionMsg ?? ($this->hotspot_user_id ? "Memperbarui user hotspot: {$hotspotUser->username}" : "Menambahkan user hotspot: {$hotspotUser->username}"),
+                    'type' => 'hotspot_crud'
+                ]);
 
                 // Dispatch Job untuk single user
                 ProvisionHotspotUserJob::dispatch($hotspotUser, $action, $oldUsername);
@@ -220,9 +239,18 @@ class HotspotManager extends Component
     {
         try {
             $user = HotspotUser::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+            $hotspotName = $user->username;
             ProvisionHotspotUserJob::dispatchSync($user, 'delete');
             $user->delete();
             session()->flash('message', 'User Hotspot dihapus.');
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'HAPUS USER HOTSPOT',
+                'message' => "Menghapus user hotspot: {$hotspotName}",
+                'type' => 'hotspot_crud'
+            ]);
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
         }
@@ -250,6 +278,7 @@ class HotspotManager extends Component
                 ->where('user_id', auth()->id())
                 ->get();
 
+            $count = count($users);
             foreach ($users as $user) {
                 ProvisionHotspotUserJob::dispatchSync($user, 'delete');
                 $user->delete();
@@ -257,7 +286,15 @@ class HotspotManager extends Component
 
             $this->selectedIds = [];
             $this->selectAll = false;
-            session()->flash('message', 'Berhasil menghapus ' . count($users) . ' data.');
+            session()->flash('message', 'Berhasil menghapus ' . $count . ' data.');
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'HAPUS MASAL HOTSPOT',
+                'message' => "Menghapus masal {$count} user hotspot",
+                'type' => 'hotspot_crud'
+            ]);
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal hapus masal: ' . $e->getMessage());
         }

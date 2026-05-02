@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\User;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -87,9 +88,21 @@ class UserManager extends Component
         if ($this->user_id) {
             $user = User::findOrFail($this->user_id);
             $user->update($data);
+            $actionTitle = 'UPDATE USER';
+            $actionMsg = "Memperbarui data user: {$user->name} ({$user->email})";
         } else {
             $user = User::create($data);
+            $actionTitle = 'TAMBAH USER';
+            $actionMsg = "Menambahkan user baru: {$user->name} ({$user->email})";
         }
+
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => $actionTitle,
+            'message' => $actionMsg,
+            'type' => 'user_crud'
+        ]);
 
         // Sync Features
         $user->features()->sync($this->selectedFeatures);
@@ -119,11 +132,30 @@ class UserManager extends Component
 
     public function delete($id)
     {
-        if($id === auth()->id()) {
+        if ($id === auth()->id()) {
             session()->flash('error', 'Cannot delete yourself.');
             return;
         }
-        User::find($id)->delete();
-        session()->flash('message', 'User deleted successfully.');
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+                $user = User::findOrFail($id);
+                $userName = $user->name;
+                $userEmail = $user->email;
+                $user->delete();
+
+                // Log Activity
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'title' => 'HAPUS USER',
+                    'message' => "Menghapus user: {$userName} ({$userEmail})",
+                    'type' => 'user_crud'
+                ]);
+            });
+
+            session()->flash('message', 'User and all associated data deleted successfully.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to delete user: ' . $e->getMessage());
+        }
     }
 }
