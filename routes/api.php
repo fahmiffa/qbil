@@ -27,6 +27,7 @@ Route::group([
 });
 
 Route::post('payment', [\App\Http\Controllers\Api\PaymentController::class, 'store']);
+Route::get('invoices/check', [InvoiceController::class, 'lookup']);
 
 Route::group([
     'middleware' => 'auth:api'

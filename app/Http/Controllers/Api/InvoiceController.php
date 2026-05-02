@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -84,6 +85,57 @@ class InvoiceController extends Controller
         return response()->json([
             'message' => 'Payment confirmed successfully',
             'invoice' => $invoice
+        ]);
+    }
+
+    /**
+     * Lookup unpaid invoices for a customer by username or IP address.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function lookup(Request $request)
+    {
+        $identifier = $request->get('identifier');
+        
+        if (!$identifier) {
+            return response()->json(['message' => 'Identifier is required (username for PPPoE or IP for Static)'], 400);
+        }
+
+        // Cari pelanggan berdasarkan username (jika PPPoE) atau IP (jika Static)
+        $customer = Customer::where(function($q) use ($identifier) {
+                $q->where('service_type', 'pppoe')->where('username', $identifier)
+                  ->orWhere('service_type', 'static')->where('ip_address', $identifier);
+            })
+            ->with(['user.appSetting'])
+            ->first();
+
+        if (!$customer) {
+            return response()->json(['message' => 'Customer not found with the provided identifier'], 404);
+        }
+
+        // Ambil invoice yang belum lunas
+        $invoices = $customer->invoices()
+            ->where('status', 'unpaid')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'admin' => [
+                'name' => $customer->user->name,
+                'phone' => $customer->user->phone,
+                'photo' => $customer->user->photo ? url('storage/' . $customer->user->photo) : null,
+                'payment_instruction' => $customer->user->appSetting->payment_instruction ?? null,
+                'qr_code' => $customer->user->appSetting->qr ?? null,
+            ],
+            'customer' => [
+                'id_pelanggan' => $customer->id_pelanggan,
+                'name' => $customer->name,
+                'service_type' => $customer->service_type,
+                'status' => $customer->status,
+            ],
+            'invoices' => $invoices
         ]);
     }
 }
