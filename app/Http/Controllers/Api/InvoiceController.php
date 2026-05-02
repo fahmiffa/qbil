@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\Customer;
+use App\Services\QrisLogic;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -119,6 +120,22 @@ class InvoiceController extends Controller
             ->where('status', 'unpaid')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Generate Dynamic QRIS for each invoice if static QR is available
+        $appSetting = $customer->user->appSetting;
+        if ($appSetting && $appSetting->qr) {
+            $invoices->map(function ($invoice) use ($appSetting) {
+                try {
+                    $invoice->qris_payload = QrisLogic::generateDynamicQris(
+                        $appSetting->qr, 
+                        $invoice->total_amount
+                    );
+                } catch (\Exception $e) {
+                    $invoice->qris_payload = null;
+                }
+                return $invoice;
+            });
+        }
 
         return response()->json([
             'status' => 'success',
