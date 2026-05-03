@@ -433,9 +433,10 @@ class CustomerManager extends Component
                 $customer = Customer::create($data);
 
                 $isPascaBayar = auth()->user()->hasFeature('pasca');
+                $isSinkron = ($this->creation_method === 'sinkron');
 
-                // Jika data BELUM ada di MikroTik DAN bukan pasca bayar, jalankan alur pra bayar (Invoice + Notif)
-                if (!$isExistingOnMikrotik && !$isPascaBayar) {
+                // Jika data BELUM ada di MikroTik DAN bukan pasca bayar DAN bukan sinkron, jalankan alur pra bayar (Invoice + Notif)
+                if (!$isExistingOnMikrotik && !$isPascaBayar && !$isSinkron) {
                     // Generate Invoice Pertama (untuk pendaftaran baru)
                     $firstInvoice = null;
                     try {
@@ -459,12 +460,12 @@ class CustomerManager extends Component
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
                 }
 
-                // TRIAL 30 MENIT: Hanya untuk pra bayar + pendaftaran baru
-                if (!$isExistingOnMikrotik && !$isPascaBayar && auth()->user()->hasFeature('mikrotik')) {
+                // TRIAL 30 MENIT: Hanya untuk pra bayar + pendaftaran baru + bukan sinkron
+                if (!$isExistingOnMikrotik && !$isPascaBayar && !$isSinkron && auth()->user()->hasFeature('mikrotik')) {
                     \App\Jobs\IsolateCustomerJob::dispatch($customer)->delay(now()->addMinutes(30));
                 }
 
-                if ($isPascaBayar) {
+                if ($isPascaBayar || $isSinkron) {
                     $this->dispatch('toast', type: 'success', message: 'Pelanggan berhasil ditambahkan');
                 } else {
                     $this->dispatch('toast', type: 'success', message: 'Pelanggan berhasil ditambahkan. Internet aktif selama 30 menit untuk trial pendaftaran.');
