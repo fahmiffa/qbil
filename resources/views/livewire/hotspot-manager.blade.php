@@ -44,14 +44,25 @@
                         </div>
 
 
-                        <div class="flex items-center gap-2">
-                            <label class="text-sm text-gray-600 dark:text-slate-400">Tampilkan:</label>
-                            <select wire:model.live="perPage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="10">10</option>
-                                <option value="100">100</option>
-                                <option value="1000">1000</option>
-                                <option value="all">Semua</option>
-                            </select>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm text-gray-600 dark:text-slate-400">Paket:</label>
+                                <select wire:model.live="filterPackage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Semua Paket</option>
+                                    @foreach($packages_list as $p)
+                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm text-gray-600 dark:text-slate-400">Tampilkan:</label>
+                                <select wire:model.live="perPage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="10">10</option>
+                                    <option value="100">100</option>
+                                    <option value="1000">1000</option>
+                                    <option value="all">Semua</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 

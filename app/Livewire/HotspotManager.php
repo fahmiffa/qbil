@@ -17,6 +17,7 @@ class HotspotManager extends Component
     public $username, $password, $profile, $hotspot_user_id, $package_id;
     public $type = 'account'; // 'account' or 'voucher'
     public $quantity = 1;
+    public $filterPackage = '';
     public $perPage = 10;
     public $packages_list = [];
     public $isOpen = false;
@@ -36,13 +37,23 @@ class HotspotManager extends Component
         $this->loadPackages();
     }
 
+    public function updatedFilterPackage()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
         
-        $hotspotUsers = auth()->user()->hotspotUsers()
-            ->with('package')
-            ->orderBy('id', 'desc')
+        $query = auth()->user()->hotspotUsers()
+            ->with('package');
+
+        if ($this->filterPackage) {
+            $query->where('package_id', $this->filterPackage);
+        }
+
+        $hotspotUsers = $query->orderBy('id', 'desc')
             ->paginate($limit);
 
         return view('livewire.hotspot-manager', ['hotspotUsers' => $hotspotUsers])
@@ -53,8 +64,11 @@ class HotspotManager extends Component
     {
         if ($value) {
             $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
-            $this->selectedIds = auth()->user()->hotspotUsers()
-                ->orderBy('id', 'desc')
+            $query = auth()->user()->hotspotUsers();
+            if ($this->filterPackage) {
+                $query->where('package_id', $this->filterPackage);
+            }
+            $this->selectedIds = $query->orderBy('id', 'desc')
                 ->limit($limit)
                 ->pluck('id')
                 ->map(fn($id) => (string)$id)
