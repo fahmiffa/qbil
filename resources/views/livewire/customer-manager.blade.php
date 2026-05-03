@@ -570,7 +570,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">ID Pelanggan</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Nama</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Paket</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">IP</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">IP & MAC</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Jatuh Tempo</th>
                                 @if(auth()->user()->hasFeature('mikrotik'))
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Layanan</th>
@@ -608,7 +608,16 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-slate-400">
-                                    {{ $customer->service_type === 'static' ? ($customer->ip_address ?? '-') : '-' }}
+                                    @if($customer->service_type === 'static')
+                                        <div class="flex flex-col">
+                                            <span>{{ $customer->ip_address ?? '-' }}</span>
+                                            @if($customer->mac_address)
+                                                <span class="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{{ $customer->mac_address }}</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        -
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500 dark:text-slate-400">
                                     {{ $customer->due_date ? $customer->due_date->format('d/m/Y') : '-' }}
