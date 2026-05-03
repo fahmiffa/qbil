@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class BulkGenerateHotspotVouchersJob implements ShouldQueue
@@ -62,6 +63,8 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
 
             Log::info("[BulkGenerateHotspotVouchersJob] Starting generation of {$this->quantity} vouchers for user {$this->userId}");
 
+            $cacheKey = "voucher_progress_{$this->userId}";
+
             for ($i = 0; $i < $this->quantity; $i++) {
                 $code = '';
                 $isUnique = false;
@@ -93,7 +96,21 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                 } catch (\Exception $e) {
                     Log::error("[BulkGenerateHotspotVouchersJob] MikroTik Provisioning Error: " . $e->getMessage());
                 }
+
+                // 3. Update progress in Cache (TTL 5 menit)
+                Cache::put($cacheKey, [
+                    'current' => $i + 1,
+                    'total'   => $this->quantity,
+                    'status'  => 'processing',
+                ], 300);
             }
+
+            // Mark as done
+            Cache::put($cacheKey, [
+                'current' => $this->quantity,
+                'total'   => $this->quantity,
+                'status'  => 'done',
+            ], 60);
 
             Log::info("[BulkGenerateHotspotVouchersJob] Successfully generated {$this->quantity} vouchers.");
 

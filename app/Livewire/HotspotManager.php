@@ -22,6 +22,9 @@ class HotspotManager extends Component
     public $packages_list = [];
     public $isOpen = false;
     
+    // Progress tracking
+    public $voucherProgress = null; // ['current' => x, 'total' => y, 'status' => 'processing|done']
+
     // Selection
     public $selectedIds = [];
     public $selectAll = false;
@@ -35,6 +38,24 @@ class HotspotManager extends Component
     public function mount()
     {
         $this->loadPackages();
+    }
+
+    public function checkVoucherProgress()
+    {
+        $progress = \Illuminate\Support\Facades\Cache::get("voucher_progress_" . auth()->id());
+
+        if ($progress) {
+            $this->voucherProgress = $progress;
+
+            if ($progress['status'] === 'done') {
+                // Bersihkan cache & reset progress setelah 2 detik berikutnya
+                \Illuminate\Support\Facades\Cache::forget("voucher_progress_" . auth()->id());
+                $this->voucherProgress = null;
+                $this->dispatch('toast', type: 'success', message: 'Semua voucher berhasil di-generate!');
+            }
+        } else {
+            $this->voucherProgress = null;
+        }
     }
 
     public function updatedFilterPackage()
@@ -173,6 +194,13 @@ class HotspotManager extends Component
                 );
                 
                 session()->flash('message', 'Proses generate ' . $this->quantity . ' voucher sedang berjalan di background.');
+
+                // Set awal progress
+                $this->voucherProgress = [
+                    'current' => 0,
+                    'total'   => (int) $this->quantity,
+                    'status'  => 'processing',
+                ];
 
                 // Log Activity
                 ActivityLog::create([
