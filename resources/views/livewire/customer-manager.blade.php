@@ -242,7 +242,7 @@
                                                 <div class="flex items-center gap-6">
                                                     <label class="inline-flex items-center cursor-pointer group">
                                                         <input type="radio" wire:model.live="creation_method" value="buat_baru" class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600 transition-all">
-                                                        <span class="ml-2 text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Buat</span>
+                                                        <span class="ml-2 text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Baru</span>
                                                     </label>
                                                     <label class="inline-flex items-center cursor-pointer group">
                                                         <input type="radio" wire:model.live="creation_method" value="sinkron" class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600 transition-all">
