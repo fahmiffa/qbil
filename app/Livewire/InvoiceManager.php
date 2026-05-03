@@ -344,6 +344,10 @@ class InvoiceManager extends Component
         if ($this->showGenerateModal && strlen($this->customerSearch) >= 2) {
             $modalCustomers = Customer::where('user_id', auth()->id())
                 ->where('status', 'active')
+                ->whereNotNull('package_id')
+                ->whereNotNull('due_date')
+                ->whereNotNull('phone')
+                ->where('phone', '!=', '')
                 ->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->customerSearch . '%')
                         ->orWhere('id_pelanggan', 'like', '%' . $this->customerSearch . '%')

@@ -22,7 +22,10 @@ class BulkGenerateInvoicesJob implements ShouldQueue
     {
         $query = \App\Models\Customer::where('user_id', $this->userId)
             ->where('status', 'active')
-            ->whereNotNull('package_id');
+            ->whereNotNull('package_id')
+            ->whereNotNull('due_date')
+            ->whereNotNull('phone')
+            ->where('phone', '!=', '');
 
         if (!empty($this->customerIds)) {
             $query->whereIn('id', $this->customerIds);

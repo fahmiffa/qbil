@@ -16,6 +16,11 @@ class InvoiceService
      */
     public function generateForCustomer(Customer $customer, string $period): ?Invoice
     {
+        // 0. Essential data validation
+        if (!$customer->package_id || !$customer->due_date || empty($customer->phone)) {
+            return null;
+        }
+
         // 1. Check if invoice already exists for this period
         $exists = Invoice::where('customer_id', $customer->id)
             ->where('billing_period', $period)

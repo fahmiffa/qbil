@@ -81,6 +81,8 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 ->where('status', 'active')
                 ->whereNotNull('package_id')
                 ->whereNotNull('due_date')
+                ->whereNotNull('phone')
+                ->where('phone', '!=', '')
                 ->get();
 
             $userGenerated = 0;
