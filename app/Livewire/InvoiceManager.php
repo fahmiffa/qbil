@@ -37,10 +37,29 @@ class InvoiceManager extends Component
     public $selectedInvoice = null;
     public $customerSearch = '';
     public $selectedCustomers = [];
+    public $invoiceProgress = null; // ['current' => x, 'total' => y, 'status' => 'processing|done']
 
     public function mount()
     {
         $this->billing_period = now()->format('Y-m');
+    }
+
+    public function checkInvoiceProgress()
+    {
+        $progress = \Illuminate\Support\Facades\Cache::get("invoice_progress_" . auth()->id());
+
+        if ($progress) {
+            $this->invoiceProgress = $progress;
+
+            if ($progress['status'] === 'done') {
+                // Bersihkan cache & reset progress setelah 2 detik berikutnya
+                \Illuminate\Support\Facades\Cache::forget("invoice_progress_" . auth()->id());
+                $this->invoiceProgress = null;
+                $this->dispatch('toast', type: 'success', message: 'Semua tagihan berhasil di-generate!');
+            }
+        } else {
+            $this->invoiceProgress = null;
+        }
     }
 
     public function openGenerateModal()
@@ -57,6 +76,13 @@ class InvoiceManager extends Component
 
         // Dispatch job untuk generate bulk
         \App\Jobs\BulkGenerateInvoicesJob::dispatch(auth()->id(), $currentPeriod, $customerIds);
+
+        // Inisialisasi progress awal
+        $this->invoiceProgress = [
+            'current' => 0,
+            'total' => $customerIds ? count($customerIds) : Customer::where('user_id', auth()->id())->where('status', 'active')->count(),
+            'status' => 'processing'
+        ];
 
         $msg = $customerIds 
             ? "Proses generate invoice untuk " . count($customerIds) . " pelanggan terpilih telah dimulai di latar belakang."

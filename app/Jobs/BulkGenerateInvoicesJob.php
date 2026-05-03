@@ -32,18 +32,39 @@ class BulkGenerateInvoicesJob implements ShouldQueue
         }
 
         $customers = $query->get();
+        $total = $customers->count();
+        $cacheKey = "invoice_progress_{$this->userId}";
 
         if ($customers->isEmpty()) {
+            \Illuminate\Support\Facades\Cache::put($cacheKey, [
+                'current' => 0,
+                'total' => 0,
+                'status' => 'done'
+            ], 60);
             return;
         }
 
-        foreach ($customers as $customer) {
+        foreach ($customers as $index => $customer) {
             try {
                 $invoiceService = new \App\Services\InvoiceService();
                 $invoiceService->generateForCustomer($customer, $this->period);
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error("BulkGenerateInvoicesJob Error for customer {$customer->id}: " . $e->getMessage());
             }
+
+            // Update progress
+            \Illuminate\Support\Facades\Cache::put($cacheKey, [
+                'current' => $index + 1,
+                'total' => $total,
+                'status' => 'processing'
+            ], 300);
         }
+
+        // Finalize
+        \Illuminate\Support\Facades\Cache::put($cacheKey, [
+            'current' => $total,
+            'total' => $total,
+            'status' => 'done'
+        ], 60);
     }
 }
