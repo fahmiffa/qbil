@@ -22,26 +22,11 @@
                         </button>
                         
                         @if(auth()->user()->hasFeature('mikrotik'))
-                        <!-- <button type="button" x-data x-on:click="
-                            Swal.fire({
-                                title: 'Sinkronisasi MikroTik?',
-                                text: 'Sistem akan mengecek tagihan dan mengisolir otomatis pelanggan yang menunggak, lalu mensinkronisasikan datanya ke MikroTik. Lanjutkan?',
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonColor: '#059669',
-                                cancelButtonColor: '#d33',
-                                confirmButtonText: 'Ya, Sinkronkan!',
-                                cancelButtonText: 'Batal'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $wire.syncAll();
-                                }
-                            })
-                        " wire:loading.attr="disabled" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition-all shadow-sm disabled:opacity-50">
-                            <svg wire:loading.remove wire:target="syncAll" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                            <svg wire:loading wire:target="syncAll" class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <button type="button" wire:click="openSyncModal" wire:loading.attr="disabled" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition-all shadow-sm disabled:opacity-50">
+                            <svg wire:loading.remove wire:target="openSyncModal" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <svg wire:loading wire:target="openSyncModal" class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             Sinkronkan MikroTik
-                        </button> -->
+                        </button>
                         @endif
                     </div>
 
@@ -251,6 +236,66 @@
                                             </div>
 
                                             @if(auth()->user()->hasFeature('mikrotik'))
+                                            <!-- Tipe Input -->
+                                            <div class="sm:col-span-2">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Metode Pembuatan</label>
+                                                <div class="flex items-center gap-6">
+                                                    <label class="inline-flex items-center cursor-pointer group">
+                                                        <input type="radio" wire:model.live="creation_method" value="buat_baru" class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600 transition-all">
+                                                        <span class="ml-2 text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Buat</span>
+                                                    </label>
+                                                    <label class="inline-flex items-center cursor-pointer group">
+                                                        <input type="radio" wire:model.live="creation_method" value="sinkron" class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600 transition-all">
+                                                        <span class="ml-2 text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">MikroTik (Sinkron)</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            @if($creation_method === 'sinkron')
+                                            <!-- Select Mikrotik Data -->
+                                            <div class="sm:col-span-2">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Sesi/Akun MikroTik yang Aktif</label>
+                                                <div class="relative" x-data="{ open: false, search: '' }" @click.away="open = false">
+                                                    <div @click="open = !open" class="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors font-mono cursor-pointer flex justify-between items-center">
+                                                        <span x-text="$wire.sync_mikrotik_id ? ($wire.availableMikrotikData.find(d => d.id === $wire.sync_mikrotik_id)?.label || '-- Pilih Data dari Router --') : '-- Pilih Data dari Router --'" class="truncate text-slate-700 dark:text-slate-300"></span>
+                                                        <svg class="w-4 h-4 text-slate-400 transform transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                    </div>
+
+                                                    <div x-show="open" x-transition.opacity x-cloak class="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-60 flex flex-col overflow-hidden" style="display: none;">
+                                                        <div class="p-2 border-b border-slate-100 dark:border-slate-700">
+                                                            <div class="relative">
+                                                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                                                </span>
+                                                                <input type="text" x-model="search" placeholder="Cari nama / komentar / IP..." class="w-full pl-9 bg-slate-50 dark:bg-slate-900 border-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors" @click.stop>
+                                                            </div>
+                                                        </div>
+                                                        <ul class="overflow-y-auto flex-1 p-1">
+                                                            <template x-for="item in $wire.availableMikrotikData.filter(i => i.label.toLowerCase().includes(search.toLowerCase()))" :key="item.id">
+                                                                <li @click="$wire.set('sync_mikrotik_id', item.id); open = false; search = ''" 
+                                                                    class="px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer rounded-lg font-mono truncate transition-colors flex items-center justify-between group">
+                                                                    <span x-text="item.label" class="truncate"></span>
+                                                                    <svg x-show="$wire.sync_mikrotik_id === item.id" class="w-4 h-4 text-blue-500 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                                </li>
+                                                            </template>
+                                                            <li x-show="$wire.availableMikrotikData.filter(i => i.label.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-4 text-sm text-slate-400 text-center italic font-medium">Data tidak ditemukan</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                @if(empty($availableMikrotikData))
+                                                    <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-2 font-bold flex items-center gap-1">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                        Sedang memuat data dari router MikroTik atau tidak ada data tersedia untuk layanan ini.
+                                                    </p>
+                                                @else
+                                                    <p class="text-[10px] text-blue-600 dark:text-blue-400 mt-2 font-bold flex items-center gap-1">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                        Pilih data untuk mengisi Parameter Layanan secara otomatis.
+                                                    </p>
+                                                @endif
+                                            </div>
+                                            @endif
+
                                             <!-- Tipe Layanan -->
                                             <div>
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Layanan</label>
@@ -387,6 +432,131 @@
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                @if($isSyncModalOpen)
+                    <div class="fixed z-[60] inset-0 overflow-y-auto">
+                        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+                            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" wire:click="closeSyncModal()"></div>
+                            
+                            <div class="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-5xl z-10 border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all flex flex-col max-h-[90vh]"
+                                 x-on:click.stop>
+                                <!-- Modal Header -->
+                                <div class="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex-shrink-0">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            </div>
+                                            Data MikroTik Belum Tersinkron
+                                        </h3>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider font-semibold">Berikut adalah daftar layanan di MikroTik yang tidak ada di database pelanggan</p>
+                                    </div>
+                                    <button wire:click="closeSyncModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 transition-all duration-300">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+
+                                <!-- Modal Body -->
+                                <div class="px-8 py-6 overflow-y-auto custom-scrollbar flex-1" x-data="{ tab: 'static' }">
+                                    <div class="flex border-b border-gray-200 dark:border-slate-700 mb-4">
+                                        <button @click="tab = 'static'" :class="tab === 'static' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-300'" class="py-2 px-4 border-b-2 font-medium text-sm transition-colors">
+                                            Layanan Static (DHCP Leases)
+                                            <span class="ml-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-0.5 px-2 rounded-full text-xs">{{ count($unmatchedStatic) }}</span>
+                                        </button>
+                                        <button @click="tab = 'pppoe'" :class="tab === 'pppoe' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-300'" class="py-2 px-4 border-b-2 font-medium text-sm transition-colors">
+                                            Layanan PPPoE (PPP Active)
+                                            <span class="ml-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-0.5 px-2 rounded-full text-xs">{{ count($unmatchedPppoe) }}</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Tab Static -->
+                                    <div x-show="tab === 'static'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+                                        @if(count($unmatchedStatic) > 0)
+                                            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
+                                                <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                                                    <thead class="bg-gray-50 dark:bg-slate-900/50">
+                                                        <tr>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">IP Address</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">MAC Address</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Server</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Host Name</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Comment</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+                                                        @foreach($unmatchedStatic as $item)
+                                                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">{{ $item['ip_address'] }}</td>
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-slate-400">{{ $item['mac_address'] }}</td>
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{{ $item['server'] }}</td>
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{{ $item['host_name'] }}</td>
+                                                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">{{ $item['comment'] }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        @else
+                                            <div class="text-center py-10 px-4">
+                                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-4">
+                                                    <svg class="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                </div>
+                                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Semua Layanan Static Sudah Sinkron</h3>
+                                                <p class="text-sm text-gray-500 dark:text-slate-400">Tidak ada DHCP lease di MikroTik yang tidak terhubung dengan database pelanggan lokal.</p>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- Tab PPPoE -->
+                                    <div x-show="tab === 'pppoe'" style="display: none;" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+                                        @if(count($unmatchedPppoe) > 0)
+                                            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
+                                                <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                                                    <thead class="bg-gray-50 dark:bg-slate-900/50">
+                                                        <tr>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Username</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">IP Address</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Service</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Uptime</th>
+                                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Caller ID (MAC)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+                                                        @foreach($unmatchedPppoe as $item)
+                                                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-medium text-gray-900 dark:text-white">{{ $item['username'] }}</td>
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-slate-400">{{ $item['address'] }}</td>
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{{ $item['service'] }}</td>
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{{ $item['uptime'] }}</td>
+                                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-slate-400">{{ $item['caller_id'] }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        @else
+                                            <div class="text-center py-10 px-4">
+                                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-4">
+                                                    <svg class="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                </div>
+                                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Semua Layanan PPPoE Sudah Sinkron</h3>
+                                                <p class="text-sm text-gray-500 dark:text-slate-400">Tidak ada sesi PPP Active di MikroTik yang tidak terhubung dengan database pelanggan lokal.</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Modal Footer -->
+                                <div class="px-8 py-5 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 rounded-b-3xl flex-shrink-0">
+                                    <button type="button" wire:click="closeSyncModal()"
+                                        class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-all uppercase tracking-widest">
+                                        Tutup
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

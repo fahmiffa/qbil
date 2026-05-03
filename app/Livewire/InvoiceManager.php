@@ -20,6 +20,7 @@ class InvoiceManager extends Component
 
     public $search = '';
     public $filter_status = '';
+    public $filter_due_date = '';
     public $billing_period = '';
     public $perPage = 10;
     public $paid_at;
@@ -27,7 +28,7 @@ class InvoiceManager extends Component
     public $showIsolationModal = false;
     public $isAlertDismissed = false;
 
-    protected $queryString = ['search', 'filter_status', 'billing_period', 'perPage'];
+    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'billing_period', 'perPage'];
 
 
 
@@ -323,6 +324,10 @@ class InvoiceManager extends Component
 
         if ($this->filter_status) {
             $query->where('status', $this->filter_status);
+        }
+
+        if ($this->filter_due_date) {
+            $query->whereDay('due_date', $this->filter_due_date);
         }
 
         if ($this->billing_period) {

@@ -23,6 +23,8 @@ class CustomerManager extends Component
     public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'active', $customer_id, $due_date;
     public $package_id, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
+    public $sync_mikrotik_id = '';
+    public $availableMikrotikData = [];
     public $latitude, $longitude;
     public $asset_id;
     public $selectedPool;
@@ -37,7 +39,9 @@ class CustomerManager extends Component
     public $filterDueDate = '';
     public $perPage = 10;
     public $isOpen = false;
-
+    public $isSyncModalOpen = false;
+    public $unmatchedStatic = [];
+    public $unmatchedPppoe = [];
     public function render()
     {
         $query = auth()->user()->customers()->with('package')->latest();
@@ -191,6 +195,8 @@ class CustomerManager extends Component
         $this->password     = '';
         $this->service_type = 'static';
         $this->creation_method = 'buat_baru';
+        $this->sync_mikrotik_id = '';
+        $this->availableMikrotikData = [];
         $this->ip_address   = '';
         $this->mac_address  = '';
         $this->dhcp_server  = '';
@@ -223,6 +229,104 @@ class CustomerManager extends Component
             }
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal mencari IP: ' . $e->getMessage());
+        }
+    }
+
+    public function updatedCreationMethod()
+    {
+        if ($this->creation_method === 'sinkron') {
+            $this->loadMikrotikDataForSync();
+        }
+        $this->sync_mikrotik_id = '';
+    }
+
+    public function updatedServiceType()
+    {
+        if ($this->creation_method === 'sinkron') {
+            $this->loadMikrotikDataForSync();
+        }
+        $this->sync_mikrotik_id = '';
+    }
+
+    public function loadMikrotikDataForSync()
+    {
+        try {
+            $mikrotik = $this->getMikrotikService();
+            if ($this->service_type === 'static') {
+                $leases = $mikrotik->getDhcpLeases();
+                $this->availableMikrotikData = [];
+                foreach ($leases as $lease) {
+                    if (isset($lease['mac-address']) || isset($lease['address'])) {
+                        $comment = $lease['comment'] ?? '';
+                        $hostname = $lease['host-name'] ?? '-';
+                        $label = ($lease['address'] ?? '') . ' - ' . ($lease['mac-address'] ?? '');
+                        if ($comment) {
+                            $label .= ' (' . $comment . ')';
+                        } else {
+                            $label .= ' (' . $hostname . ')';
+                        }
+
+                        $this->availableMikrotikData[] = [
+                            'id' => $lease['.id'] ?? '',
+                            'mac_address' => $lease['mac-address'] ?? '',
+                            'ip_address' => $lease['address'] ?? '',
+                            'dhcp_server' => $lease['server'] ?? '',
+                            'hostname' => $lease['host-name'] ?? '',
+                            'comment' => $comment,
+                            'label' => $label
+                        ];
+                    }
+                }
+            } else {
+                $secrets = $mikrotik->getPppSecrets();
+                $this->availableMikrotikData = [];
+                foreach ($secrets as $secret) {
+                    if (isset($secret['name'])) {
+                        $comment = $secret['comment'] ?? '';
+                        $label = $secret['name'];
+                        if ($comment) {
+                            $label .= ' - ' . $comment;
+                        }
+                        $label .= ' (Profile: ' . ($secret['profile'] ?? '-') . ')';
+
+                        $this->availableMikrotikData[] = [
+                            'id' => $secret['.id'] ?? '',
+                            'username' => $secret['name'] ?? '',
+                            'password' => $secret['password'] ?? '',
+                            'comment' => $comment,
+                            'label' => $label
+                        ];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->availableMikrotikData = [];
+            session()->flash('error', 'Gagal memuat data dari MikroTik: ' . $e->getMessage());
+        }
+    }
+
+    public function updatedSyncMikrotikId($value)
+    {
+        if (!$value) return;
+
+        $selected = collect($this->availableMikrotikData)->firstWhere('id', $value);
+        if ($selected) {
+            if ($this->service_type === 'static') {
+                $this->mac_address = strtoupper($selected['mac_address']);
+                $this->ip_address = $selected['ip_address'];
+                $this->dhcp_server = $selected['dhcp_server'] ?: 'all';
+                $suggestedName = $selected['comment'] ?: $selected['hostname'];
+                if (empty($this->name) && !empty($suggestedName)) {
+                    $this->name = $suggestedName;
+                }
+            } else {
+                $this->username = $selected['username'];
+                $this->password = $selected['password'];
+                $suggestedName = $selected['comment'] ?: $selected['username'];
+                if (empty($this->name)) {
+                    $this->name = $suggestedName;
+                }
+            }
         }
     }
 
@@ -279,7 +383,7 @@ class CustomerManager extends Component
             'username'     => $this->username ?: null,
             'password'     => $this->password ?: null,
             'service_type' => $this->service_type,
-            'creation_method' => 'buat_baru',
+            'creation_method' => $this->creation_method,
             'ip_address'   => $normIp,
             'mac_address'  => $normMac,
             'dhcp_server'  => $this->dhcp_server ?: 'all',
@@ -396,6 +500,83 @@ class CustomerManager extends Component
         SyncAllCustomersJob::dispatch(auth()->user());
 
         $this->dispatch('toast', type: 'success', message: 'Sinkronisasi seluruh pelanggan telah dijadwalkan ke antrean.');
+    }
+
+    public function openSyncModal()
+    {
+        $this->isSyncModalOpen = true;
+        $this->loadUnmatchedMikrotikData();
+    }
+
+    public function closeSyncModal()
+    {
+        $this->isSyncModalOpen = false;
+        $this->unmatchedStatic = [];
+        $this->unmatchedPppoe = [];
+    }
+
+    public function loadUnmatchedMikrotikData()
+    {
+        try {
+            $mikrotik = $this->getMikrotikService();
+            
+            // 1. Get all from Mikrotik
+            $leases = $mikrotik->getDhcpLeases();
+            $actives = $mikrotik->getPppActives();
+
+            // 2. Get local customers
+            $localCustomers = \App\Models\Customer::where('user_id', auth()->id())->get();
+
+            // 3. Find unmatched Static (Leases)
+            $localMacs = $localCustomers->where('service_type', 'static')->pluck('mac_address')->filter()->map(function($mac) {
+                return strtoupper(str_replace(['-', ' '], ':', $mac));
+            })->toArray();
+            $localIps = $localCustomers->where('service_type', 'static')->pluck('ip_address')->filter()->toArray();
+
+            $this->unmatchedStatic = [];
+            if (!empty($leases)) {
+                foreach ($leases as $lease) {
+                    $mac = strtoupper($lease['mac-address'] ?? '');
+                    $ip = $lease['address'] ?? '';
+                    
+                    if (empty($mac) && empty($ip)) continue;
+
+                    if (!in_array($mac, $localMacs) && !in_array($ip, $localIps)) {
+                        $this->unmatchedStatic[] = [
+                            'mac_address' => $mac,
+                            'ip_address' => $ip,
+                            'server' => $lease['server'] ?? '',
+                            'host_name' => $lease['host-name'] ?? '',
+                            'status' => $lease['status'] ?? '',
+                            'comment' => $lease['comment'] ?? '',
+                        ];
+                    }
+                }
+            }
+
+            // 4. Find unmatched PPPoE (Active)
+            $localUsernames = $localCustomers->where('service_type', 'pppoe')->pluck('username')->filter()->toArray();
+
+            $this->unmatchedPppoe = [];
+            if (!empty($actives)) {
+                foreach ($actives as $active) {
+                    $username = $active['name'] ?? '';
+                    if (empty($username)) continue;
+
+                    if (!in_array($username, $localUsernames)) {
+                        $this->unmatchedPppoe[] = [
+                            'username' => $username,
+                            'address' => $active['address'] ?? '-',
+                            'service' => $active['service'] ?? '-',
+                            'uptime' => $active['uptime'] ?? '-',
+                            'caller_id' => $active['caller-id'] ?? '-',
+                        ];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal memuat data MikroTik: ' . $e->getMessage());
+        }
     }
 
 

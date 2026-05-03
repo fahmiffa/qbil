@@ -252,6 +252,24 @@ class MikrotikService
         return !empty($secrets) ? $secrets[0] : null;
     }
 
+    public function getPppSecrets(): array
+    {
+        $cacheKey = "mk_ppp_secrets_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () {
+            $query = new Query('/ppp/secret/print');
+            return $this->client->query($query)->read();
+        });
+    }
+
+    public function getPppActives(): array
+    {
+        $cacheKey = "mk_ppp_actives_{$this->router->id}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () {
+            $query = new Query('/ppp/active/print');
+            return $this->client->query($query)->read();
+        });
+    }
+
     // -------------------------
     // Hotspot Users (Customer Hotspot)
     // -------------------------
