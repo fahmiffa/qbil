@@ -1,8 +1,9 @@
+@php \Carbon\Carbon::setLocale('id'); @endphp
 @section('title', "Invoice {$invoice->invoice_number} - {$invoice->customer->user->name}")
 
 @push('meta')
     <meta property="og:title" content="Invoice - {{ $invoice->customer->user->name }}">
-    <meta property="og:description" content="{{ $invoice->package->name ?? 'Tagihan Internet' }} #{{ $invoice->invoice_number }} - {{ $invoice->billing_period }}">
+    <meta property="og:description" content="{{ $invoice->package->name ?? 'Tagihan Internet' }} #{{ $invoice->invoice_number }} - {{ \Carbon\Carbon::parse($invoice->billing_period)->translatedFormat('F Y') }}">
     @if($invoice->customer->user->photo)
         <meta property="og:image" content="{{ url(Storage::url($invoice->customer->user->photo)) }}">
     @endif
@@ -84,11 +85,11 @@
                 <div class="space-y-1 text-xs">
                     <div class="flex justify-end gap-2 text-slate-500 italic">
                         <span>Periode:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200 non-italic">{{ $invoice->billing_period }}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 non-italic">{{ \Carbon\Carbon::parse($invoice->billing_period)->translatedFormat('F Y') }}</span>
                     </div>
                     <div class="flex justify-end gap-2 text-slate-500 italic">
                         <span>Jatuh Tempo:</span>
-                        <span class="font-bold text-rose-500 non-italic">{{ $invoice->due_date->format('d') }}</span>
+                        <span class="font-bold text-rose-500 non-italic">{{ $invoice->due_date->translatedFormat('d F Y') }}</span>
                     </div>
                 </div>
             </div>

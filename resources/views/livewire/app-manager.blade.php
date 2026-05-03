@@ -136,6 +136,7 @@
                                 <li>{unique_code} = Kode Unik Transfer</li>
                                 <li>{total_amount} = Total Tagihan (Rp)</li>
                                 <li>{due_date} = Tanggal Jatuh Tempo</li>
+                                <li>{period} = Periode Tagihan</li>
                                 <li>{public_url} = Link Invoice Publik</li>
                             </ul>
                         </div>
@@ -157,6 +158,8 @@
                                 <li>{password} = Password Akun</li>
                                 <li>{package_name} = Nama Paket</li>
                                 <li>{address} = Alamat Pelanggan</li>
+                                <li>{period} = Periode Awal</li>
+                                <li>{due_date} = Jatuh Tempo Pertama</li>
                             </ul>
                         </div>
                         @error('registration_template') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
@@ -177,6 +180,7 @@
                                 <li>{amount} = Total Dibayar (Rp)</li>
                                 <li>{package_name} = Nama Paket</li>
                                 <li>{period} = Bulan/Periode Tagihan</li>
+                                <li>{due_date} = Jatuh Tempo</li>
                                 <li>{public_url} = Link Kwitansi/Invoice</li>
                             </ul>
                         </div>

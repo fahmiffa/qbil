@@ -25,10 +25,13 @@ class InvoiceManager extends Component
     public $perPage = 10;
     public $paid_at;
 
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
+
     public $showIsolationModal = false;
     public $isAlertDismissed = false;
 
-    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'billing_period', 'perPage'];
+    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
 
 
 
@@ -42,6 +45,16 @@ class InvoiceManager extends Component
     public function mount()
     {
         $this->billing_period = now()->format('Y-m');
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 
     public function checkInvoiceProgress()
@@ -363,7 +376,7 @@ class InvoiceManager extends Component
         $totalCount = $query->count();
         $limit = $this->perPage === 'all' ? max(1, $totalCount) : (int) $this->perPage;
 
-        $invoices = $query->orderBy('created_at', 'desc')->paginate($limit);
+        $invoices = $query->orderBy($this->sortField, $this->sortDirection)->paginate($limit);
 
 
         $modalCustomers = [];

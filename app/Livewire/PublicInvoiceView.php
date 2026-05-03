@@ -14,6 +14,7 @@ class PublicInvoiceView extends Component
 
     public function mount(Invoice $invoice)
     {
+        app()->setLocale('id');
         $this->invoice = $invoice->load(['customer.user.appSetting', 'package']);
         
         $appSetting = $this->invoice->customer->user->appSetting;

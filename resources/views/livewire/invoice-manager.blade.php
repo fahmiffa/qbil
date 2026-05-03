@@ -121,8 +121,42 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Pelanggan</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Periode</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Tagihan</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Batas Waktu</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status</th>
+                                <th wire:click="sortBy('due_date')" class="cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
+                                    <div class="flex items-center gap-1">
+                                        Batas Waktu
+                                        @if($sortField === 'due_date')
+                                            @if($sortDirection === 'asc')
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                            @else
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sortBy('status')" class="cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
+                                    <div class="flex items-center gap-1">
+                                        Status
+                                        @if($sortField === 'status')
+                                            @if($sortDirection === 'asc')
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                            @else
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sortBy('paid_at')" class="cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
+                                    <div class="flex items-center gap-1">
+                                        Tanggal Bayar
+                                        @if($sortField === 'paid_at')
+                                            @if($sortDirection === 'asc')
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                            @else
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Aksi</th>
                             </tr>
                         </thead>
@@ -150,7 +184,7 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
-                                        {{ $invoice->due_date->format('d') }}
+                                        {{ $invoice->due_date ? $invoice->due_date->format('d/m/Y') : '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($invoice->status == 'unpaid')
@@ -158,8 +192,11 @@
                                         @elseif($invoice->status == 'paid')
                                             <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Paid</span>
                                         @else
-                                            <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 uppercase tracking-wider">Canceled</span>
+                                            <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400 uppercase tracking-wider">Canceled</span>
                                         @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                                        {{ $invoice->paid_at ? $invoice->paid_at->format('d/m/Y H:i') : '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
                                         <div class="inline-flex gap-2">

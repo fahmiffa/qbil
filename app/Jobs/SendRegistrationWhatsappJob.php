@@ -64,6 +64,9 @@ class SendRegistrationWhatsappJob implements ShouldQueue
 
         $publicUrl = $latestInvoice ? route('public.invoice', ['invoice' => $latestInvoice->id]) : '-';
 
+        // Set locale to Indonesian for date formatting
+        \Carbon\Carbon::setLocale('id');
+
         $message = $whatsappService->formatMessage($templateText, [
             'name'           => $customer->name,
             'amount'         => $amount,
@@ -75,6 +78,8 @@ class SendRegistrationWhatsappJob implements ShouldQueue
             'public_url'     => $publicUrl,
             'invoice_number' => $latestInvoice ? $latestInvoice->invoice_number : '-',
             'total_amount'   => $latestInvoice ? $latestInvoice->total_amount : $amount,
+            'period'         => $latestInvoice ? \Carbon\Carbon::parse($latestInvoice->billing_period)->translatedFormat('F Y') : '-',
+            'due_date'       => ($latestInvoice && $latestInvoice->due_date) ? $latestInvoice->due_date->translatedFormat('d F Y') : '-',
             'user_name'      => $user->name,
         ]);
 

@@ -13,6 +13,7 @@ class PrintController extends Controller
 {
     public function invoice(Invoice $invoice)
     {
+        app()->setLocale('id');
         $invoice->load(['customer.user.appSetting', 'package']);
         return view('print.unified', [
             'type' => 'Invoice',
@@ -31,6 +32,7 @@ class PrintController extends Controller
 
     public function bulkInvoices(Request $request)
     {
+        app()->setLocale('id');
         $ids = explode(',', $request->query('ids', ''));
         $invoices = Invoice::whereIn('id', $ids)->with(['customer.user.appSetting', 'package'])->orderBy('billing_period', 'asc')->get();
         
@@ -119,9 +121,10 @@ class PrintController extends Controller
             ['label' => 'Rincian Piutang Terutang', 'value' => null],
         ];
 
+        \Carbon\Carbon::setLocale('id');
         foreach ($unpaidPiutangs as $p) {
             $items[] = [
-                'label' => 'Periode: ' . $p->billing_period,
+                'label' => 'Periode: ' . \Carbon\Carbon::parse($p->billing_period)->translatedFormat('F Y'),
                 'value' => $p->amount,
                 'is_sub' => true
             ];
@@ -154,6 +157,7 @@ class PrintController extends Controller
 
     public function thermal(Invoice $invoice)
     {
+        app()->setLocale('id');
         $invoice->load(['customer.user.appSetting', 'package']);
         return view('print.thermal', [
             'invoice' => $invoice

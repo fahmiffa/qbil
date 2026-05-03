@@ -76,7 +76,7 @@
                 </div>
                 <div class="text-right">
                     <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Detail Transaksi:</h3>
-                    <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Tanggal: {{ \Carbon\Carbon::parse($date)->format('d F Y') }}</p>
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Tanggal: {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y') }}</p>
                     <p class="text-[10px] text-slate-400 mt-1 uppercase">{{ $customer->id_pelanggan }}</p>
                 </div>
             </div>

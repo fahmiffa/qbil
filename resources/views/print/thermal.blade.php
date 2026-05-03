@@ -64,7 +64,7 @@
         ID Pel : {{ $invoice->customer->id_pelanggan }}<br>
         Nama   : {{ $invoice->customer->name }}<br>
         Inv    : {{ $invoice->invoice_number }}<br>
-        Tgl    : {{ $invoice->created_at->format('d/m/y H:i') }}
+        Tgl    : {{ $invoice->created_at->translatedFormat('d/m/y H:i') }}
     </div>
 
     <table class="border-top">

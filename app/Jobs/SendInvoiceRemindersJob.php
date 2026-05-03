@@ -124,14 +124,17 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 
             $publicUrl = route('public.invoice', ['invoice' => $invoice->id]);
 
+            // Set locale to Indonesian for date formatting
+            \Carbon\Carbon::setLocale('id');
+
             $message = $whatsappService->formatMessage($appSetting->template, [
                 'name'           => $customer->name,
                 'invoice_number' => $invoice->invoice_number,
                 'amount'         => $invoice->amount,
                 'unique_code'    => $invoice->unique_code,
                 'total_amount'   => $invoice->total_amount,
-                'period'         => $invoice->billing_period,
-                'due_date'       => $invoice->due_date->format('d-m-Y'),
+                'period'         => \Carbon\Carbon::parse($invoice->billing_period)->translatedFormat('F Y'),
+                'due_date'       => $invoice->due_date->translatedFormat('d F Y'),
                 'package'        => $customer->package->name ?? '-',
                 'id_pelanggan'   => $customer->id_pelanggan ?? '-',
                 'address'        => $customer->address ?? '-',
