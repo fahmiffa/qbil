@@ -434,28 +434,30 @@ class MikrotikService
 
     public function findAvailableIpInPool(string $poolName): ?string
     {
-        // 1. Get Pool Details
+        // 1. Get Pool Details (real-time, small data)
         $query = (new Query('/ip/pool/print'))->where('name', $poolName);
         $pools = $this->client->query($query)->read();
         if (empty($pools)) return null;
 
         $ranges = explode(',', $pools[0]['ranges']);
         
-        // 2. Collect Used IPs efficiently
-        // Using associative array for O(1) lookup speed
+        // 2. Collect Used IPs — use Cache to avoid repeated slow API calls
+        // Each cache entry lives for 60 seconds. Acceptable trade-off for UX speed.
+        $routerId = $this->router->id;
         $usedIps = [];
 
-        // Optimize: Only fetch what's absolutely necessary or use more efficient queries
-        // If we have thousands of leases/queues, this is the bottleneck.
-        
-        // From DHCP Leases
-        $leases = $this->client->query(new Query('/ip/dhcp-server/lease/print'))->read();
+        // From DHCP Leases (Cached, 60s) — reuses same key as sync dropdown
+        $leases = \Illuminate\Support\Facades\Cache::remember("mk_dhcp_leases_{$routerId}", 60, function () {
+            return $this->client->query(new Query('/ip/dhcp-server/lease/print'))->read();
+        });
         foreach ($leases as $l) {
             if (isset($l['address'])) $usedIps[$l['address']] = true;
         }
 
-        // From Simple Queues (Target)
-        $queues = $this->client->query(new Query('/queue/simple/print'))->read();
+        // From Simple Queues / Target IP (Cached, 60s) — reuses same key as getSimpleQueues()
+        $queues = \Illuminate\Support\Facades\Cache::remember("mk_queues_{$routerId}", 60, function () {
+            return $this->client->query(new Query('/queue/simple/print'))->read();
+        });
         foreach ($queues as $q) {
             if (isset($q['target'])) {
                 $ip = explode('/', $q['target'])[0];
@@ -463,12 +465,7 @@ class MikrotikService
             }
         }
 
-        // From ARP Table (Optional/Limit? Checking ARP can be slow)
-        // Let's keep it but be aware it adds to the query count
-        $arps = $this->client->query(new Query('/ip/arp/print'))->read();
-        foreach ($arps as $a) {
-            if (isset($a['address'])) $usedIps[$a['address']] = true;
-        }
+        // NOTE: ARP check removed — covered by DHCP leases and is the slowest query.
 
         // 3. Iterate through ranges to find first free
         foreach ($ranges as $range) {
@@ -477,7 +474,7 @@ class MikrotikService
                 $startLong = ip2long(trim($start));
                 $endLong = ip2long(trim($end));
 
-                // Limit the search to prevent infinite/long loops (Max 1000 IPs per range)
+                // Limit the search to prevent infinite/long loops (Max 2000 IPs per range)
                 $count = 0;
                 for ($i = $startLong; $i <= $endLong; $i++) {
                     $candidate = long2ip($i);
@@ -486,7 +483,7 @@ class MikrotikService
                     }
                     
                     $count++;
-                    if ($count > 2000) break; // Break if we scanned too many without success
+                    if ($count > 2000) break;
                 }
             } else {
                 $candidate = trim($range);
