@@ -155,7 +155,7 @@ class ProvisionCustomerJob implements ShouldQueue
                 $mikrotik->addToAddressList($customer->ip_address, 'ISOLIR', 'Suspended: ' . $customer->name);
             }
         } elseif ($customer->service_type === 'static' && $customer->mac_address) {
-            $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, true);
+            $mikrotik->setDhcpLeaseStateByMac($customer->mac_address, false);
             if ($customer->ip_address) {
                 $mikrotik->addToAddressList($customer->ip_address, 'ISOLIR', 'Suspended: ' . $customer->name);
             }
