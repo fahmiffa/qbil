@@ -29,7 +29,7 @@ class MikrotikService
             'user'    => $router->username,
             'pass'    => $router->password,
             'port'    => (int) $router->port,
-            'timeout' => 30,
+            'timeout' => 60,
         ]);
     }
 
