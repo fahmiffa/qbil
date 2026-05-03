@@ -28,6 +28,7 @@ class CustomerManager extends Component
     public $latitude, $longitude;
     public $asset_id;
     public $selectedPool;
+    public $autoAssignError = '';
     public $ipPools = [];
     public $dhcpServers = [];
     public $pppProfiles = [];
@@ -209,13 +210,14 @@ class CustomerManager extends Component
 
     public function autoAssignIp()
     {
+        $this->autoAssignError = '';
+
         if (!$this->selectedPool) {
-            session()->flash('error', 'Pilih IP Pool terlebih dahulu.');
+            $this->autoAssignError = 'Pilih IP Pool terlebih dahulu.';
             return;
         }
 
         try {
-            // Tingkatkan batas waktu eksekusi khusus untuk proses pencarian IP ini
             set_time_limit(60);
 
             $mikrotik = $this->getMikrotikService();
@@ -223,12 +225,12 @@ class CustomerManager extends Component
 
             if ($availableIp) {
                 $this->ip_address = $availableIp;
-                session()->flash('message', 'IP Address ditemukan: ' . $availableIp);
+                $this->dispatch('toast', type: 'success', message: 'IP tersedia ditemukan: ' . $availableIp);
             } else {
-                session()->flash('error', 'Tidak ada IP kosong di pool ini.');
+                $this->autoAssignError = 'Tidak ada IP kosong di pool "' . $this->selectedPool . '".';
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal mencari IP: ' . $e->getMessage());
+            $this->autoAssignError = 'Gagal mencari IP: ' . $e->getMessage();
         }
     }
 
