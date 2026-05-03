@@ -252,8 +252,10 @@ class CustomerManager extends Component
     {
         try {
             $mikrotik = $this->getMikrotikService();
+            $routerId = auth()->user()->router->id ?? 0;
+
             if ($this->service_type === 'static') {
-                $leases = $mikrotik->getDhcpLeases();
+                $leases = \Illuminate\Support\Facades\Cache::remember("mk_dhcp_leases_{$routerId}", 300, fn() => $mikrotik->getDhcpLeases());
                 $this->availableMikrotikData = [];
                 foreach ($leases as $lease) {
                     if (isset($lease['mac-address']) || isset($lease['address'])) {
@@ -278,7 +280,7 @@ class CustomerManager extends Component
                     }
                 }
             } else {
-                $secrets = $mikrotik->getPppSecrets();
+                $secrets = \Illuminate\Support\Facades\Cache::remember("mk_ppp_secrets_{$routerId}", 300, fn() => $mikrotik->getPppSecrets());
                 $this->availableMikrotikData = [];
                 foreach ($secrets as $secret) {
                     if (isset($secret['name'])) {
