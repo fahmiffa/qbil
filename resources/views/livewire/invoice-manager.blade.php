@@ -1,6 +1,10 @@
 <div>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">Invoice</h2>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="font-black text-2xl text-slate-800 dark:text-white tracking-tight">Tagihan</h2>
+            </div>
+        </div>
     </x-slot>
 
     <div class="w-full">
@@ -34,62 +38,80 @@
             </div>
         @endif
 
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-2xl border border-gray-100 dark:border-slate-700 transition-colors">
+        <div class="bg-white dark:bg-slate-800 shadow-sm rounded-2xl border border-gray-100 dark:border-slate-700 transition-colors">
             <div class="p-4 sm:p-6">
                 
 
 
-                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <div class="flex items-center gap-4">
-                        <div>
-                            <select wire:model.live="billing_period" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors min-w-[150px]">
-                                @php $currentYear = date('Y'); @endphp
-                                @for($i = 1; $i <= 12; $i++)
-                                    @php
-                                        $monthValue = $currentYear . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
-                                        $monthLabel = \Carbon\Carbon::create()->month($i)->translatedFormat('F');
-                                    @endphp
-                                    <option value="{{ $monthValue }}">{{ $monthLabel }}</option>
-                                @endfor
+                <div class="flex flex-col gap-6 mb-8">
+                    {{-- Row 1: Period and Generate --}}
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            <div class="relative min-w-[180px]">
+                                <select wire:model.live="billing_period" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all">
+                                    @php $currentYear = date('Y'); @endphp
+                                    @for($i = 1; $i <= 12; $i++)
+                                        @php
+                                            $monthValue = $currentYear . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+                                            $monthLabel = \Carbon\Carbon::create()->month($i)->translatedFormat('F');
+                                        @endphp
+                                        <option value="{{ $monthValue }}">{{ $monthLabel }} {{ $currentYear }}</option>
+                                    @endfor
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                </div>
+                            </div>
+                            <button wire:click="openGenerateModal" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                Generate Tagihan
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2 sm:justify-end">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Tampil:</span>
+                            <select wire:model.live="perPage" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
+                                <option value="10">10</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="1000">1000</option>
+                                <option value="all">Semua</option>
                             </select>
                         </div>
-                        <button wire:click="openGenerateModal" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/20">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                            Generate Tagihan ({{ \Carbon\Carbon::parse($billing_period)->translatedFormat('F Y') }})
-                        </button>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                        <div class="flex items-center gap-2">
-                             <select wire:model.live="perPage" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                                <option value="10">Tampil 10</option>
-                                <option value="50">Tampil 50</option>
-                                <option value="100">Tampil 100</option>
-                                <option value="1000">Tampil 1000</option>
-                                <option value="all">Tampil Semua</option>
-                            </select>
-                        </div>
-
-                        <div class="relative flex-1 md:w-64">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                    {{-- Row 2: Search and Filters --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="relative sm:col-span-2 lg:col-span-2">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </span>
-                            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari invoice/pelanggan/kode unik..." class="w-full pl-10 bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
+                            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari invoice/pelanggan/kode unik..." class="w-full pl-11 bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm">
                         </div>
                         
-                        <select wire:model.live="filter_status" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                            <option value="">Semua Status</option>
-                            <option value="unpaid">Belum Lunas</option>
-                            <option value="paid">Lunas</option>
-                            <option value="canceled">Dibatalkan</option>
-                        </select>
+                        <div class="relative">
+                            <select wire:model.live="filter_status" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all">
+                                <option value="">Semua Status</option>
+                                <option value="unpaid">Belum Lunas</option>
+                                <option value="paid">Lunas</option>
+                                <option value="canceled">Dibatalkan</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
 
-                        <select wire:model.live="filter_due_date" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                            <option value="">Semua Tgl. Jatuh Tempo</option>
-                            @for($i = 1; $i <= 31; $i++)
-                                <option value="{{ $i }}">Tanggal {{ $i }}</option>
-                            @endfor
-                        </select>
+                        <div class="relative">
+                            <select wire:model.live="filter_due_date" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all">
+                                <option value="">Semua Tgl. Jatuh Tempo</option>
+                                @for($i = 1; $i <= 31; $i++)
+                                    <option value="{{ $i }}">Tanggal {{ $i }}</option>
+                                @endfor
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -113,51 +135,39 @@
                     </div>
                 @endif
 
-                <div wire:poll.keep-alive.10s class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 transition-colors">
+                <div wire:poll.keep-alive.10s class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 transition-colors min-h-[450px] pb-32">
                     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                         <thead class="bg-slate-50/50 dark:bg-slate-900/40">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">No. Invoice</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Pelanggan</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Periode</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Tagihan</th>
-                                <th wire:click="sortBy('due_date')" class="cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
-                                    <div class="flex items-center gap-1">
-                                        Batas Waktu
-                                        @if($sortField === 'due_date')
-                                            @if($sortDirection === 'asc')
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                            @else
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </th>
-                                <th wire:click="sortBy('status')" class="cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
-                                    <div class="flex items-center gap-1">
-                                        Status
-                                        @if($sortField === 'status')
-                                            @if($sortDirection === 'asc')
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                            @else
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </th>
-                                <th wire:click="sortBy('paid_at')" class="cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
-                                    <div class="flex items-center gap-1">
-                                        Tanggal Bayar
-                                        @if($sortField === 'paid_at')
-                                            @if($sortDirection === 'asc')
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                            @else
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </th>
-                                <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Aksi</th>
+                            <tr class="bg-slate-50/50 dark:bg-slate-900/40">
+                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">NO. INVOICE</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">PELANGGAN</th>
+                                <th class="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">PERIODE</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">TAGIHAN</th>
+                                <th wire:click="sortBy('due_date')" class="hidden sm:table-cell cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
+                                     <div class="flex items-center gap-1">
+                                         TEMPO
+                                         @if($sortField === 'due_date')
+                                             @if($sortDirection === 'asc')
+                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                             @else
+                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                             @endif
+                                         @endif
+                                     </div>
+                                 </th>
+                                 <th wire:click="sortBy('status')" class="cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
+                                     <div class="flex items-center gap-1">
+                                         STATUS
+                                         @if($sortField === 'status')
+                                             @if($sortDirection === 'asc')
+                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                             @else
+                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                             @endif
+                                         @endif
+                                     </div>
+                                 </th>
+                                 <th class="px-6 py-4 text-right text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">AKSI</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700 text-sm transition-colors">
@@ -174,7 +184,7 @@
                                             </div>
                                         </a>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
+                                    <td class="hidden lg:table-cell px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                         {{ $invoice->billing_period }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -183,101 +193,104 @@
                                             <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Uniq: +{{ $invoice->unique_code }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
+                                    <td class="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                         {{ $invoice->due_date ? $invoice->due_date->format('d/m/Y') : '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($invoice->status == 'unpaid')
-                                            <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 uppercase tracking-wider">Unpaid</span>
+                                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 uppercase tracking-widest">Unpaid</span>
                                         @elseif($invoice->status == 'paid')
-                                            <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Paid</span>
+                                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Paid</span>
                                         @else
-                                            <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400 uppercase tracking-wider">Canceled</span>
+                                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400 uppercase tracking-widest">Canceled</span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400 font-mono text-[11px]">
-                                        {{ $invoice->paid_at ? $invoice->paid_at->format('d/m/Y H:i') : '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
-                                        <div class="inline-flex gap-2">
-                                            <button @click="
-                                                navigator.clipboard.writeText('{{ route('public.invoice', $invoice->id) }}');
-                                                $dispatch('toast', { type: 'success', message: 'Link invoice berhasil disalin!' });
-                                            " class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold text-xs flex-shrink-0">
-                                                Copy
+                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <div x-data="{ 
+                                            open: false, 
+                                            pos: { top: 0, left: 0 },
+                                            updatePos() {
+                                                let rect = this.$refs.btn.getBoundingClientRect();
+                                                this.pos.top = rect.bottom + window.scrollY;
+                                                this.pos.left = rect.right - 192 + window.scrollX;
+                                            }
+                                        }" class="inline-block text-left">
+                                            <button x-ref="btn" @click="open = !open; if(open) $nextTick(() => updatePos())" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all text-xs font-bold group">
+                                                <span>Aksi</span>
+                                                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                             </button>
-                                            <a href="{{ route('public.invoice', $invoice->id) }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold text-xs flex-shrink-0">
-                                                Open
-                                            </a>
-                                            <button wire:click="sendWhatsappNotification('{{ $invoice->id }}')" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold text-xs flex-shrink-0">
-                                                Kirim WA
-                                            </button>
-                                            <a href="{{ route('public.print-thermal', $invoice->id) }}" target="_blank" class="text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-xs flex-shrink-0">
-                                                Thermal
-                                            </a>
+
+                                            <template x-teleport="body">
+                                                <div x-show="open" @click.away="open = false" x-cloak
+                                                     :style="`position: absolute; top: ${pos.top}px; left: ${pos.left}px;`"
+                                                     class="w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-[9999] py-2 transition-all">
+
+                                                    <a href="{{ route('public.invoice', $invoice->id) }}" target="_blank" class="px-4 py-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                                        Buka Invoice
+                                                    </a>
+                                                    <button wire:click="sendWhatsappNotification('{{ $invoice->id }}')" @click="open = false" class="w-full text-left px-4 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.394 0 12.03c0 2.119.552 4.188 1.598 6.049L0 24l6.104-1.602a11.834 11.834 0 005.937 1.57h.005c6.632 0 12.028-5.391 12.03-12.028a11.85 11.85 0 00-3.529-8.52"/></svg>
+                                                        Kirim WA
+                                                    </button>
+
+                                                    <div class="border-t border-slate-50 dark:border-slate-700 my-1"></div>
+                                                    @if($invoice->status == 'unpaid' && !$invoice->paid_at)
+                                                        <button wire:click="openVerifyModal('{{ $invoice->id }}')" @click="open = false" class="w-full text-left px-4 py-2 text-xs font-black text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-2">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                            VERIFIKASI
+                                                        </button>
+
+                                                    @elseif($invoice->status == 'canceled')
+                                                        <button @click="
+                                                            open = false;
+                                                            Swal.fire({
+                                                                title: 'Re-generate Invoice?',
+                                                                text: 'Buat ulang invoice ini dengan kode unik yang baru?',
+                                                                icon: 'info',
+                                                                showCancelButton: true,
+                                                                confirmButtonColor: '#3b82f6',
+                                                                cancelButtonColor: '#64748b',
+                                                                confirmButtonText: 'Ya, Generate Ulang',
+                                                                cancelButtonText: 'Kembali',
+                                                                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                                                                color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
+                                                            }).then((result) => {
+                                                                if (result.isConfirmed) {
+                                                                    $wire.regenerateInvoice('{{ $invoice->id }}')
+                                                                }
+                                                            })
+                                                        " class="w-full text-left px-4 py-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                            GENERATE ULANG
+                                                        </button>
+                                                    @endif
+                                                    <button @click="
+                                                        open = false;
+                                                        Swal.fire({
+                                                            title: 'Hapus Permanen?',
+                                                            text: 'Data invoice {{ $invoice->invoice_number }} akan dihapus selamanya dari database.',
+                                                            icon: 'error',
+                                                            showCancelButton: true,
+                                                            confirmButtonColor: '#ef4444',
+                                                            cancelButtonColor: '#64748b',
+                                                            confirmButtonText: 'Ya, Hapus Permanen',
+                                                            cancelButtonText: 'Batal',
+                                                            background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                                                            color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
+                                                        }).then((result) => {
+                                                            if (result.isConfirmed) {
+                                                                $wire.deleteInvoice('{{ $invoice->id }}')
+                                                            }
+                                                        })
+                                                    " class="w-full text-left px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        HAPUS
+                                                    </button>
+                                                </div>
+                                            </template>
                                         </div>
-
-
-                                        @if($invoice->status == 'unpaid' && !$invoice->paid_at)
-                                            <button wire:click="openVerifyModal('{{ $invoice->id }}')" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold text-xs">Verifikasi</button>
-                                            
-                                            <button @click="
-                                                Swal.fire({
-                                                    title: 'Batalkan Invoice?',
-                                                    text: 'Invoice {{ $invoice->invoice_number }} akan ditandai sebagai dibatalkan.',
-                                                    icon: 'warning',
-                                                    showCancelButton: true,
-                                                    confirmButtonColor: '#f59e0b',
-                                                    cancelButtonColor: '#64748b',
-                                                    confirmButtonText: 'Ya, Batalkan',
-                                                    cancelButtonText: 'Kembali',
-                                                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                                                    color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
-                                                }).then((result) => {
-                                                    if (result.isConfirmed) {
-                                                        $wire.cancelInvoice('{{ $invoice->id }}')
-                                                    }
-                                                })
-                                            " class="text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-400 font-bold text-xs">Batal</button>
-                                        @elseif($invoice->status == 'canceled')
-                                            <button @click="
-                                                Swal.fire({
-                                                    title: 'Re-generate Invoice?',
-                                                    text: 'Buat ulang invoice ini dengan kode unik yang baru?',
-                                                    icon: 'info',
-                                                    showCancelButton: true,
-                                                    confirmButtonColor: '#3b82f6',
-                                                    cancelButtonColor: '#64748b',
-                                                    confirmButtonText: 'Ya, Generate Ulang',
-                                                    cancelButtonText: 'Kembali',
-                                                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                                                    color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
-                                                }).then((result) => {
-                                                    if (result.isConfirmed) {
-                                                        $wire.regenerateInvoice('{{ $invoice->id }}')
-                                                    }
-                                                })
-                                            " class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold text-xs">Generate Lagi</button>
-                                        @endif
-
-                                        <button @click="
-                                            Swal.fire({
-                                                title: 'Hapus Permanen?',
-                                                text: 'Data invoice {{ $invoice->invoice_number }} akan dihapus selamanya dari database.',
-                                                icon: 'error',
-                                                showCancelButton: true,
-                                                confirmButtonColor: '#ef4444',
-                                                cancelButtonColor: '#64748b',
-                                                confirmButtonText: 'Ya, Hapus Permanen',
-                                                cancelButtonText: 'Batal',
-                                                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                                                color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
-                                            }).then((result) => {
-                                                if (result.isConfirmed) {
-                                                    $wire.deleteInvoice('{{ $invoice->id }}')
-                                                }
-                                            })
-                                        " class="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 font-bold text-xs">Hapus</button>
                                     </td>
                                 </tr>
                             @empty
@@ -547,6 +560,56 @@
 
                 <div class="px-8 py-6 bg-slate-50 dark:bg-slate-900/30 text-center border-t border-slate-50 dark:border-slate-700">
                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Lakukan verifikasi pembayaran untuk membatalkan isolir otomatis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Phone Selection Modal -->
+    <div x-data="{ show: @entangle('showPhoneSelectionModal') }" 
+         x-show="show" 
+         x-cloak
+         class="fixed inset-0 z-[70] overflow-y-auto"
+         style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="show = false; $wire.closePhoneSelectionModal()">
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full border border-slate-200 dark:border-slate-700">
+                <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-700 text-center">
+                    <div class="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.394 0 12.03c0 2.119.552 4.188 1.598 6.049L0 24l6.104-1.602a11.834 11.834 0 005.937 1.57h.005c6.632 0 12.028-5.391 12.03-12.028a11.85 11.85 0 00-3.529-8.52"/></svg>
+                    </div>
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Kirim WhatsApp</h3>
+                    <p class="text-sm text-slate-500 mt-1">Pilih nomor tujuan pengiriman</p>
+                </div>
+
+                <div class="px-8 py-8 space-y-3">
+                    @if(isset($customerPhones['phone']))
+                        <button wire:click="confirmSendWhatsapp('{{ $customerPhones['phone'] }}')" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-blue-50 dark:bg-slate-900/40 dark:hover:bg-blue-900/20 border border-slate-100 dark:border-slate-700 rounded-2xl transition-all group">
+                            <div class="text-left">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">WhatsApp Utama</p>
+                                <p class="font-bold text-slate-700 dark:text-slate-200">{{ $customerPhones['phone'] }}</p>
+                            </div>
+                            <svg class="w-5 h-5 text-blue-500 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    @endif
+
+                    @if(isset($customerPhones['phone2']))
+                        <button wire:click="confirmSendWhatsapp('{{ $customerPhones['phone2'] }}')" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-blue-50 dark:bg-slate-900/40 dark:hover:bg-blue-900/20 border border-slate-100 dark:border-slate-700 rounded-2xl transition-all group">
+                            <div class="text-left">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">WhatsApp 2</p>
+                                <p class="font-bold text-slate-700 dark:text-slate-200">{{ $customerPhones['phone2'] }}</p>
+                            </div>
+                            <svg class="w-5 h-5 text-blue-500 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    @endif
+                </div>
+
+                <div class="px-8 py-4 bg-slate-50 dark:bg-slate-900/30 text-center border-t border-slate-50 dark:border-slate-700">
+                    <button @click="show = false; $wire.closePhoneSelectionModal()" class="text-xs font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-all">Batal</button>
                 </div>
             </div>
         </div>

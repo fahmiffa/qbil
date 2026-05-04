@@ -17,13 +17,15 @@ class SendManualInvoiceWhatsappJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $invoice;
+    protected $overridePhone;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(Invoice $invoice)
+    public function __construct(Invoice $invoice, $overridePhone = null)
     {
         $this->invoice = $invoice;
+        $this->overridePhone = $overridePhone;
     }
 
     /**
@@ -47,7 +49,9 @@ class SendManualInvoiceWhatsappJob implements ShouldQueue
             return;
         }
 
-        if (!$customer->phone) {
+        $targetPhone = $this->overridePhone ?: $customer->phone;
+
+        if (!$targetPhone) {
             Log::warning("[SendManualInvoiceWhatsappJob] Nomor telepon tidak ada untuk customer: {$customer->name}");
             return;
         }
@@ -102,14 +106,14 @@ class SendManualInvoiceWhatsappJob implements ShouldQueue
 
         $success = $whatsappService->sendMessage(
             $user->phone ?? '',
-            $customer->phone,
+            $targetPhone,
             $message
         );
 
         if ($success) {
-            Log::info("[SendManualInvoiceWhatsappJob] Sukses mengirim pesan ke {$customer->phone}.");
+            Log::info("[SendManualInvoiceWhatsappJob] Sukses mengirim pesan ke {$targetPhone}.");
         } else {
-            Log::error("[SendManualInvoiceWhatsappJob] Gagal mengirim pesan ke {$customer->phone}.");
+            Log::error("[SendManualInvoiceWhatsappJob] Gagal mengirim pesan ke {$targetPhone}.");
         }
     }
 }

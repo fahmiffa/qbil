@@ -21,7 +21,17 @@
                     </div>
                     <div class="flex-1">
                         <h1 class="text-2xl font-black tracking-tight">{{ $customer->name }}</h1>
-                        <p class="text-blue-200 text-sm mt-0.5">{{ $customer->phone ?? 'No. Telepon tidak tersedia' }}</p>
+                        <div class="flex flex-col text-blue-200 text-sm mt-0.5">
+                            @if($customer->phone)
+                                <p>{{ $customer->phone }}</p>
+                            @endif
+                            @if($customer->phone2)
+                                <p>{{ $customer->phone2 }}</p>
+                            @endif
+                            @if(!$customer->phone && !$customer->phone2)
+                                <p>No. Telepon tidak tersedia</p>
+                            @endif
+                        </div>
                         <div class="flex flex-wrap gap-2 mt-3">
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest {{ $customer->status === 'active' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-red-400/20 text-red-200' }}">
                                 {{ $customer->status === 'active' ? '● Aktif' : '● Suspend' }}

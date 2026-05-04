@@ -20,7 +20,7 @@ class CustomerManager extends Component
 {
     use WithPagination;
 
-    public $id_pelanggan, $name, $phone, $address, $keterangan, $status = 'active', $customer_id, $due_date;
+    public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date;
     public $package_id, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $sync_mikrotik_id = '';
@@ -186,7 +186,7 @@ class CustomerManager extends Component
         $this->id_pelanggan = '';
         $this->name         = '';
         $this->phone        = '';
-        $this->address      = '';
+        $this->phone2       = '';
         $this->keterangan   = '';
         $this->status       = 'active';
         $this->due_date     = '';
@@ -344,6 +344,7 @@ class CustomerManager extends Component
             'id_pelanggan' => 'nullable|string|max:50',
             'name'         => 'required|string|max:255',
             'phone'        => 'nullable|string|max:50',
+            'phone2'       => 'nullable|string|max:50',
             'address'      => 'nullable|string',
             'keterangan'   => 'nullable|string',
             'status'       => 'required|in:active,suspended',
@@ -379,6 +380,7 @@ class CustomerManager extends Component
             'id_pelanggan' => $this->id_pelanggan,
             'name'         => $this->name,
             'phone'        => $this->phone,
+            'phone2'       => $this->phone2,
             'address'      => $this->address,
             'keterangan'   => $this->keterangan,
             'status'       => $this->status,
@@ -594,6 +596,7 @@ class CustomerManager extends Component
         $this->id_pelanggan = $customer->id_pelanggan;
         $this->name         = $customer->name;
         $this->phone        = $customer->phone;
+        $this->phone2       = $customer->phone2;
         $this->address      = $customer->address;
         $this->keterangan   = $customer->keterangan;
         $this->status       = $customer->status;

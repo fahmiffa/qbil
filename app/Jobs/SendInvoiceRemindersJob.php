@@ -150,6 +150,16 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 $message
             )->delay(now()->addSeconds($sentCount * 10));
 
+            // Jika pengingat ke-2 dan ada nomor kedua, kirim juga ke nomor kedua
+            if ($reminderType === 2 && !empty($customer->phone2)) {
+                $sentCount++;
+                SendWhatsAppMessageJob::dispatch(
+                    $user->phone ?? '',
+                    $customer->phone2,
+                    $message
+                )->delay(now()->addSeconds($sentCount * 10));
+            }
+
             $userId = $user->id;
             if (!isset($userSentCounts[$userId])) {
                 $userSentCounts[$userId] = [

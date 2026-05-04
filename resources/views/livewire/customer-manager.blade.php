@@ -155,9 +155,9 @@
                                                 @error('name') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>
 
-                                            <!-- No HP -->
+                                            <!-- No HP 1 -->
                                             <div>
-                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">WhatsApp</label>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">WhatsApp 1</label>
                                                 <input type="text" wire:model="phone" placeholder="08..."
                                                     oninput="
                                                         let original = this.value;
@@ -172,6 +172,25 @@
                                                     "
                                                     class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
                                                 @error('phone') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                            </div>
+
+                                            <!-- No HP 2 -->
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">WhatsApp 2 (Opsional)</label>
+                                                <input type="text" wire:model="phone2" placeholder="08..."
+                                                    oninput="
+                                                        let original = this.value;
+                                                        let val = original.replace(/\D/g, '');
+                                                        if (val.startsWith('62')) {
+                                                            val = '0' + val.substring(2);
+                                                        }
+                                                        if (original !== val) {
+                                                            this.value = val;
+                                                            this.dispatchEvent(new Event('input'));
+                                                        }
+                                                    "
+                                                    class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
+                                                @error('phone2') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
                                             </div>
 
                                             <!-- Status -->
@@ -573,23 +592,21 @@
                         </div>
                     </div>
                 @endif
-
-                <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm transition-colors">
+                <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm transition-colors mt-6">
                     <table class="min-w-full min-w-[900px] divide-y divide-gray-200 dark:divide-slate-700">
-                        <thead class="bg-gray-50 dark:bg-slate-900/50">
+                        <thead class="bg-slate-50/50 dark:bg-slate-900/40">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">No</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">ID Pelanggan</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Nama</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Paket</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">IP & MAC</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Jatuh Tempo</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">NO</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">ID PELANGGAN</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">NAMA</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">PAKET</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">IP & MAC</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">TEMPO</th>
                                 @if(auth()->user()->hasFeature('mikrotik'))
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Layanan</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">LAYANAN</th>
                                 @endif
-
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Aksi</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">STATUS</th>
+                                <th class="px-4 py-3 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">AKSI</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700 transition-colors">
@@ -600,9 +617,14 @@
                                 <td class="whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white p-0">
                                     <a href="{{ route('customers.detail', $customer->id) }}" class="block px-4 py-3 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group" wire:navigate>
                                         <span class="group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{{ $customer->name }}</span>
-                                        @if($customer->phone)
-                                            <p class="text-[10px] text-gray-400 font-normal mt-0.5">{{ $customer->phone }}</p>
-                                        @endif
+                                        <div class="text-[10px] text-gray-400 font-normal mt-0.5 space-y-0.5">
+                                            @if($customer->phone)
+                                                <p>{{ $customer->phone }}</p>
+                                            @endif
+                                            @if($customer->phone2)
+                                                <p>{{ $customer->phone2 }}</p>
+                                            @endif
+                                        </div>
                                     </a>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-slate-300">
@@ -649,37 +671,60 @@
                                         <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-center space-x-2">
-                                    <a href="{{ route('customers.detail', $customer->id) }}" target="_blank"
-                                        class="inline-flex items-center px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-all shadow-sm text-sm">
-                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                        Detail
-                                    </a>
-                                    <button wire:click="edit({{ $customer->id }})" class="inline-flex items-center px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm text-sm">
-                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        Edit
-                                    </button>
-                                    <button @click="
-                                        Swal.fire({
-                                            title: 'Hapus Pelanggan?',
-                                            text: 'Anda akan menghapus {{ $customer->name }}. Akun di MikroTik juga akan dihapus secara otomatis.',
-                                            icon: 'warning',
-                                            showCancelButton: true,
-                                            confirmButtonColor: '#ef4444',
-                                            cancelButtonColor: '#64748b',
-                                            confirmButtonText: 'Ya, Hapus!',
-                                            cancelButtonText: 'Batal',
-                                            background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                                            color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
-                                        }).then((result) => {
-                                            if (result.isConfirmed) {
-                                                $wire.delete({{ $customer->id }})
-                                            }
-                                        })
-                                    " class="inline-flex items-center px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition-all shadow-sm text-sm">
-                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        Hapus
-                                    </button>
+                                <td class="px-4 py-3 whitespace-nowrap text-right">
+                                    <div x-data="{ 
+                                        open: false, 
+                                        pos: { top: 0, left: 0 },
+                                        updatePos() {
+                                            let rect = this.$refs.btn.getBoundingClientRect();
+                                            this.pos.top = rect.bottom + window.scrollY;
+                                            this.pos.left = rect.right - 192 + window.scrollX;
+                                        }
+                                    }" class="inline-block text-left">
+                                        <button x-ref="btn" @click="open = !open; if(open) $nextTick(() => updatePos())" 
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all text-xs font-bold group">
+                                            <span>Aksi</span>
+                                            <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+
+                                        <template x-teleport="body">
+                                            <div x-show="open" @click.away="open = false" x-cloak
+                                                 :style="`position: absolute; top: ${pos.top}px; left: ${pos.left}px;`"
+                                                 class="w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-[9999] py-2 transition-all">
+                                                <a href="{{ route('customers.detail', $customer->id) }}" wire:navigate class="px-4 py-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    Lihat Detail
+                                                </a>
+                                                <button wire:click="edit({{ $customer->id }})" @click="open = false" class="w-full text-left px-4 py-2 text-xs font-bold text-amber-600 dark:text-amber-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                    Edit Data
+                                                </button>
+                                                <div class="border-t border-slate-50 dark:border-slate-700 my-1"></div>
+                                                <button @click="
+                                                    open = false;
+                                                    Swal.fire({
+                                                        title: 'Hapus Pelanggan?',
+                                                        text: 'Anda akan menghapus {{ $customer->name }}. Akun di MikroTik juga akan dihapus secara otomatis.',
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        confirmButtonColor: '#ef4444',
+                                                        cancelButtonColor: '#64748b',
+                                                        confirmButtonText: 'Ya, Hapus!',
+                                                        cancelButtonText: 'Batal',
+                                                        background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                                                        color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
+                                                    }).then((result) => {
+                                                        if (result.isConfirmed) {
+                                                            $wire.delete({{ $customer->id }})
+                                                        }
+                                                    })
+                                                " class="w-full text-left px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    Hapus
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </td>
                             </tr>
                             @empty

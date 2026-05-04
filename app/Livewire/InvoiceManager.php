@@ -41,6 +41,9 @@ class InvoiceManager extends Component
     public $customerSearch = '';
     public $selectedCustomers = [];
     public $invoiceProgress = null; // ['current' => x, 'total' => y, 'status' => 'processing|done']
+    public $showPhoneSelectionModal = false;
+    public $customerPhones = [];
+    public $phoneSelectionInvoiceId = null;
 
     public function mount()
     {
@@ -293,12 +296,41 @@ class InvoiceManager extends Component
 
     public function sendWhatsappNotification($invoiceId)
     {
-        $invoice = Invoice::findOrFail($invoiceId);
+        $invoice = Invoice::with('customer')->findOrFail($invoiceId);
+        $customer = $invoice->customer;
 
-        // Dispatch job ke antrean
+        if ($customer->phone && $customer->phone2) {
+            $this->customerPhones = [
+                'phone' => $customer->phone,
+                'phone2' => $customer->phone2
+            ];
+            $this->phoneSelectionInvoiceId = $invoiceId;
+            $this->showPhoneSelectionModal = true;
+            return;
+        }
+
+        // Dispatch job ke antrean dengan phone default (phone1)
         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
 
         $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} sedang diproses di latar belakang.");
+    }
+
+    public function confirmSendWhatsapp($phone)
+    {
+        $invoice = Invoice::findOrFail($this->phoneSelectionInvoiceId);
+        
+        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, $phone);
+
+        $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} dikirim ke nomor {$phone}.");
+        
+        $this->closePhoneSelectionModal();
+    }
+
+    public function closePhoneSelectionModal()
+    {
+        $this->showPhoneSelectionModal = false;
+        $this->customerPhones = [];
+        $this->phoneSelectionInvoiceId = null;
     }
 
     public function regenerateInvoice($invoiceId)
