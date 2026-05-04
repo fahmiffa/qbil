@@ -441,7 +441,7 @@ class InvoiceManager extends Component
         $isolationTimeRemaining = '';
         $isBeforeIsolation = false;
 
-        if ($settings && $settings->isolate_days && $settings->isolate_time) {
+        if ($settings && $settings->isolate_time !== null && $settings->isolate_days !== null) {
             $now = now();
             $isolateTime = Carbon::parse($settings->isolate_time);
             $offsetDays = (int) $settings->isolate_days;

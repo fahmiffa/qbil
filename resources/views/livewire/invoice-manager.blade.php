@@ -531,11 +531,11 @@
                                     $unpaidInvoice = $c->invoices()->where('status', 'unpaid')->where('billing_period', now()->format('Y-m'))->first();
                                 @endphp
                                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                                    <td class="px-8 py-4">
-                                        <div class="flex flex-col">
-                                            <span class="font-bold text-slate-900 dark:text-white">{{ $c->name }}</span>
-                                            <span class="text-[10px] text-slate-400 font-medium">{{ $c->id_pelanggan }}</span>
-                                        </div>
+                                    <td class="whitespace-nowrap p-0">
+                                        <a href="{{ route('customers.detail', $c->id) }}" class="block px-8 py-4 flex flex-col group transition-colors" wire:navigate>
+                                            <span class="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{{ $c->name }}</span>
+                                            <span class="text-[10px] text-slate-400 font-medium group-hover:text-blue-400 transition-colors">{{ $c->phone }}</span>
+                                        </a>
                                     </td>
                                     <td class="px-8 py-4">
                                         @if($unpaidInvoice)
