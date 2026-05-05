@@ -43,6 +43,7 @@ class CustomerManager extends Component
     public $isSyncModalOpen = false;
     public $unmatchedStatic = [];
     public $unmatchedPppoe = [];
+    public $is_trial = false;
     public function render()
     {
         $query = auth()->user()->customers()->with('package')->latest();
@@ -206,6 +207,7 @@ class CustomerManager extends Component
         $this->asset_id     = '';
         $this->selectedPool = '';
         $this->showPassword = false;
+        $this->is_trial     = false;
     }
 
     public function autoAssignIp()
@@ -466,8 +468,8 @@ class CustomerManager extends Component
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
                 }
 
-                // TRIAL 30 MENIT: Hanya untuk pra bayar + pendaftaran baru + bukan sinkron
-                if (!$isExistingOnMikrotik && !$isPascaBayar && !$isSinkron && auth()->user()->hasFeature('mikrotik')) {
+                // TRIAL 30 MENIT: Hanya untuk pra bayar + pendaftaran baru + bukan sinkron + jika CHECKED
+                if ($this->is_trial && !$isExistingOnMikrotik && !$isPascaBayar && !$isSinkron && auth()->user()->hasFeature('mikrotik')) {
                     \App\Jobs\IsolateCustomerJob::dispatch($customer)->delay(now()->addMinutes(30));
                 }
 

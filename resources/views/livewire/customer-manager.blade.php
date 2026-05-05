@@ -210,6 +210,19 @@
                                                     class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
                                             </div>
 
+                                            @if(!$customer_id)
+                                            <!-- Trial Checkbox -->
+                                            <div class="sm:col-span-2 flex items-center p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl gap-3">
+                                                <div class="flex items-center h-5">
+                                                    <input id="is_trial" wire:model="is_trial" type="checkbox" class="w-5 h-5 text-blue-600 bg-white border-slate-300 rounded-lg focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600 transition-all cursor-pointer">
+                                                </div>
+                                                <div class="flex-1">
+                                                    <label for="is_trial" class="font-bold text-slate-700 dark:text-slate-200 text-sm cursor-pointer">Mode Trial (30 Menit)</label>
+                                                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Jika dicentang, pelanggan akan aktif selama 30 menit sebelum otomatis diisolir jika belum membayar.</p>
+                                                </div>
+                                            </div>
+                                            @endif
+
                                             <!-- Alamat -->
                                             <div class="sm:col-span-2">
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Alamat Lengkap</label>
