@@ -143,10 +143,22 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">PELANGGAN</th>
                                 <th class="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">PERIODE</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">TAGIHAN</th>
-                                <th wire:click="sortBy('due_date')" class="hidden sm:table-cell cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
+                                 <th wire:click="sortBy('due_date')" class="hidden sm:table-cell cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
                                      <div class="flex items-center gap-1">
                                          TEMPO
                                          @if($sortField === 'due_date')
+                                             @if($sortDirection === 'asc')
+                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                             @else
+                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                             @endif
+                                         @endif
+                                     </div>
+                                 </th>
+                                 <th wire:click="sortBy('paid_at')" class="hidden md:table-cell cursor-pointer px-6 py-4 text-left text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-colors">
+                                     <div class="flex items-center gap-1">
+                                         TGL. BAYAR
+                                         @if($sortField === 'paid_at')
                                              @if($sortDirection === 'asc')
                                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
                                              @else
@@ -195,6 +207,9 @@
                                     </td>
                                     <td class="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                         {{ $invoice->due_date ? $invoice->due_date->format('d/m/Y') : '-' }}
+                                    </td>
+                                    <td class="hidden md:table-cell px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
+                                        {{ $invoice->paid_at ? $invoice->paid_at->format('d/m/Y H:i') : '' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($invoice->status == 'unpaid')
@@ -295,7 +310,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 italic">Belum ada invoice untuk periode ini.</td>
+                                    <td colspan="8" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 italic">Belum ada invoice untuk periode ini.</td>
                                 </tr>
                             @endforelse
                         </tbody>
