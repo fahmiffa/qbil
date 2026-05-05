@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login');
+Route::get('/', \App\Livewire\LandingPage::class)->name('home');
 
 Route::get('dashboard', \App\Livewire\DashboardReport::class)
     ->middleware(['auth', 'verified'])
