@@ -24,8 +24,8 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
-<div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-slate-50 dark:bg-slate-950 px-6">
-    <div class="w-full sm:max-w-md bg-white dark:bg-slate-900 shadow-2xl shadow-blue-500/10 rounded-3xl p-8 md:p-10 border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+<div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-black px-6">
+    <div class="w-full sm:max-w-md bg-slate-900 shadow-2xl shadow-blue-500/10 rounded-3xl p-8 md:p-10 border border-white/5 relative overflow-hidden">
         {{-- Decorative background --}}
         <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
 
@@ -38,8 +38,8 @@ new #[Layout('layouts.guest')] class extends Component
                     <circle cx="12" cy="12" r="2" />
                 </svg>
             </div>
-            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-3">{{ __('Welcome back') }}</h2>
-            <p class="text-slate-500 dark:text-slate-400 font-medium">{{ __('Sign in to manage your billing system.') }}</p>
+            <h2 class="text-3xl font-black text-white tracking-tight leading-none mb-3">{{ __('Welcome back') }}</h2>
+            <p class="text-white/40 font-medium">{{ __('Sign in to manage your billing system.') }}</p>
         </div>
 
         <!-- Session Status -->
@@ -48,15 +48,15 @@ new #[Layout('layouts.guest')] class extends Component
         <form wire:submit="login" class="space-y-6">
             <!-- Email Address -->
             <div>
-                <x-input-label for="email" :value="__('Email')" class="font-bold text-slate-700 dark:text-slate-300 ml-1 mb-1.5" />
-                <x-text-input wire:model="form.email" id="email" class="block w-full !rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 focus:ring-blue-600 focus:border-blue-600 px-4 py-3" type="email" name="email" required autofocus placeholder="admin@isp.com" />
+                <x-input-label for="email" :value="__('Email')" class="font-bold text-white/70 ml-1 mb-1.5" />
+                <x-text-input wire:model="form.email" id="email" class="block w-full !rounded-2xl border-white/10 bg-white/5 text-white focus:ring-blue-600 focus:border-blue-600 px-4 py-3 placeholder-white/20" type="email" name="email" required autofocus placeholder="admin@isp.com" />
                 <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
             </div>
 
             <!-- Password -->
             <div>
-                <x-input-label for="password" :value="__('Password')" class="font-bold text-slate-700 dark:text-slate-300 ml-1 mb-1.5" />
-                <x-password-input wire:model="form.password" id="password" class="block w-full !rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 focus:ring-blue-600 focus:border-blue-600 px-4 py-3"
+                <x-input-label for="password" :value="__('Password')" class="font-bold text-white/70 ml-1 mb-1.5" />
+                <x-password-input wire:model="form.password" id="password" class="block w-full !rounded-2xl border-white/10 bg-white/5 text-white focus:ring-blue-600 focus:border-blue-600 px-4 py-3 placeholder-white/20"
                                 name="password"
                                 required placeholder="••••••••" />
 
@@ -66,8 +66,8 @@ new #[Layout('layouts.guest')] class extends Component
             <!-- Remember Me -->
             <div class="flex items-center justify-between px-1">
                 <label for="remember" class="inline-flex items-center cursor-pointer">
-                    <input wire:model="form.remember" id="remember" type="checkbox" class="rounded-lg border-slate-300 dark:border-slate-800 text-blue-600 shadow-sm focus:ring-blue-600 dark:bg-slate-800" name="remember">
-                    <span class="ms-2 text-sm font-bold text-slate-600 dark:text-slate-400">{{ __('Stay signed in') }}</span>
+                    <input wire:model="form.remember" id="remember" type="checkbox" class="rounded-lg border-white/10 bg-white/5 text-blue-600 shadow-sm focus:ring-blue-600" name="remember">
+                    <span class="ms-2 text-sm font-bold text-white/50">{{ __('Stay signed in') }}</span>
                 </label>
             </div>
 
@@ -81,7 +81,7 @@ new #[Layout('layouts.guest')] class extends Component
     </div>
 
     <div class="mt-8 text-center">
-        <p class="text-xs font-black text-slate-300 dark:text-slate-800 uppercase tracking-[0.2em]">
+        <p class="text-xs font-black text-white/20 uppercase tracking-[0.2em]">
             &copy; {{ date('Y') }} {{ config('app.name') }} Systems
         </p>
     </div>

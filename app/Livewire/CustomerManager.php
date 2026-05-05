@@ -15,10 +15,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use App\Models\ActivityLog;
+use App\Traits\ChecksDemoMode;
 
 class CustomerManager extends Component
 {
-    use WithPagination;
+    use WithPagination, ChecksDemoMode;
 
     public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date;
     public $package_id, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
@@ -338,6 +339,8 @@ class CustomerManager extends Component
 
     public function store()
     {
+        if ($this->checkDemoMode()) return;
+
         if (!auth()->user()->hasFeature('mikrotik')) {
             $this->service_type = 'static';
         }
@@ -501,6 +504,8 @@ class CustomerManager extends Component
 
     public function syncAll()
     {
+        if ($this->checkDemoMode()) return;
+
         if (!auth()->user()->hasFeature('mikrotik')) {
             $this->dispatch('toast', type: 'error', message: 'Fitur MikroTik tidak aktif untuk akun Anda.');
             return;
@@ -619,6 +624,8 @@ class CustomerManager extends Component
 
     public function delete($id)
     {
+        if ($this->checkDemoMode()) return;
+
         try {
             $customer = Customer::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
 

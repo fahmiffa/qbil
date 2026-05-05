@@ -13,10 +13,11 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use App\Traits\ChecksDemoMode;
 
 class InvoiceManager extends Component
 {
-    use WithPagination;
+    use WithPagination, ChecksDemoMode;
 
     public $search = '';
     public $filter_status = '';
@@ -87,6 +88,8 @@ class InvoiceManager extends Component
 
     public function generateInvoices()
     {
+        if ($this->checkDemoMode()) return;
+
         $currentPeriod = $this->billing_period;
         $customerIds = !empty($this->selectedCustomers) ? $this->selectedCustomers : null;
 
@@ -143,6 +146,8 @@ class InvoiceManager extends Component
 
     public function markAsPaid($invoiceId = null)
     {
+        if ($this->checkDemoMode()) return;
+
         $id = $invoiceId ?? $this->selectedInvoice->id;
         $invoice = Invoice::findOrFail($id);
 
@@ -204,6 +209,8 @@ class InvoiceManager extends Component
 
     public function markAsPiutang()
     {
+        if ($this->checkDemoMode()) return;
+
         $invoice = $this->selectedInvoice;
 
         DB::transaction(function () use ($invoice) {
@@ -265,6 +272,8 @@ class InvoiceManager extends Component
 
     public function cancelInvoice($invoiceId)
     {
+        if ($this->checkDemoMode()) return;
+
         $invoice = Invoice::findOrFail($invoiceId);
         $invoice->update(['status' => 'canceled']);
         $this->dispatch('toast', type: 'warning', message: "Invoice {$invoice->invoice_number} telah dibatalkan.");
@@ -280,6 +289,8 @@ class InvoiceManager extends Component
 
     public function deleteInvoice($invoiceId)
     {
+        if ($this->checkDemoMode()) return;
+
         $invoice = Invoice::findOrFail($invoiceId);
         $invoiceNum = $invoice->invoice_number;
         $invoice->delete();
@@ -296,6 +307,8 @@ class InvoiceManager extends Component
 
     public function sendWhatsappNotification($invoiceId)
     {
+        if ($this->checkDemoMode()) return;
+
         $invoice = Invoice::with('customer')->findOrFail($invoiceId);
         $customer = $invoice->customer;
 
@@ -335,6 +348,8 @@ class InvoiceManager extends Component
 
     public function regenerateInvoice($invoiceId)
     {
+        if ($this->checkDemoMode()) return;
+
         $invoice = Invoice::findOrFail($invoiceId);
 
         if ($invoice->status !== 'canceled') {
