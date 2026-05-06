@@ -24,9 +24,8 @@ class MikrotikHotspotProfile extends Component
     public string $price = '';
     public string $download_value = '10', $download_unit = 'M';
     public string $upload_value = '10', $upload_unit = 'M';
-    public string $shared_users = '1';
     public string $address_pool = 'none';
-    public string $session_timeout = '8h';
+    public string $limit_time = '';
     public string $selected_mikrotik_profile = '';
 
     public array $mikrotik_profiles_list = [];
@@ -77,9 +76,10 @@ class MikrotikHotspotProfile extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editId', 'name', 'price', 'shared_users', 'address_pool', 'session_timeout', 'download_value', 'download_unit', 'upload_value', 'upload_unit', 'selected_mikrotik_profile', 'sync_mode']);
+        $this->reset(['editId', 'name', 'price', 'address_pool', 'limit_time', 'download_value', 'download_unit', 'upload_value', 'upload_unit', 'selected_mikrotik_profile', 'sync_mode']);
         $this->sync_mode = 'new';
         $this->session_timeout = '8h';
+        $this->limit_time = '';
         $this->isEditing = false;
         $this->showModal = true;
         
@@ -93,6 +93,7 @@ class MikrotikHotspotProfile extends Component
             $this->editId = $id;
             $this->name   = $p->name;
             $this->price  = (string)$p->price;
+            $this->limit_time = $p->limit_time ?? '';
             $this->sync_mode = 'new';
             
             // Fetch current settings from Mikrotik since they aren't in our DB
@@ -101,14 +102,10 @@ class MikrotikHotspotProfile extends Component
                 $allM = $mikrotik->getHotspotProfiles();
                 $mProfile = collect($allM)->firstWhere('name', $p->mikrotik_profile);
                 if ($mProfile) {
-                    $this->shared_users = $mProfile['shared-users'] ?? '1';
                     $this->address_pool = $mProfile['address-pool'] ?? 'none';
-                    $this->session_timeout = $p->session_timeout ?: ($mProfile['session-timeout'] ?? '8h');
-                } else {
-                    $this->session_timeout = $p->session_timeout ?: '8h';
                 }
             } catch (\Exception $e) {
-                $this->session_timeout = $p->session_timeout ?: '8h';
+                // Ignore
             }
             
             // Split Speed
@@ -144,6 +141,7 @@ class MikrotikHotspotProfile extends Component
                 'selected_mikrotik_profile' => 'required',
                 'name' => 'required|string|max:100',
                 'price' => 'required|numeric|min:0',
+                'limit_time' => 'nullable|string',
             ]);
         } else {
             $this->validate([
@@ -151,8 +149,7 @@ class MikrotikHotspotProfile extends Component
                 'price'          => 'required|numeric|min:0',
                 'download_value' => 'required|numeric|min:1',
                 'upload_value'   => 'required|numeric|min:1',
-                'shared_users'   => 'required|numeric|min:1',
-                'session_timeout' => 'required|string',
+                'limit_time'     => 'nullable|string',
             ]);
         }
 
@@ -162,9 +159,7 @@ class MikrotikHotspotProfile extends Component
             $profileName = $this->sync_mode === 'sync' ? $this->selected_mikrotik_profile : $this->name;
             $upload = $this->upload_value . $this->upload_unit;
             $download = $this->download_value . $this->download_unit;
-            $shusers = $this->shared_users;
             $pool = $this->address_pool;
-            $stimeout = $this->session_timeout;
 
             if ($this->sync_mode === 'sync') {
                 $mProfile = collect($this->mikrotik_profiles_list)->firstWhere('name', $this->selected_mikrotik_profile);
@@ -180,9 +175,7 @@ class MikrotikHotspotProfile extends Component
                             $upload = '1M'; 
                         }
                     }
-                    $shusers = $mProfile['shared-users'] ?? '1';
                     $pool = $mProfile['address-pool'] ?? 'none';
-                    $stimeout = $mProfile['session-timeout'] ?? '8h';
                 }
             }
 
@@ -197,19 +190,17 @@ class MikrotikHotspotProfile extends Component
                     'price' => $this->price ?: 0,
                     'speed_upload' => $upload,
                     'speed_download' => $download,
-                    'session_timeout' => $stimeout,
+                    'limit_time' => $this->limit_time,
                 ]);
 
                 if ($this->sync_mode === 'new') {
                     // Sync ke Mikrotik via Job
-                    \App\Jobs\ProvisionPackageJob::dispatch($package, 'update', $package->mikrotik_profile, [
-                        'shared_users' => $shusers,
+                    \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'update', $package->mikrotik_profile, [
                         'address_pool' => $pool,
-                        'session_timeout' => $stimeout,
                     ]);
                 }
 
-                session()->flash('message', "Profil Hotspot berhasil diperbarui (Antrian).");
+                session()->flash('message', "Profil Hotspot berhasil diperbarui.");
             } else {
                 $package = \App\Models\Package::create([
                     'user_id' => auth()->id(),
@@ -219,18 +210,16 @@ class MikrotikHotspotProfile extends Component
                     'price' => $this->price ?: 0,
                     'speed_upload' => $upload,
                     'speed_download' => $download,
-                    'session_timeout' => $stimeout,
+                    'limit_time' => $this->limit_time,
                 ]);
 
                 if ($this->sync_mode === 'new') {
-                     \App\Jobs\ProvisionPackageJob::dispatch($package, 'create', null, [
-                        'shared_users' => $shusers,
+                     \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'create', null, [
                         'address_pool' => $pool,
-                        'session_timeout' => $stimeout,
                     ]);
                 }
 
-                session()->flash('message', "Profil Hotspot berhasil ditambahkan (Antrian).");
+                session()->flash('message', "Profil Hotspot berhasil ditambahkan.");
             }
             $this->closeModal();
             $this->loadProfiles();

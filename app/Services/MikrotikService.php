@@ -14,11 +14,7 @@ class MikrotikService
 
     public static function getInstance(Router $router): self
     {
-        $id = $router->id;
-        if (!isset(self::$instances[$id])) {
-            self::$instances[$id] = new self($router);
-        }
-        return self::$instances[$id];
+        return new self($router);
     }
 
     public function __construct(Router $router)
@@ -131,9 +127,10 @@ class MikrotikService
         $query = (new Query('/ip/hotspot/user/profile/add'))
             ->equal('name', $name)
             ->equal('rate-limit', $rateLimit)
-            ->equal('shared-users', $sharedUsers)
+            ->equal('shared-users', '1')
             ->equal('address-pool', $addressPool)
-            ->equal('session-timeout', $sessionTimeout);
+            ->equal('session-timeout', '8h')
+            ->equal('add-mac-cookie', 'yes');
 
         $this->client->query($query)->read();
     }
@@ -144,9 +141,10 @@ class MikrotikService
             ->equal('.id', $id)
             ->equal('name', $name)
             ->equal('rate-limit', $rateLimit)
-            ->equal('shared-users', $sharedUsers)
+            ->equal('shared-users', '1')
             ->equal('address-pool', $addressPool)
-            ->equal('session-timeout', $sessionTimeout);
+            ->equal('session-timeout', '8h')
+            ->equal('add-mac-cookie', 'yes');
 
         $this->client->query($query)->read();
     }
@@ -273,6 +271,12 @@ class MikrotikService
     // -------------------------
     // Hotspot Users (Customer Hotspot)
     // -------------------------
+
+    public function getHotspotUsers(): array
+    {
+        $query = new Query('/ip/hotspot/user/print');
+        return $this->client->query($query)->read();
+    }
 
     public function addHotspotUser(string $username, string $password, string $profile, string $comment = ''): void
     {

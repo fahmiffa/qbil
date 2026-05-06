@@ -32,7 +32,8 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
         public int $userId,
         public int $packageId,
         public int $quantity,
-        public ?int $voucherOrderId = null
+        public ?int $voucherOrderId = null,
+        public ?string $expiredAt = null
     ) {}
 
     /**
@@ -88,6 +89,7 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                     'profile'          => $profile,
                     'package_id'       => $this->packageId,
                     'voucher_order_id' => $this->voucherOrderId,
+                    'expired_at'       => $this->expiredAt,
                 ]);
 
                 // 2. Provision to Mikrotik

@@ -129,6 +129,14 @@
                                     </div>
                                 </div>
                                 <form wire:submit.prevent="save">
+                                    @if(session('error'))
+                                        <div class="px-6 pt-4">
+                                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-3">
+                                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                <span class="text-sm font-semibold">{{ session('error') }}</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                     <div class="px-6 py-4">
                                         <div class="grid grid-cols-2 gap-4">
                                             <!-- Mode Selector -->
@@ -159,15 +167,25 @@
                                                         @endforeach
                                                     </select>
                                                     @error('selected_mikrotik_profile') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                                    <p class="text-[10px] text-slate-400 mt-2 italic px-1">Kecepatan dan Shared Users akan mengikuti settingan yang ada di profil MikroTik tersebut.</p>
-                                                </div>
-                                            @else
-                                                <div class="col-span-1">
-                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Shared Users</label>
-                                                    <input type="number" wire:model="shared_users" placeholder="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
-                                                    @error('shared_users') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                    <p class="text-[10px] text-slate-400 mt-2 italic px-1">Kecepatan dan Address Pool akan mengikuti settingan yang ada di profil MikroTik tersebut.</p>
                                                 </div>
 
+                                                <div class="col-span-2" x-data="{
+                                                    formatTime(val) {
+                                                        let v = val.replace(/\D/g, '');
+                                                        if (v.length > 2) v = v.substring(0,2) + ':' + v.substring(2);
+                                                        if (v.length > 5) v = v.substring(0,5) + ':' + v.substring(5,7);
+                                                        return v;
+                                                    }
+                                                }">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Limit Time</label>
+                                                    <input type="text" wire:model="limit_time" placeholder="01:00:00" maxlength="8"
+                                                        x-on:input="$event.target.value = formatTime($event.target.value); $wire.set('limit_time', $event.target.value)"
+                                                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
+                                                    @error('limit_time') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Contoh: 01:00:00</p>
+                                                </div>
+                                            @else
                                                 <div class="col-span-1">
                                                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Address Pool</label>
                                                     <select wire:model="address_pool" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
@@ -179,11 +197,20 @@
                                                     @error('address_pool') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                                 </div>
 
-                                                <div class="col-span-1">
-                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Waktu (Timeout)</label>
-                                                    <input type="text" wire:model="session_timeout" placeholder="8h" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
-                                                    @error('session_timeout') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Contoh: 8h, 30m, 1d</p>
+                                                <div class="col-span-1" x-data="{
+                                                    formatTime(val) {
+                                                        let v = val.replace(/\D/g, '');
+                                                        if (v.length > 2) v = v.substring(0,2) + ':' + v.substring(2);
+                                                        if (v.length > 5) v = v.substring(0,5) + ':' + v.substring(5,7);
+                                                        return v;
+                                                    }
+                                                }">
+                                                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Limit Time</label>
+                                                    <input type="text" wire:model="limit_time" placeholder="01:00:00" maxlength="8"
+                                                        x-on:input="$event.target.value = formatTime($event.target.value); $wire.set('limit_time', $event.target.value)"
+                                                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
+                                                    @error('limit_time') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Contoh: 01:00:00</p>
                                                 </div>
 
                                                 <div class="col-span-1">
@@ -212,7 +239,7 @@
                                             @endif
 
                                             <div class="col-span-2">
-                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Harga Bulanan (Rp)</label>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Harga (Rp)</label>
                                                 <input type="text" 
                                                     class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors" 
                                                     placeholder="150.000"
