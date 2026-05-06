@@ -161,32 +161,24 @@
                                                 <div class="col-span-2">
                                                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Profile MikroTik</label>
                                                     <select wire:model="selected_mikrotik_profile" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
-                                                        <option value="">-- Pilih Profile MikroTik --</option>
+                                                        <option value="">-- Pilih Profile --</option>
                                                         @foreach($mikrotik_profiles_list as $mp)
                                                             <option value="{{ $mp['name'] }}">{{ $mp['name'] }} ({{ $mp['rate-limit'] ?? 'No Limit' }})</option>
                                                         @endforeach
                                                     </select>
                                                     @error('selected_mikrotik_profile') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                                    <p class="text-[10px] text-slate-400 mt-2 italic px-1">Kecepatan dan Address Pool akan mengikuti settingan yang ada di profil MikroTik tersebut.</p>
+                                                    <p class="text-[10px] text-slate-400 mt-2 italic px-1">Setting akan disesuaikan.</p>
                                                 </div>
 
-                                                <div class="col-span-2" x-data="{
-                                                    formatTime(val) {
-                                                        let v = val.replace(/\D/g, '');
-                                                        if (v.length > 2) v = v.substring(0,2) + ':' + v.substring(2);
-                                                        if (v.length > 5) v = v.substring(0,5) + ':' + v.substring(5,7);
-                                                        return v;
-                                                    }
-                                                }">
+                                                <div class="col-span-2">
                                                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Limit Time</label>
-                                                    <input type="text" wire:model="limit_time" placeholder="01:00:00" maxlength="8"
-                                                        x-on:input="$event.target.value = formatTime($event.target.value); $wire.set('limit_time', $event.target.value)"
+                                                    <input type="text" wire:model="limit_time" placeholder="Contoh: 30d atau 02:00:00"
                                                         class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
                                                     @error('limit_time') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Contoh: 01:00:00</p>
+                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Gunakan format MikroTik (contoh: 30d, 1w)</p>
                                                 </div>
                                             @else
-                                                <div class="col-span-1">
+                                                <div class="col-span-2">
                                                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Address Pool</label>
                                                     <select wire:model="address_pool" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
                                                         <option value="none">none</option>
@@ -197,20 +189,12 @@
                                                     @error('address_pool') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                                 </div>
 
-                                                <div class="col-span-1" x-data="{
-                                                    formatTime(val) {
-                                                        let v = val.replace(/\D/g, '');
-                                                        if (v.length > 2) v = v.substring(0,2) + ':' + v.substring(2);
-                                                        if (v.length > 5) v = v.substring(0,5) + ':' + v.substring(5,7);
-                                                        return v;
-                                                    }
-                                                }">
+                                                <div class="col-span-2">
                                                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Limit Time</label>
-                                                    <input type="text" wire:model="limit_time" placeholder="01:00:00" maxlength="8"
-                                                        x-on:input="$event.target.value = formatTime($event.target.value); $wire.set('limit_time', $event.target.value)"
+                                                    <input type="text" wire:model="limit_time" placeholder="Contoh: 30d atau 3d 06:00:00"
                                                         class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors">
                                                     @error('limit_time') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Contoh: 01:00:00</p>
+                                                    <p class="text-[10px] text-slate-400 mt-1 italic px-1">Gunakan format MikroTik (contoh: 30d, 1w 3d, atau 02:00:00)</p>
                                                 </div>
 
                                                 <div class="col-span-1">

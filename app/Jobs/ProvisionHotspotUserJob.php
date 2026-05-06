@@ -49,6 +49,14 @@ class ProvisionHotspotUserJob implements ShouldQueue
 
             $mikrotik = MikrotikService::getInstance($router);
 
+            $limitUptime = '';
+            if ($this->hotspotUser->package_id) {
+                $package = \App\Models\Package::find($this->hotspotUser->package_id);
+                if ($package && $package->limit_time) {
+                    $limitUptime = $package->limit_time;
+                }
+            }
+
             if ($this->action === 'delete') {
                 $mikrotik->removeHotspotUser($this->hotspotUser->username);
             } elseif ($this->action === 'update' && $this->oldUsername) {
@@ -57,14 +65,16 @@ class ProvisionHotspotUserJob implements ShouldQueue
                     $this->hotspotUser->username,
                     $this->hotspotUser->password,
                     $this->hotspotUser->profile,
-                    'ebilling'
+                    'ebilling',
+                    $limitUptime
                 );
             } else {
                 $mikrotik->addHotspotUser(
                     $this->hotspotUser->username,
                     $this->hotspotUser->password,
                     $this->hotspotUser->profile,
-                    'ebilling'
+                    'ebilling',
+                    $limitUptime
                 );
             }
         } catch (\Exception $e) {

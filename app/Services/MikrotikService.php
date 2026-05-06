@@ -278,17 +278,21 @@ class MikrotikService
         return $this->client->query($query)->read();
     }
 
-    public function addHotspotUser(string $username, string $password, string $profile, string $comment = ''): void
+    public function addHotspotUser(string $username, string $password, string $profile, string $comment = '', string $limitUptime = ''): void
     {
         $query = (new Query('/ip/hotspot/user/add'))
             ->equal('name', $username)
             ->equal('password', $password)
             ->equal('profile', $profile)
             ->equal('comment', $comment);
+            
+        if ($limitUptime) {
+            $query->equal('limit-uptime', $limitUptime);
+        }
         $this->client->query($query)->read();
     }
 
-    public function updateHotspotUser(string $oldUsername, string $newUsername, string $password, string $profile, string $comment = ''): void
+    public function updateHotspotUser(string $oldUsername, string $newUsername, string $password, string $profile, string $comment = '', string $limitUptime = ''): void
     {
         $query = (new Query('/ip/hotspot/user/print'))->where('name', $oldUsername);
         $users = $this->client->query($query)->read();
@@ -300,10 +304,11 @@ class MikrotikService
                 ->equal('profile', $profile);
             
             if ($comment) $setQuery->equal('comment', $comment);
+            if ($limitUptime) $setQuery->equal('limit-uptime', $limitUptime);
 
             $this->client->query($setQuery)->read();
         } else {
-            $this->addHotspotUser($newUsername, $password, $profile, $comment);
+            $this->addHotspotUser($newUsername, $password, $profile, $comment, $limitUptime);
         }
     }
 

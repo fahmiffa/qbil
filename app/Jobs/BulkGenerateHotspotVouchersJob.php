@@ -94,7 +94,7 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
 
                 // 2. Provision to Mikrotik
                 try {
-                    $mikrotik->addHotspotUser($code, $code, $profile, 'order-' . $this->voucherOrderId);
+                    $mikrotik->addHotspotUser($code, $code, $profile, 'order-' . $this->voucherOrderId, $package->limit_time ?? '');
                 } catch (\Exception $e) {
                     Log::error("[BulkGenerateHotspotVouchersJob] MikroTik Provisioning Error: " . $e->getMessage());
                 }
