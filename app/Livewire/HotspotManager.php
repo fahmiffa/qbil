@@ -14,7 +14,7 @@ class HotspotManager extends Component
 {
     use WithPagination;
 
-    public $username, $password, $profile, $hotspot_user_id, $package_id, $expired_at;
+    public $username, $password, $profile, $hotspot_user_id, $package_id;
     public $type = 'account'; // 'account' or 'voucher'
     public $quantity = 1;
     public $filterPackage = '';
@@ -152,7 +152,6 @@ class HotspotManager extends Component
         $this->hotspot_user_id = '';
         $this->type = 'account';
         $this->quantity = 1;
-        $this->expired_at = now()->addDay()->format('Y-m-d\TH:i');
     }
 
     public function updatedPackageId($value)
@@ -175,10 +174,8 @@ class HotspotManager extends Component
         if ($this->type === 'account') {
             $rules['username'] = 'required';
             $rules['password'] = 'required';
-            $rules['expired_at'] = 'nullable|date';
         } else {
             $rules['quantity'] = 'required|integer|min:1';
-            $rules['expired_at'] = 'nullable|date';
         }
 
         $this->validate($rules);
@@ -193,9 +190,8 @@ class HotspotManager extends Component
                 BulkGenerateHotspotVouchersJob::dispatch(
                     auth()->id(),
                     $this->package_id,
-                    (int) $this->quantity,
-                    null,
-                    $this->expired_at
+                    $this->quantity,
+                    null
                 );
                 
                 session()->flash('message', 'Proses generate ' . $this->quantity . ' voucher sedang berjalan di background.');
@@ -223,7 +219,6 @@ class HotspotManager extends Component
                         'password' => $this->password,
                         'profile' => $this->profile,
                         'package_id' => $this->package_id,
-                        'expired_at' => $this->expired_at,
                     ]);
                     $action = 'update';
                 } else {
@@ -233,7 +228,6 @@ class HotspotManager extends Component
                         'password' => $this->password,
                         'profile' => $this->profile,
                         'package_id' => $this->package_id,
-                        'expired_at' => $this->expired_at,
                     ]);
                     $action = 'create';
                     $actionTitle = 'TAMBAH USER HOTSPOT';
@@ -268,7 +262,6 @@ class HotspotManager extends Component
         $this->password = $user->password;
         $this->package_id = $user->package_id;
         $this->profile = $user->profile;
-        $this->expired_at = $user->expired_at ? \Carbon\Carbon::parse($user->expired_at)->format('Y-m-d\TH:i') : null;
         $this->loadPackages();
         $this->type = 'account';
         $this->openModal();

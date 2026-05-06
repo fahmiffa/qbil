@@ -26,6 +26,8 @@ class MikrotikHotspotProfile extends Component
     public string $upload_value = '10', $upload_unit = 'M';
     public string $address_pool = 'none';
     public string $limit_time = '';
+    public string $masa_aktif = '';       // Masa aktif setelah login pertama, contoh: "1d"
+    public string $valid_duration = '';   // Masa berlaku sebelum aktivasi, contoh: "30d"
     public string $selected_mikrotik_profile = '';
 
     public array $mikrotik_profiles_list = [];
@@ -76,13 +78,13 @@ class MikrotikHotspotProfile extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editId', 'name', 'price', 'address_pool', 'limit_time', 'download_value', 'download_unit', 'upload_value', 'upload_unit', 'selected_mikrotik_profile', 'sync_mode']);
+        $this->reset(['editId', 'name', 'price', 'address_pool', 'limit_time', 'masa_aktif', 'valid_duration', 'download_value', 'download_unit', 'upload_value', 'upload_unit', 'selected_mikrotik_profile', 'sync_mode']);
         $this->sync_mode = 'new';
-        $this->session_timeout = '8h';
         $this->limit_time = '';
+        $this->masa_aktif = '';
+        $this->valid_duration = '';
         $this->isEditing = false;
         $this->showModal = true;
-        
         $this->loadProfiles();
     }
 
@@ -93,7 +95,9 @@ class MikrotikHotspotProfile extends Component
             $this->editId = $id;
             $this->name   = $p->name;
             $this->price  = (string)$p->price;
-            $this->limit_time = $p->limit_time ?? '';
+            $this->limit_time    = $p->limit_time ?? '';
+            $this->masa_aktif    = $p->masa_aktif ?? '';
+            $this->valid_duration = $p->valid_duration ?? '';
             $this->sync_mode = 'new';
             
             // Fetch current settings from Mikrotik since they aren't in our DB
@@ -139,9 +143,11 @@ class MikrotikHotspotProfile extends Component
         if ($this->sync_mode === 'sync') {
             $this->validate([
                 'selected_mikrotik_profile' => 'required',
-                'name' => 'required|string|max:100',
-                'price' => 'required|numeric|min:0',
+                'name'       => 'required|string|max:100',
+                'price'      => 'required|numeric|min:0',
                 'limit_time' => 'nullable|string',
+                'masa_aktif'    => 'nullable|string',
+                'valid_duration' => 'nullable|string',
             ]);
         } else {
             $this->validate([
@@ -150,6 +156,8 @@ class MikrotikHotspotProfile extends Component
                 'download_value' => 'required|numeric|min:1',
                 'upload_value'   => 'required|numeric|min:1',
                 'limit_time'     => 'nullable|string',
+                'masa_aktif'     => 'nullable|string',
+                'valid_duration' => 'nullable|string',
             ]);
         }
 
@@ -185,12 +193,14 @@ class MikrotikHotspotProfile extends Component
                 $package = \App\Models\Package::find($this->editId);
                 
                 $package->update([
-                    'name' => $this->name,
+                    'name'             => $this->name,
                     'mikrotik_profile' => $profileName,
-                    'price' => $this->price ?: 0,
-                    'speed_upload' => $upload,
-                    'speed_download' => $download,
-                    'limit_time' => $this->limit_time,
+                    'price'            => $this->price ?: 0,
+                    'speed_upload'     => $upload,
+                    'speed_download'   => $download,
+                    'limit_time'       => $this->limit_time,
+                    'masa_aktif'       => $this->masa_aktif,
+                    'valid_duration'   => $this->valid_duration,
                 ]);
 
                 if ($this->sync_mode === 'new') {
@@ -203,14 +213,16 @@ class MikrotikHotspotProfile extends Component
                 session()->flash('message', "Profil Hotspot berhasil diperbarui.");
             } else {
                 $package = \App\Models\Package::create([
-                    'user_id' => auth()->id(),
-                    'tipe' => 'HOTSPOT',
-                    'name' => $this->name,
+                    'user_id'          => auth()->id(),
+                    'tipe'             => 'HOTSPOT',
+                    'name'             => $this->name,
                     'mikrotik_profile' => $profileName,
-                    'price' => $this->price ?: 0,
-                    'speed_upload' => $upload,
-                    'speed_download' => $download,
-                    'limit_time' => $this->limit_time,
+                    'price'            => $this->price ?: 0,
+                    'speed_upload'     => $upload,
+                    'speed_download'   => $download,
+                    'limit_time'       => $this->limit_time,
+                    'masa_aktif'       => $this->masa_aktif,
+                    'valid_duration'   => $this->valid_duration,
                 ]);
 
                 if ($this->sync_mode === 'new') {

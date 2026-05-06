@@ -98,11 +98,7 @@
                                                 <x-password-input id="password" wire:model="password" />
                                                 @error('password') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
-                                            <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Expired At (Opsional):</label>
-                                                <input type="datetime-local" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" wire:model="expired_at">
-                                                @error('expired_at') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                                            </div>
+
                                             @else
                                             <div>
                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Jumlah Voucher:</label>
@@ -110,11 +106,7 @@
                                                 <p class="text-[10px] text-gray-500 mt-1">* Voucher akan digenerate secara otomatis di background.</p>
                                                 @error('quantity') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
-                                            <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Expired At (Opsional):</label>
-                                                <input type="datetime-local" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" wire:model="expired_at">
-                                                @error('expired_at') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                                            </div>
+
                                             @endif
                                             <div>
                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Paket/Profile:</label>

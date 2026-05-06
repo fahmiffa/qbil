@@ -32,8 +32,7 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
         public int $userId,
         public int $packageId,
         public int $quantity,
-        public ?int $voucherOrderId = null,
-        public ?string $expiredAt = null
+        public ?int $voucherOrderId = null
     ) {}
 
     /**
@@ -62,6 +61,19 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
             $profile = $package->mikrotik_profile ?: 'default';
             $mikrotik = MikrotikService::getInstance($router);
 
+            // Build MikroTik comment dari setting paket
+            $commentParts = [];
+            if ($package->masa_aktif)    $commentParts[] = 'masa_aktif:' . $package->masa_aktif;
+            if ($package->valid_duration) $commentParts[] = 'valid:' . $package->valid_duration;
+            $comment = !empty($commentParts) ? implode('|', $commentParts) : 'ebilling';
+
+            // Hitung valid_until dari valid_duration jika ada
+            $validUntil = null;
+            if ($package->valid_duration) {
+                $secs = \App\Models\Package::parseDurationToSeconds($package->valid_duration);
+                $validUntil = now()->addSeconds($secs);
+            }
+
             Log::info("[BulkGenerateHotspotVouchersJob] Starting generation of {$this->quantity} vouchers for user {$this->userId}");
 
             $cacheKey = "voucher_progress_{$this->userId}";
@@ -89,12 +101,12 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                     'profile'          => $profile,
                     'package_id'       => $this->packageId,
                     'voucher_order_id' => $this->voucherOrderId,
-                    'expired_at'       => $this->expiredAt,
+                    'valid_until'      => $validUntil,
                 ]);
 
                 // 2. Provision to Mikrotik
                 try {
-                    $mikrotik->addHotspotUser($code, $code, $profile, 'order-' . $this->voucherOrderId, $package->limit_time ?? '');
+                    $mikrotik->addHotspotUser($code, $code, $profile, $comment, $package->limit_time ?? '');
                 } catch (\Exception $e) {
                     Log::error("[BulkGenerateHotspotVouchersJob] MikroTik Provisioning Error: " . $e->getMessage());
                 }

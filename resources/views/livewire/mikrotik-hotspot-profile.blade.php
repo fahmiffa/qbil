@@ -238,6 +238,29 @@
                                                     x-init="$el.value = formatCurrency($wire.get('price') || '')">
                                                 @error('price') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                             </div>
+
+                                            {{-- ===== VALIDITY FIELDS ===== --}}
+                                            <div class="col-span-2">
+                                                <div class="rounded-xl border border-dashed border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 p-3">
+                                                    <p class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-3">⏱ Pengaturan Masa Aktif Voucher</p>
+                                                    <div class="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Masa Berlaku</label>
+                                                            <input type="text" wire:model="valid_duration" placeholder="Contoh: 30d, 1w"
+                                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none transition-colors">
+                                                            <p class="text-[10px] text-slate-400 mt-1">Batas voucher bisa diaktivasi (sejak dibuat)</p>
+                                                            @error('valid_duration') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Masa Aktif</label>
+                                                            <input type="text" wire:model="masa_aktif" placeholder="Contoh: 1d, 12h"
+                                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none transition-colors">
+                                                            <p class="text-[10px] text-slate-400 mt-1">Durasi internet setelah login pertama</p>
+                                                            @error('masa_aktif') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex gap-3">

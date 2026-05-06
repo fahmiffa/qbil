@@ -10,7 +10,13 @@ class HotspotUser extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'username', 'password', 'profile', 'package_id', 'voucher_order_id', 'expired_at'
+        'user_id', 'username', 'password', 'profile', 'package_id',
+        'voucher_order_id', 'activated_at', 'valid_until',
+    ];
+
+    protected $casts = [
+        'activated_at' => 'datetime',
+        'valid_until'  => 'datetime',
     ];
 
     public function user()

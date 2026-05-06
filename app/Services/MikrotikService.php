@@ -278,6 +278,75 @@ class MikrotikService
         return $this->client->query($query)->read();
     }
 
+    /**
+     * Ambil sesi aktif dari /ip hotspot active
+     * Field penting: user, address, uptime, mac-address, server
+     * Gunakan untuk mendapat uptime sesi SAAT INI (bukan total/kumulatif)
+     */
+    public function getHotspotActiveSessions(): array
+    {
+        $query = new Query('/ip/hotspot/active/print');
+        return $this->client->query($query)->read();
+    }
+
+    /**
+     * Push On-Login Script ke semua Hotspot USER Profile di MikroTik.
+     * Lokasi Winbox: IP > Hotspot > User Profiles > [pilih profil] > tab Scripts > On Login
+     * Script ini akan mencatat waktu login ke comment user secara otomatis.
+     * Hanya menulis login: jika belum ada exp: di comment.
+     */
+    public function pushHotspotOnLoginScript(): void
+    {
+        // Script dengan log MikroTik agar bisa didebug lewat Winbox Log
+        $script = ':log info "Hotspot Login detected for user: $user"' . "\n"
+            . ':local userId [/ip hotspot user find name=$user]' . "\n"
+            . ':if ($userId != "") do={' . "\n"
+            . '    :local cmt [/ip hotspot user get $userId comment]' . "\n"
+            . '    :local hasExp [:find $cmt "exp:"]' . "\n"
+            . '    :local hasMasa [:find $cmt "masa_aktif:"]' . "\n"
+            . '    :if (([:len $hasExp] = 0) && ([:len $hasMasa] > 0)) do={' . "\n"
+            . '        :local loginTime ([/system clock get date] . "-" . [/system clock get time])' . "\n"
+            . '        /ip hotspot user set $userId comment=($cmt . "|login:" . $loginTime)' . "\n"
+            . '        :log info "QBILL: Updated login time for $user to $loginTime"' . "\n"
+            . '    }' . "\n"
+            . '}';
+
+        // Terapkan ke semua USER PROFILE (path: /ip/hotspot/user/profile)
+        $profiles = $this->getHotspotProfiles();
+
+        // Diagnostic: log struktur data untuk debug
+        if (!empty($profiles)) {
+            $first = reset($profiles);
+            if (is_array($first)) {
+                \Illuminate\Support\Facades\Log::debug('[MikroTik] user/profile keys: ' . implode(', ', array_keys($first)));
+            }
+        }
+
+        foreach ($profiles as $profile) {
+            $profileName = $profile['name'] ?? '';
+            $profileId   = $profile['.id'] ?? null;
+
+            if (strtolower($profileName) === 'default') continue;
+            if (!$profileId) continue;
+
+            // Hanya update jika script belum terpasang
+            if (($profile['on-login'] ?? '') !== $script) {
+                \Illuminate\Support\Facades\Log::info("[MikroTik] Pushing script to User Profile: {$profileName}");
+                $setQuery = (new Query('/ip/hotspot/user/profile/set'))
+                    ->equal('.id', $profileId)
+                    ->equal('on-login', $script);
+                $response = $this->client->query($setQuery)->read();
+                \Illuminate\Support\Facades\Log::debug("[MikroTik] Push result: " . json_encode($response));
+            }
+        }
+    }
+
+    public function getHotspotServerProfiles(): array
+    {
+        $query = new Query('/ip/hotspot/server-profile/print');
+        return $this->client->query($query)->read();
+    }
+
     public function addHotspotUser(string $username, string $password, string $profile, string $comment = '', string $limitUptime = ''): void
     {
         $query = (new Query('/ip/hotspot/user/add'))
@@ -324,6 +393,18 @@ class MikrotikService
         }
     }
 
+    public function updateHotspotUserComment(string $username, string $comment): void
+    {
+        $query = (new Query('/ip/hotspot/user/print'))->where('name', $username);
+        $users = $this->client->query($query)->read();
+        if (!empty($users)) {
+            $setQuery = (new Query('/ip/hotspot/user/set'))
+                ->equal('.id', $users[0]['.id'])
+                ->equal('comment', $comment);
+            $this->client->query($setQuery)->read();
+        }
+    }
+
     public function enableHotspotUser(string $username): void
     {
         $query = (new Query('/ip/hotspot/user/print'))->where('name', $username);
@@ -333,16 +414,34 @@ class MikrotikService
                 ->equal('.id', $users[0]['.id'])
                 ->equal('disabled', 'no');
             $this->client->query($setQuery)->read();
-        }
-    }
-
     public function removeHotspotUser(string $username): void
     {
+        // 1. Kick dari active session agar internet langsung mati
+        $this->removeHotspotActiveSession($username);
+
+        // 2. Hapus user profile
         $query = (new Query('/ip/hotspot/user/print'))->where('name', $username);
         $users = $this->client->query($query)->read();
+
         if (!empty($users)) {
             $delQuery = (new Query('/ip/hotspot/user/remove'))->equal('.id', $users[0]['.id']);
             $this->client->query($delQuery)->read();
+        }
+    }
+
+    /**
+     * Memutus koneksi user yang sedang aktif (Kick)
+     */
+    public function removeHotspotActiveSession(string $username): void
+    {
+        $query = (new Query('/ip/hotspot/active/print'))->where('user', $username);
+        $actives = $this->client->query($query)->read();
+
+        foreach ($actives as $active) {
+            if (isset($active['.id'])) {
+                $delQuery = (new Query('/ip/hotspot/active/remove'))->equal('.id', $active['.id']);
+                $this->client->query($delQuery)->read();
+            }
         }
     }
 

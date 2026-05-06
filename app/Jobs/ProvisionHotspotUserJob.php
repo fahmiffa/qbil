@@ -50,10 +50,21 @@ class ProvisionHotspotUserJob implements ShouldQueue
             $mikrotik = MikrotikService::getInstance($router);
 
             $limitUptime = '';
+            $comment     = 'ebilling';
+
             if ($this->hotspotUser->package_id) {
                 $package = \App\Models\Package::find($this->hotspotUser->package_id);
-                if ($package && $package->limit_time) {
-                    $limitUptime = $package->limit_time;
+                if ($package) {
+                    if ($package->limit_time) {
+                        $limitUptime = $package->limit_time;
+                    }
+                    // Build comment: masa_aktif:1d|valid:30d
+                    $parts = [];
+                    if ($package->masa_aktif)    $parts[] = 'masa_aktif:' . $package->masa_aktif;
+                    if ($package->valid_duration) $parts[] = 'valid:' . $package->valid_duration;
+                    if (!empty($parts)) {
+                        $comment = implode('|', $parts);
+                    }
                 }
             }
 
@@ -65,7 +76,7 @@ class ProvisionHotspotUserJob implements ShouldQueue
                     $this->hotspotUser->username,
                     $this->hotspotUser->password,
                     $this->hotspotUser->profile,
-                    'ebilling',
+                    $comment,
                     $limitUptime
                 );
             } else {
@@ -73,7 +84,7 @@ class ProvisionHotspotUserJob implements ShouldQueue
                     $this->hotspotUser->username,
                     $this->hotspotUser->password,
                     $this->hotspotUser->profile,
-                    'ebilling',
+                    $comment,
                     $limitUptime
                 );
             }
