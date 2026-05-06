@@ -414,6 +414,8 @@ class MikrotikService
                 ->equal('.id', $users[0]['.id'])
                 ->equal('disabled', 'no');
             $this->client->query($setQuery)->read();
+        }
+    }
     public function removeHotspotUser(string $username): void
     {
         // 1. Kick dari active session agar internet langsung mati
