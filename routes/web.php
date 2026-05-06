@@ -30,6 +30,7 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('piutangs', \App\Livewire\PiutangManager::class)->name('piutangs');
     Route::get('activities', \App\Livewire\Activities\ActivityLog::class)->name('activities');
     Route::get('vouchers', \App\Livewire\VoucherManager::class)->name('vouchers');
+    Route::get('finance', \App\Livewire\FinanceManager::class)->name('finance');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)

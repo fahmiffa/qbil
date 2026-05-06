@@ -43,4 +43,29 @@ class Invoice extends Model
     {
         return $this->belongsTo(Package::class);
     }
+
+    protected static function booted()
+    {
+        static::updated(function ($invoice) {
+            if ($invoice->wasChanged('status') && $invoice->status === 'paid') {
+                // Ensure a transaction doesn't already exist for this invoice
+                $exists = Transaction::where('reference_type', self::class)
+                    ->where('reference_id', $invoice->id)
+                    ->exists();
+
+                if (!$exists) {
+                    Transaction::create([
+                        'user_id' => $invoice->customer->user_id, // Get owner from customer
+                        'type' => 'income',
+                        'amount' => $invoice->total_amount,
+                        'category' => 'Tagihan Bulanan',
+                        'description' => 'Pembayaran tagihan ' . $invoice->billing_period . ' (' . $invoice->invoice_number . ')',
+                        'reference_type' => self::class,
+                        'reference_id' => $invoice->id,
+                        'transaction_date' => $invoice->paid_at ?? now(),
+                    ]);
+                }
+            }
+        });
+    }
 }
