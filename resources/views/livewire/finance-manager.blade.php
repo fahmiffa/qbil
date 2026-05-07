@@ -143,6 +143,11 @@
                                             {{ $t->category }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                                            @if($t->category === 'Tagihan Bulanan' && $t->reference_type === 'App\Models\Invoice' && $t->reference && $t->reference->customer)
+                                                <div class="font-bold text-gray-800 dark:text-gray-200 mb-1">
+                                                    👤 {{ $t->reference->customer->name }}
+                                                </div>
+                                            @endif
                                             {{ $t->description ?: '-' }}
                                             @if($t->reference_type)
                                                 <div class="text-xs text-blue-500 mt-1">Otomatis dari Sistem</div>
