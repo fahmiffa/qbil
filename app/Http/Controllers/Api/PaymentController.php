@@ -21,6 +21,18 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
+        // Validasi API Key untuk Keamanan
+        $expectedKey = env('PAYMENT_API_KEY', 'welcomeTo26@FFA');
+        $authHeader = $request->header('Authorization');
+        
+        if (!$authHeader || str_replace('Bearer ', '', $authHeader) !== $expectedKey) {
+            Log::channel('payment')->warning('Unauthorized payment push attempt', [
+                'ip' => $request->ip(),
+                'header' => $authHeader
+            ]);
+            return response()->json(['message' => 'Unauthorized. Invalid API Key.'], 401);
+        }
+
         // Sample Payload:
         // {"id":273397,"title":"Financial Diary","text":"You spent IDR 85,000.00 at Groceries.","package":"com.bca.mybca.omni.android","postTime":1775903218006}
         
