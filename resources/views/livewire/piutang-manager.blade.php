@@ -3,10 +3,10 @@
         <h2 class="font-black text-2xl text-slate-800 dark:text-white tracking-tight">Piutang</h2>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-slate-50 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
+    <div class="w-full">
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-slate-700 transition-colors">
+            <div class="p-4 sm:p-6 text-gray-900 dark:text-gray-100">
+                <div class="pb-4 border-b border-slate-50 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 mb-4">
                     <div class="flex items-center gap-4 flex-1 min-w-0">
                         <div class="relative w-full sm:w-80">
                             <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
