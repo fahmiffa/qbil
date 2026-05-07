@@ -20,49 +20,49 @@
                         </div>
                     @endif
 
-                            <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-2">
-                            <button wire:click="create()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors shadow-lg shadow-blue-600/20">
-                                Tambah Hotspot
-                            </button>
-
-                            @if(count($selectedIds) > 0)
-                                <button wire:click="requestBulkDelete" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    Hapus ({{ count($selectedIds) }})
-                                </button>
-                                
-                                <a href="{{ route('hotspot.print-vouchers', ['ids' => implode(',', $selectedIds)]) }}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                    </svg>
-                                    Cetak ({{ count($selectedIds) }})
-                                </a>
-                            @endif
-                        </div>
-
-
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <label class="text-sm text-gray-600 dark:text-slate-400">Paket:</label>
-                                <select wire:model.live="filterPackage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 mb-4">
+                        
+                        <div class="grid grid-cols-2 lg:flex w-full lg:w-auto gap-3">
+                            <div class="col-span-1">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Paket:</label>
+                                <select wire:model.live="filterPackage" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">Semua Paket</option>
                                     @foreach($packages_list as $p)
                                         <option value="{{ $p->id }}">{{ $p->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <label class="text-sm text-gray-600 dark:text-slate-400">Tampilkan:</label>
-                                <select wire:model.live="perPage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div class="col-span-1">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Tampilkan:</label>
+                                <select wire:model.live="perPage" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="10">10</option>
                                     <option value="100">100</option>
                                     <option value="1000">1000</option>
                                     <option value="all">Semua</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row w-full lg:w-auto gap-2">
+                            <button wire:click="create()" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-lg shadow-blue-600/20">
+                                Tambah Hotspot
+                            </button>
+
+                            @if(count($selectedIds) > 0)
+                                <button wire:click="requestBulkDelete" class="w-full sm:w-auto justify-center bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Hapus ({{ count($selectedIds) }})
+                                </button>
+                                
+                                <a href="{{ route('hotspot.print-vouchers', ['ids' => implode(',', $selectedIds)]) }}" target="_blank" class="w-full sm:w-auto justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Cetak ({{ count($selectedIds) }})
+                                </a>
+                            @endif
                         </div>
                     </div>
 

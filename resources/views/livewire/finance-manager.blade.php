@@ -1,7 +1,7 @@
 <div>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Buku Kas & Keuangan') }}
+        <h2 class="font-semibold text-sm md:text-xl text-gray-800 dark:text-gray-100 leading-tight">
+            {{ __('Kas & Keuangan') }}
         </h2>
     </x-slot>
 
@@ -74,49 +74,41 @@
                 <div class="p-6">
                     
                     <!-- Filters & Actions -->
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div class="flex flex-wrap items-center gap-4">
-                            <div>
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 mb-6">
+                        <div class="grid grid-cols-2 lg:flex w-full lg:w-auto gap-3">
+                            <div class="col-span-1">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Dari Tanggal</label>
-                                <input type="date" wire:model.live="startDate" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                                <input type="date" wire:model.live="startDate" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
                             </div>
-                            <div>
+                            <div class="col-span-1">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Sampai Tanggal</label>
-                                <input type="date" wire:model.live="endDate" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                                <input type="date" wire:model.live="endDate" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
                             </div>
-                            <div>
+                            <div class="col-span-1">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Tipe Transaksi</label>
-                                <select wire:model.live="filterType" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
-                                    <option value="all">Semua Tipe</option>
-                                    <option value="income">Pemasukan Saja</option>
-                                    <option value="expense">Pengeluaran Saja</option>
+                                <select wire:model.live="filterType" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                                    <option value="all">Semua</option>
+                                    <option value="income">Pemasukan</option>
+                                    <option value="expense">Pengeluaran</option>
                                 </select>
                             </div>
-                            <div>
+                            <div class="col-span-1">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Tampilkan</label>
-                                <select wire:model.live="perPage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
-                                    <option value="20">20 Baris</option>
-                                    <option value="100">100 Baris</option>
-                                    <option value="1000">1000 Baris</option>
-                                    <option value="all">Semua Data</option>
+                                <select wire:model.live="perPage" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                                    <option value="20">20</option>
+                                    <option value="100">100</option>
+                                    <option value="1000">1000</option>
+                                    <option value="all">Semua</option>
                                 </select>
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-2">
-                            <button wire:click="syncOldData" wire:confirm="Sinkronkan data pemasukan lama (Invoice & Voucher Lunas) ke Buku Kas?" class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 font-semibold py-2 px-4 rounded-lg shadow-sm border border-gray-200 dark:border-slate-600 transition-all flex items-center gap-2">
-                                <svg wire:loading.class="animate-spin" wire:target="syncOldData" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                <span wire:loading.remove wire:target="syncOldData">Sync Data</span>
-                                <span wire:loading wire:target="syncOldData">Proses...</span>
-                            </button>
-
-                            <button wire:click="openModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2">
+                        <div class="w-full lg:w-auto mt-2 lg:mt-0">
+                            <button wire:click="openModal" class="w-full lg:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                                 </svg>
-                                Catat Manual
+                                Catat Transaksi
                             </button>
                         </div>
                     </div>
