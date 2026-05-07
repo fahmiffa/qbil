@@ -71,11 +71,11 @@ new class extends Component
             </x-sidebar-link>
 
 
-            <x-sidebar-link :href="route('piutangs')" :active="request()->routeIs('piutangs')" icon="user-group">
+            <x-sidebar-link :href="route('piutangs')" :active="request()->routeIs('piutangs')" icon="piutang">
                 Piutang
             </x-sidebar-link>
 
-            <x-sidebar-link :href="route('finance')" :active="request()->routeIs('finance')" icon="document-text">
+            <x-sidebar-link :href="route('finance')" :active="request()->routeIs('finance')" icon="wallet">
                 Buku Kas
             </x-sidebar-link>
 

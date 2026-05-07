@@ -86,12 +86,22 @@
                             </div>
                         </div>
                         
-                        <button wire:click="openModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                            </svg>
-                            Catat Transaksi Manual
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button wire:click="syncOldData" wire:confirm="Sinkronkan data pemasukan lama (Invoice & Voucher Lunas) ke Buku Kas?" class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 font-semibold py-2 px-4 rounded-lg shadow-sm border border-gray-200 dark:border-slate-600 transition-all flex items-center gap-2">
+                                <svg wire:loading.class="animate-spin" wire:target="syncOldData" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span wire:loading.remove wire:target="syncOldData">Sync Data</span>
+                                <span wire:loading wire:target="syncOldData">Proses...</span>
+                            </button>
+
+                            <button wire:click="openModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                </svg>
+                                Catat Manual
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Transactions Table -->

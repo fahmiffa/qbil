@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Transaction;
+use App\Models\Invoice;
+use App\Models\VoucherOrder;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Carbon\Carbon;
@@ -101,6 +103,68 @@ class FinanceManager extends Component
         if ($transaction) {
             $transaction->delete();
             session()->flash('message', 'Transaksi berhasil dihapus.');
+        }
+    }
+
+    public function syncOldData()
+    {
+        $userId = auth()->id();
+        $syncedCount = 0;
+
+        // 1. Sync Invoices
+        $invoices = Invoice::whereHas('customer', function($q) use ($userId) {
+            $q->where('user_id', $userId);
+        })->where('status', 'paid')->get();
+
+        foreach ($invoices as $invoice) {
+            $exists = Transaction::where('reference_type', Invoice::class)
+                ->where('reference_id', $invoice->id)
+                ->exists();
+
+            if (!$exists) {
+                Transaction::create([
+                    'user_id' => $userId,
+                    'type' => 'income',
+                    'amount' => $invoice->total_amount,
+                    'category' => 'Tagihan Bulanan',
+                    'description' => 'Pembayaran tagihan ' . $invoice->billing_period . ' (' . $invoice->invoice_number . ')',
+                    'reference_type' => Invoice::class,
+                    'reference_id' => $invoice->id,
+                    'transaction_date' => $invoice->paid_at ?? $invoice->updated_at ?? now(),
+                ]);
+                $syncedCount++;
+            }
+        }
+
+        // 2. Sync Voucher Orders
+        $vouchers = VoucherOrder::where('user_id', $userId)
+            ->where('payment_status', 'paid')
+            ->get();
+
+        foreach ($vouchers as $order) {
+            $exists = Transaction::where('reference_type', VoucherOrder::class)
+                ->where('reference_id', $order->id)
+                ->exists();
+
+            if (!$exists) {
+                Transaction::create([
+                    'user_id' => $userId,
+                    'type' => 'income',
+                    'amount' => $order->total_price + $order->unique_amount,
+                    'category' => 'Voucher Hotspot',
+                    'description' => 'Pembelian ' . $order->quantity . ' Voucher (' . $order->order_code . ')',
+                    'reference_type' => VoucherOrder::class,
+                    'reference_id' => $order->id,
+                    'transaction_date' => $order->paid_at ?? $order->updated_at ?? now(),
+                ]);
+                $syncedCount++;
+            }
+        }
+
+        if ($syncedCount > 0) {
+            session()->flash('message', "Berhasil menyinkronkan {$syncedCount} data transaksi lama.");
+        } else {
+            session()->flash('message', 'Semua data transaksi sudah tersinkronisasi. Tidak ada data baru.');
         }
     }
 
