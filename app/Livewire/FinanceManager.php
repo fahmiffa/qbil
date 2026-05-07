@@ -15,6 +15,9 @@ class FinanceManager extends Component
 
     public $startDate;
     public $endDate;
+    public $filterType = 'all'; // all, income, expense
+    public $perPage = 20;
+
     
     // Form fields for manual entry
     public $isOpen = false;
@@ -49,7 +52,7 @@ class FinanceManager extends Component
 
     public function updated($property)
     {
-        if (in_array($property, ['startDate', 'endDate'])) {
+        if (in_array($property, ['startDate', 'endDate', 'filterType', 'perPage'])) {
             $this->resetPage();
         }
     }
@@ -174,13 +177,21 @@ class FinanceManager extends Component
             ->whereDate('transaction_date', '>=', $this->startDate)
             ->whereDate('transaction_date', '<=', $this->endDate);
 
-        // Calculate totals based on filtered date
+        // Calculate totals based on filtered date (before applying type filter for table)
         $totalIncome = (clone $query)->where('type', 'income')->sum('amount');
         $totalExpense = (clone $query)->where('type', 'expense')->sum('amount');
         $netProfit = $totalIncome - $totalExpense;
 
+        // Apply type filter for the table
+        if ($this->filterType !== 'all') {
+            $query->where('type', $this->filterType);
+        }
+
+        // Determine pagination
+        $paginationCount = $this->perPage === 'all' ? ($query->count() > 0 ? $query->count() : 1) : $this->perPage;
+
         // Fetch paginated data
-        $transactions = $query->orderBy('transaction_date', 'desc')->paginate(15);
+        $transactions = $query->orderBy('transaction_date', 'desc')->paginate($paginationCount);
 
         return view('livewire.finance-manager', [
             'transactions' => $transactions,

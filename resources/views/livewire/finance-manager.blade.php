@@ -75,7 +75,7 @@
                     
                     <!-- Filters & Actions -->
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div class="flex items-center gap-4">
+                        <div class="flex flex-wrap items-center gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Dari Tanggal</label>
                                 <input type="date" wire:model.live="startDate" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
@@ -83,6 +83,23 @@
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Sampai Tanggal</label>
                                 <input type="date" wire:model.live="endDate" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Tipe Transaksi</label>
+                                <select wire:model.live="filterType" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="income">Pemasukan Saja</option>
+                                    <option value="expense">Pengeluaran Saja</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Tampilkan</label>
+                                <select wire:model.live="perPage" class="border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                                    <option value="20">20 Baris</option>
+                                    <option value="100">100 Baris</option>
+                                    <option value="1000">1000 Baris</option>
+                                    <option value="all">Semua Data</option>
+                                </select>
                             </div>
                         </div>
                         
