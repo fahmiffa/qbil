@@ -103,7 +103,15 @@
                             </div>
                         </div>
                         
-                        <div class="w-full lg:w-auto mt-2 lg:mt-0">
+                        <div class="w-full lg:w-auto mt-2 lg:mt-0 flex flex-col sm:flex-row gap-3">
+                            <button wire:click="syncOldData" wire:loading.attr="disabled" class="w-full lg:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
+                                <svg wire:loading.class="animate-spin" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span wire:loading.remove wire:target="syncOldData">Sinkronisasi Data</span>
+                                <span wire:loading wire:target="syncOldData">Menyingkronkan...</span>
+                            </button>
+                            
                             <button wire:click="openModal" class="w-full lg:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />

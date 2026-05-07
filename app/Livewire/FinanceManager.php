@@ -124,7 +124,10 @@ class FinanceManager extends Component
                 ->where('reference_id', $invoice->id)
                 ->exists();
 
-            if (!$exists) {
+            // Check if this invoice is in Piutang
+            $isPiutang = \App\Models\Piutang::where('invoice_id', $invoice->id)->exists();
+
+            if (!$exists && !$isPiutang) {
                 Transaction::create([
                     'user_id' => $userId,
                     'type' => 'income',
