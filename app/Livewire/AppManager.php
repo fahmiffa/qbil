@@ -9,6 +9,7 @@ use Livewire\Component;
 class AppManager extends Component
 {
     public $template = "@{user_name}\nAssalamualaikum.wr.wb\nSemoga Kita selalu diberikan Keberkahan dan Nikmat Rejeki, Kami informasikan data dibawah ini belum melakukan pembayaran\nID Pelanggan : *{id_pelanggan}*\nNama : *{name}*\nAlamat : *{address}* \nNama Paket : *{package_name}*\nPeriode : *{period}*\nJatuh Tempo : *{due_date}*\nStatus : *Belum Lunas*\nHarga : *{amount}*\nTotal Yang Harus Dibayar : *{amount}*\n*Pembayaran Melalui*\nKlik link Dibawah ini: \n*{public_url}*\n*TRANSFER MANUAL MELALUI REKENING DIBAWAH INI:*\nKode Unik : *{unique_code}*\nTotal yang harus di transfer :*{total_amount}*\n_(Pastikan jumlah yang di transfer sesuai dengan total yang harus di transfer.)_\nMOHON KIRIM BUKTI PEMBAYARAN JIKA SDH MELAKUKAN TRANSAKSI VIA TRANSFER\nTrimakasih\nMohon abaikan pesan ini jika sudah melakukan pembayaran.\n\n*@{user_name}*\n\nTerima Kasih,\nAdmin @{user_name}";
+    public $template_2 = "@{user_name}\nAssalamualaikum.wr.wb\nSemoga Kita selalu diberikan Keberkahan dan Nikmat Rejeki, Kami informasikan data dibawah ini belum melakukan pembayaran\nID Pelanggan : *{id_pelanggan}*\nNama : *{name}*\nAlamat : *{address}* \nNama Paket : *{package_name}*\nPeriode : *{period}*\nJatuh Tempo : *{due_date}*\nStatus : *Belum Lunas*\nHarga : *{amount}*\nTotal Yang Harus Dibayar : *{amount}*\n*Pembayaran Melalui*\nKlik link Dibawah ini: \n*{public_url}*\n*TRANSFER MANUAL MELALUI REKENING DIBAWAH INI:*\nKode Unik : *{unique_code}*\nTotal yang harus di transfer :*{total_amount}*\n_(Pastikan jumlah yang di transfer sesuai dengan total yang harus di transfer.)_\nMOHON KIRIM BUKTI PEMBAYARAN JIKA SDH MELAKUKAN TRANSAKSI VIA TRANSFER\nTrimakasih\nMohon abaikan pesan ini jika sudah melakukan pembayaran.\n\n*@{user_name}*\n\nTerima Kasih,\nAdmin @{user_name}";
     public $registration_template = "@{user_name}\nTerimakasih telah bergabung dengan Layanan Internet *{user_name}*\nini adalah pesan otomatis dari sistem\n\nAnda baru saja terdaftar ke sistem e-billing kami\n\nNama : {name}\nNama Paket : {package_name}\nHarga : Rp. {amount}\nPeriode : {period}\nJatuh Tempo : {due_date}\n     \n*@{user_name}*\n\nTerima Kasih,\nStaff @{user_name}";
     public $payment_template = "@{user_name}\n*{user_name}*\nAlhamdulillah Semoga Allah SWT. Selalu memberikan Keberkahan,Kesehatan dan Kemudahan Rizki Kepada Kita semua,Amiin\n\nBerikut terlampir kwitansi pembayaran yang baru saja dilakukan silahkan di download\n\nNama : {name}\nAlamat : {address}\nJumlah Bayar : Rp. {amount}\nUntuk Pembayaran : {package_name}\nBulan : {period}\nJatuh Tempo : {due_date}\nDownload Bukti Pembayaran: {public_url}\nKami Ucapkan Terimakasih\n\n*@{user_name}*\n\nTerima Kasih,\nAdmin @{user_name}";
     public $payment_instruction = "";
@@ -28,6 +29,7 @@ class AppManager extends Component
     {
         return [
             'template' => 'nullable|string',
+            'template_2' => 'nullable|string',
             'registration_template' => 'nullable|string',
             'payment_template' => 'nullable|string',
             'payment_instruction' => 'nullable|string',
@@ -99,6 +101,7 @@ class AppManager extends Component
         $setting = AppSetting::where('user_id', auth()->id())->first();
         if ($setting) {
             $this->template = $setting->template ?? $this->template;
+            $this->template_2 = $setting->template_2 ?? $this->template_2;
             $this->registration_template = $setting->registration_template ?? $this->registration_template;
             $this->payment_template = $setting->payment_template ?? $this->payment_template;
             $this->payment_instruction = $setting->payment_instruction ?? "";
@@ -123,6 +126,7 @@ class AppManager extends Component
                 ['user_id' => auth()->id()],
                 [
                     'template' => $this->template,
+                    'template_2' => $this->template_2,
                     'registration_template' => $this->registration_template,
                     'payment_template' => $this->payment_template,
                     'payment_instruction' => $this->payment_instruction,

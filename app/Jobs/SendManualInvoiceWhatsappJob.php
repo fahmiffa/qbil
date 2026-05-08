@@ -18,14 +18,16 @@ class SendManualInvoiceWhatsappJob implements ShouldQueue
 
     protected $invoice;
     protected $overridePhone;
+    protected $isManual;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(Invoice $invoice, $overridePhone = null)
+    public function __construct(Invoice $invoice, $overridePhone = null, bool $isManual = false)
     {
         $this->invoice = $invoice;
         $this->overridePhone = $overridePhone;
+        $this->isManual = $isManual;
     }
 
     /**
@@ -43,6 +45,12 @@ class SendManualInvoiceWhatsappJob implements ShouldQueue
 
         $customer = $invoice->customer;
         $user = $customer->user;
+
+        // Skip if notification disabled AND not a manual action
+        if (!$this->isManual && !$customer->wa_notify) {
+            Log::info("[SendManualInvoiceWhatsappJob] Notifikasi WA dinonaktifkan untuk pelanggan: {$customer->name}");
+            return;
+        }
 
         if ($user && !$user->hasFeature('whatsapp')) {
             Log::warning("[SendManualInvoiceWhatsappJob] Fitur WhatsApp tidak aktif untuk user: {$user->id}");

@@ -3,13 +3,12 @@
         <div class="flex items-center gap-3">
             <div>
                 <h2 class="font-black text-xl text-slate-800 dark:text-white tracking-tight">Detail Pelanggan</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">{{ $customer->id_pelanggan }}</p>
             </div>
         </div>
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="w-full sm:px-6 lg:px-8 space-y-6">
 
             {{-- Header Card --}}
             <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-500/20 text-white overflow-hidden relative">
@@ -36,6 +35,9 @@
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest {{ $customer->status === 'active' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-red-400/20 text-red-200' }}">
                                 {{ $customer->status === 'active' ? '● Aktif' : '● Suspend' }}
                             </span>
+                            <button wire:click="toggleNotify" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all {{ $customer->wa_notify ? 'bg-indigo-400/30 text-indigo-100 hover:bg-indigo-400/40' : 'bg-slate-400/20 text-slate-300 hover:bg-slate-400/30' }}">
+                                {{ $customer->wa_notify ? 'Notif WA: ON' : 'Notif WA: OFF' }}
+                            </button>
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 text-blue-100">
                                 {{ strtoupper($customer->service_type) }}
                             </span>

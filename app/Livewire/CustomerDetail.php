@@ -137,15 +137,23 @@ class CustomerDetail extends Component
                     }
                 }
 
-                // Kirim notifikasi WA (Job)
+                // Kirim notifikasi WA (Job) - Mark as automatic/non-manual for verification check
                 if ($invoice) {
-                    \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
+                    \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, null, false);
                 }
             }
         });
 
         session()->flash('message', 'Pembayaran berhasil diverifikasi dan notifikasi dikirim.');
         $this->closeModal();
+    }
+
+    public function toggleNotify()
+    {
+        $this->customer->update([
+            'wa_notify' => !$this->customer->wa_notify
+        ]);
+        $this->dispatch('toast', type: 'success', message: 'Preferensi notifikasi berhasil diperbarui.');
     }
 
     public function render()

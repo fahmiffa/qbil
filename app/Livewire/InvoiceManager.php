@@ -322,8 +322,8 @@ class InvoiceManager extends Component
             return;
         }
 
-        // Dispatch job ke antrean dengan phone default (phone1)
-        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
+        // Dispatch job ke antrean dengan phone default (phone1) - Mark as manual
+        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, null, true);
 
         $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} sedang diproses di latar belakang.");
     }
@@ -332,7 +332,7 @@ class InvoiceManager extends Component
     {
         $invoice = Invoice::findOrFail($this->phoneSelectionInvoiceId);
         
-        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, $phone);
+        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, $phone, true);
 
         $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} dikirim ke nomor {$phone}.");
         

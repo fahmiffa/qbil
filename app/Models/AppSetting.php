@@ -12,6 +12,7 @@ class AppSetting extends Model
     protected $fillable = [
         'user_id',
         'template',
+        'template_2',
         'registration_template',
         'payment_template',
         'payment_instruction',

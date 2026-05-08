@@ -38,6 +38,11 @@ class SendRegistrationWhatsappJob implements ShouldQueue
             return;
         }
 
+        if (!$customer->wa_notify) {
+            Log::info("[SendRegistrationWhatsappJob] Notifikasi WA dinonaktifkan untuk pelanggan: {$customer->name}");
+            return;
+        }
+
         $user = $customer->user;
         if (!$user || !$user->hasFeature('whatsapp')) {
             Log::warning("[SendRegistrationWhatsappJob] Fitur WhatsApp tidak aktif untuk user: " . ($user ? $user->id : 'Unknown'));

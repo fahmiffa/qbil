@@ -53,7 +53,10 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
     {
         Log::info('[SendInvoiceRemindersJob] Mulai pengecekan pengingat tagihan...');
 
-        $invoices = Invoice::with(['customer.user', 'customer.package', 'customer.user.appSetting'])
+        $invoices = Invoice::whereHas('customer', function ($q) {
+                $q->where('wa_notify', true);
+            })
+            ->with(['customer.user', 'customer.package', 'customer.user.appSetting'])
             ->where('status', 'unpaid')
             ->get();
 
@@ -124,10 +127,12 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 
             $publicUrl = route('public.invoice', ['invoice' => $invoice->id]);
 
-            // Set locale to Indonesian for date formatting
-            \Carbon\Carbon::setLocale('id');
+            // Pilih template berdasarkan jenis pengingat
+            $selectedTemplate = ($reminderType === 2 && !empty($appSetting->template_2)) 
+                ? $appSetting->template_2 
+                : $appSetting->template;
 
-            $message = $whatsappService->formatMessage($appSetting->template, [
+            $message = $whatsappService->formatMessage($selectedTemplate, [
                 'name'           => $customer->name,
                 'invoice_number' => $invoice->invoice_number,
                 'amount'         => $invoice->amount,
