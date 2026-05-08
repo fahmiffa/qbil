@@ -83,12 +83,23 @@
         }
 
         .voucher-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             font-size: 8px;
             font-weight: 800;
             color: #1e40af;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-top: 2px;
+            line-height: 1.2;
+        }
+
+        .voucher-logo {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            margin-bottom: 2px;
         }
 
         .voucher-body {
@@ -197,7 +208,12 @@
     <div class="page">
         @foreach($pageVouchers as $v)
         <div class="voucher">
-            <div class="voucher-header">{{ $v->user->name ?? 'Voucher Wi-Fi' }}</div>
+            <div class="voucher-header">
+                @if($v->user->photo ?? false)
+                    <img src="{{ Storage::url($v->user->photo) }}" class="voucher-logo">
+                @endif
+                <span>{{ $v->user->name ?? 'Voucher Wi-Fi' }}</span>
+            </div>
             
             <div class="voucher-body">
                 <div class="voucher-code-label">KODE AKSES</div>
