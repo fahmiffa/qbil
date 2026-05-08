@@ -1,4 +1,4 @@
-<div>
+<div wire:init="loadProfiles">
 
     <div class="w-full">
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-slate-700 transition-colors">
@@ -230,7 +230,12 @@
                                                     x-data="{
                                                         formatCurrency(val) {
                                                             if (!val) return '';
-                                                            let num = val.toString().replace(/\D/g, '');
+                                                            let str = val.toString();
+                                                            // Jika format database (200000.00), ambil angka depannya saja
+                                                            if (str.indexOf('.') !== -1 && !isNaN(str)) {
+                                                                str = str.split('.')[0];
+                                                            }
+                                                            let num = str.replace(/\D/g, '');
                                                             return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                                                         }
                                                     }"

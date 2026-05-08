@@ -34,7 +34,7 @@ class MikrotikHotspotProfile extends Component
 
     public function mount(): void
     {
-        $this->loadProfiles();
+        // Data will be loaded via wire:init to prevent blocking the initial page load
     }
 
     private function getMikrotik(): MikrotikService
@@ -54,11 +54,11 @@ class MikrotikHotspotProfile extends Component
             $mikrotik = $this->getMikrotik();
             $routerId = auth()->user()->router->id ?? 0;
             
-            // Get IP Pools (Cached)
-            $this->ip_pools = Cache::remember("mk_pools_{$routerId}", 300, fn() => $mikrotik->getIpPools());
+            // Get IP Pools (Cached - 1 hour)
+            $this->ip_pools = Cache::remember("mk_pools_{$routerId}", 3600, fn() => $mikrotik->getIpPools());
 
-            // Get existing Mikrotik Profiles (Cached)
-            $allM = Cache::remember("mk_hs_profiles_{$routerId}", 300, fn() => $mikrotik->getHotspotProfiles());
+            // Get existing Mikrotik Profiles (Cached - 1 hour)
+            $allM = Cache::remember("mk_hs_profiles_{$routerId}", 3600, fn() => $mikrotik->getHotspotProfiles());
             
             $this->mikrotik_profiles_list = collect($allM)
                 ->filter(fn($p) => strtolower($p['name'] ?? '') !== 'default')
@@ -94,7 +94,7 @@ class MikrotikHotspotProfile extends Component
         if ($p) {
             $this->editId = $id;
             $this->name   = $p->name;
-            $this->price  = (string)$p->price;
+            $this->price  = (string)intval($p->price);
             $this->limit_time    = $p->limit_time ?? '';
             $this->masa_aktif    = $p->masa_aktif ?? '';
             $this->valid_duration = $p->valid_duration ?? '';
