@@ -53,7 +53,10 @@ class Invoice extends Model
                     ->where('reference_id', $invoice->id)
                     ->exists();
 
-                if (!$exists) {
+                // Check if this invoice is in Piutang
+                $isPiutang = \App\Models\Piutang::where('invoice_id', $invoice->id)->exists();
+
+                if (!$exists && !$isPiutang) {
                     Transaction::create([
                         'user_id' => $invoice->customer->user_id, // Get owner from customer
                         'type' => 'income',
