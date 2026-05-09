@@ -85,9 +85,13 @@ class CustomerManager extends Component
             })
             ->orderBy('name')->get();
 
-        // All packages for filter dropdown (only STATIC and PPPOE)
+        // All packages for filter dropdown based on active features
+        $allowedTipe = [];
+        if (auth()->user()->hasFeature('static')) $allowedTipe[] = 'STATIC';
+        if (auth()->user()->hasFeature('pppoe')) $allowedTipe[] = 'PPPOE';
+
         $allPackages = auth()->user()->packages()
-            ->whereIn('tipe', ['STATIC', 'PPPOE'])
+            ->whereIn('tipe', $allowedTipe)
             ->orderBy('name')
             ->get();
 
@@ -196,7 +200,16 @@ class CustomerManager extends Component
         $this->ppp_profile  = '';
         $this->username     = '';
         $this->password     = '';
-        $this->service_type = 'static';
+        
+        // Default service type based on features
+        if (auth()->user()->hasFeature('static')) {
+            $this->service_type = 'static';
+        } elseif (auth()->user()->hasFeature('pppoe')) {
+            $this->service_type = 'pppoe';
+        } else {
+            $this->service_type = 'static';
+        }
+
         $this->creation_method = 'buat_baru';
         $this->sync_mikrotik_id = '';
         $this->availableMikrotikData = [];
@@ -342,6 +355,7 @@ class CustomerManager extends Component
         if ($this->checkDemoMode()) return;
 
         if (!auth()->user()->hasFeature('mikrotik')) {
+            // If no mikrotik feature at all, default to static but it will likely fail later if they try to use mikrotik functions
             $this->service_type = 'static';
         }
 
@@ -357,9 +371,9 @@ class CustomerManager extends Component
             'username'     => 'required_if:service_type,pppoe|nullable|string|max:100',
             'password'     => 'required_if:service_type,pppoe|nullable|string|max:100',
             'service_type' => 'required|in:static,pppoe',
-            'ip_address'   => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50' : 'nullable',
-            'mac_address'  => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50|regex:/^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$/' : 'nullable',
-            'dhcp_server'  => ($this->service_type === 'static' && auth()->user()->hasFeature('mikrotik')) ? 'required|string|max:50' : 'nullable',
+            'ip_address'   => ($this->service_type === 'static' && auth()->user()->hasFeature('static')) ? 'required|string|max:50' : 'nullable',
+            'mac_address'  => ($this->service_type === 'static' && auth()->user()->hasFeature('static')) ? 'required|string|max:50|regex:/^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$/' : 'nullable',
+            'dhcp_server'  => ($this->service_type === 'static' && auth()->user()->hasFeature('static')) ? 'required|string|max:50' : 'nullable',
             'latitude'     => 'nullable|string|max:50',
             'longitude'    => 'nullable|string|max:50',
             'package_id'   => 'nullable|exists:packages,id',

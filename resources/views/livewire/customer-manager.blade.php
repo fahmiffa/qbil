@@ -57,13 +57,17 @@
                             </div>
                         </div>
 
-                        @if(auth()->user()->hasFeature('mikrotik'))
+                        @php
+                            $hasStatic = auth()->user()->hasFeature('static');
+                            $hasPppoe = auth()->user()->hasFeature('pppoe');
+                        @endphp
+                        @if($hasStatic || $hasPppoe)
                         <!-- Filter Layanan -->
                         <div class="relative w-full sm:w-40">
                             <select wire:model.live="filterService" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
                                 <option value="">Semua Layanan</option>
-                                <option value="static">STATIC</option>
-                                <option value="pppoe">PPPoE</option>
+                                @if($hasStatic) <option value="static">STATIC</option> @endif
+                                @if($hasPppoe) <option value="pppoe">PPPoE</option> @endif
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -338,8 +342,12 @@
                                             <div>
                                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Layanan</label>
                                                 <select wire:model.live="service_type" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors border-l-4 border-l-orange-500">
-                                                    <option value="static">STATIC (IP Queue)</option>
-                                                    <option value="pppoe">PPPOE (User & PW)</option>
+                                                    @if(auth()->user()->hasFeature('static'))
+                                                        <option value="static">STATIC (IP Queue)</option>
+                                                    @endif
+                                                    @if(auth()->user()->hasFeature('pppoe'))
+                                                        <option value="pppoe">PPPOE (User & PW)</option>
+                                                    @endif
                                                 </select>
                                             </div>
                                             @endif

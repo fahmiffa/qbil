@@ -65,7 +65,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
         foreach ($users as $user) {
             $setting = $user->appSetting;
 
-            if (!$setting) {
+            if (!$setting || (!$user->hasFeature('static') && !$user->hasFeature('pppoe'))) {
                 continue;
             }
 
@@ -87,6 +87,10 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
 
             $userGenerated = 0;
             $lastTargetPeriod = '';
+
+            if (!$user || (!$user->hasFeature('static') && !$user->hasFeature('pppoe'))) {
+                continue;
+            }
 
             if ($customers->isEmpty()) {
                 continue;

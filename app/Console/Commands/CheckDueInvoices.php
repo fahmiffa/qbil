@@ -39,7 +39,7 @@ class CheckDueInvoices extends Command
         $currentPeriod = $now->format('Y-m');
 
         foreach ($users as $user) {
-            if (!$user->hasFeature('mikrotik')) continue;
+            if (!$user->hasFeature('static') && !$user->hasFeature('pppoe')) continue;
             
             $setting = $user->appSetting;
             if (!$setting) continue;

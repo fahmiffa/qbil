@@ -12,6 +12,7 @@
 
                 <form wire:submit.prevent="save" class="space-y-8">
                     
+                    @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
                     <!-- SECTION: OTOMASI SISTEM -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 bg-slate-50/50 dark:bg-slate-900/30 rounded-[2rem] border border-slate-100 dark:border-slate-700 transition-colors">
                         <!-- Generate Invoice -->
@@ -72,7 +73,9 @@
                             </div>
                         </div>
                     </div>
+                    @endif
 
+                    @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
                     <!-- SECTION: JADWAL NOTIFIKASI & TEMPLATE -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         
@@ -133,6 +136,7 @@
                         </div>
 
                     </div>
+                    @endif
 
                     {{-- VARIABEL INFO --}}
                     <div class="bg-slate-900 text-white rounded-3xl p-6 relative overflow-hidden">

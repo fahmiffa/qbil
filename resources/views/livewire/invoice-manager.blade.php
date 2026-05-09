@@ -8,6 +8,7 @@
     </x-slot>
 
     <div class="w-full">
+        @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
         @if($isBeforeIsolation && $customersToIsolate->isNotEmpty())
             <div x-show="!$wire.isAlertDismissed" class="mb-6 group relative">
                 <div @click="$wire.set('showIsolationModal', true)" class="cursor-pointer bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 flex items-center justify-between transition-all hover:shadow-lg hover:shadow-rose-500/10">
@@ -37,6 +38,7 @@
                 </div>
             </div>
         @endif
+        @endif
 
         <div class="bg-white dark:bg-slate-800 shadow-sm rounded-2xl border border-gray-100 dark:border-slate-700 transition-colors">
             <div class="p-4 sm:p-6">
@@ -62,10 +64,12 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                 </div>
                             </div>
+                            @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
                             <button wire:click="openGenerateModal" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                                 Generate Tagihan
                             </button>
+                            @endif
                         </div>
 
                         <div class="flex items-center gap-2 sm:justify-end">

@@ -53,8 +53,8 @@ class GenerateEmergencyInvoices extends Command
         foreach ($users as $user) {
             $setting = $user->appSetting;
 
-            if (!$setting) {
-                $this->warn("  [Skip] User {$user->name}: Belum ada app-setting.");
+            if (!$setting || (!$user->hasFeature('static') && !$user->hasFeature('pppoe'))) {
+                $this->warn("  [Skip] User {$user->name}: Belum ada app-setting atau fitur layanan tidak aktif.");
                 continue;
             }
 

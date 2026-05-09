@@ -33,6 +33,11 @@ class ExpireInvoices extends Command
         // agar memberi waktu pelanggan membayar sedikit terlambat sebelum kode uniknya dilepas.
         $expiredCount = Invoice::where('status', 'unpaid')
             ->where('due_date', '<', now()->subDays(2))
+            ->whereHas('customer.user', function($q) {
+                $q->whereHas('features', function($f) {
+                    $f->whereIn('parameter', ['pppoe', 'static']);
+                });
+            })
             ->update(['status' => 'canceled']);
 
         $this->info("Berhasil membatalkan $expiredCount invoice. Kode unik sekarang sudah tersedia kembali.");

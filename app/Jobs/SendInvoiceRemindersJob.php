@@ -68,7 +68,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $customer   = $invoice->customer;
             $user       = $customer->user;
             
-            if (!$user || !$user->hasFeature('whatsapp')) {
+            if (!$user || !$user->hasFeature('whatsapp') || (!$user->hasFeature('static') && !$user->hasFeature('pppoe'))) {
                 continue;
             }
 

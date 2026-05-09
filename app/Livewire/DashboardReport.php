@@ -42,7 +42,17 @@ class DashboardReport extends Component
             ->first();
 
         // Breakdown by Service Type (PPPOE, STATIC, HOTSPOT)
-        $allowedTypes = auth()->user()->hasFeature('mikrotik') ? ['PPPOE', 'STATIC', 'HOTSPOT'] : ['STATIC'];
+        $allowedTypes = [];
+        if (auth()->user()->hasFeature('pppoe')) $allowedTypes[] = 'PPPOE';
+        if (auth()->user()->hasFeature('static')) $allowedTypes[] = 'STATIC';
+        if (auth()->user()->hasFeature('hotspot')) $allowedTypes[] = 'HOTSPOT';
+        
+        // Fallback for UI if no specific features yet but has general mikrotik (legacy support during migration)
+        if (empty($allowedTypes) && auth()->user()->hasFeature('mikrotik')) {
+            $allowedTypes = ['PPPOE', 'STATIC', 'HOTSPOT'];
+        } elseif (empty($allowedTypes)) {
+            $allowedTypes = ['STATIC'];
+        }
         
         $serviceBreakdown = collect($allowedTypes)->map(function ($tipe) use ($userId, $period) {
             $activeCount = 0;

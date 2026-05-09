@@ -56,16 +56,19 @@ new class extends Component
                 <div x-show="!sidebarOpen" class="border-t border-slate-100 dark:border-slate-800 mx-3"></div>
             </div>
 
+            @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
             <x-sidebar-link :href="route('customers')" :active="request()->routeIs('customers')" icon="users">
                 Pelanggan
             </x-sidebar-link>
+            @endif
 
-            @if(auth()->user()->hasFeature('mikrotik'))
+            @if(auth()->user()->hasFeature('hotspot'))
             <x-sidebar-link :href="route('hotspot')" :active="request()->routeIs('hotspot')" icon="wifi">
                 Hotspot
             </x-sidebar-link>
             @endif
 
+            @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
             <x-sidebar-link :href="route('invoice')" :active="request()->routeIs('invoice')" icon="interface">
                 Tagihan
             </x-sidebar-link>
@@ -74,6 +77,7 @@ new class extends Component
             <x-sidebar-link :href="route('piutangs')" :active="request()->routeIs('piutangs')" icon="piutang">
                 Piutang
             </x-sidebar-link>
+            @endif
 
             <x-sidebar-link :href="route('finance')" :active="request()->routeIs('finance')" icon="wallet">
                 Buku Kas
@@ -95,7 +99,9 @@ new class extends Component
             <x-sidebar-link :href="route('router')" :active="request()->routeIs('router')" icon="server">
                 Router
             </x-sidebar-link>
+            @endif
 
+            @if(auth()->user()->features()->where('parameter', 'map')->exists())
             <x-sidebar-link :href="route('assets')" :active="request()->routeIs('assets')" icon="box">
                 Asset
             </x-sidebar-link>
@@ -105,6 +111,7 @@ new class extends Component
             @php
             $paketActive = request()->routeIs('static-packages') || request()->routeIs('ppp-profiles') || request()->routeIs('hotspot-profiles');
             @endphp
+            @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static', 'hotspot'])->exists())
             <div x-data="{
                     open: {{ $paketActive ? 'true' : 'false' }} || JSON.parse(localStorage.getItem('paketOpen') || 'false'),
                 }"
@@ -162,6 +169,7 @@ new class extends Component
                     x-transition:leave-end="opacity-0 -translate-y-2"
                     class="ml-4 mt-1 space-y-0.5 border-l-2 border-slate-100 dark:border-slate-700 pl-3">
 
+                    @if(auth()->user()->hasFeature('static'))
                     {{-- Static --}}
                     <a href="{{ route('static-packages') }}"
                         wire:navigate
@@ -176,8 +184,9 @@ new class extends Component
                         </div>
                         <span class="whitespace-nowrap">Static</span>
                     </a>
+                    @endif
 
-                    @if(auth()->user()->hasFeature('mikrotik'))
+                    @if(auth()->user()->hasFeature('pppoe'))
                     {{-- PPPoE --}}
                     <a href="{{ route('ppp-profiles') }}"
                         wire:navigate
@@ -192,7 +201,9 @@ new class extends Component
                         </div>
                         <span class="whitespace-nowrap">PPPoE</span>
                     </a>
+                    @endif
 
+                    @if(auth()->user()->hasFeature('hotspot'))
                     {{-- Hotspot --}}
                     <a href="{{ route('hotspot-profiles') }}"
                         wire:navigate
@@ -211,6 +222,7 @@ new class extends Component
 
                 </div>
             </div>
+            @endif
 
             <div class="pt-4 pb-2">
                 <span x-show="sidebarOpen" class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3">Pengaturan</span>

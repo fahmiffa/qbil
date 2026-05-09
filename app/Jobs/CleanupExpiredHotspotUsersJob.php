@@ -55,7 +55,9 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
         // - Tier 3: Jika exp: sudah terlewati → hapus
         // =====================================================================
         $routers = Router::whereHas('user', function ($q) {
-            $q->whereHas('hotspotUsers');
+            $q->whereHas('features', function($f) {
+                $f->where('parameter', 'hotspot');
+            });
         })->get();
 
         foreach ($routers as $router) {
