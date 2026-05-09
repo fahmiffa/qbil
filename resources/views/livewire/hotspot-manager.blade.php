@@ -33,6 +33,14 @@
                                 </select>
                             </div>
                             <div class="col-span-1">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Status:</label>
+                                <select wire:model.live="filterPrinted" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Semua Status</option>
+                                    <option value="0">Belum Dicetak</option>
+                                    <option value="1">Sudah Dicetak</option>
+                                </select>
+                            </div>
+                            <div class="col-span-1">
                                 <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Tampilkan:</label>
                                 <select wire:model.live="perPage" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="10">10</option>
@@ -169,6 +177,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Username</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Password</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Paket</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aksi</th>
                                 </tr>
                             </thead>
@@ -188,6 +197,17 @@
                                             {{ $hu->profile }}
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                        @if($hu->is_printed)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+                                                Sudah Dicetak
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                                Belum Dicetak
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center space-x-2">
                                         <button wire:click="edit({{ $hu->id }})" class="inline-flex items-center px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm">
                                             Edit
@@ -199,7 +219,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data user hotspot.</td>
+                                    <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data user hotspot.</td>
                                 </tr>
                                 @endforelse
 

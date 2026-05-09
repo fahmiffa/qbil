@@ -18,6 +18,7 @@ class HotspotManager extends Component
     public $type = 'account'; // 'account' or 'voucher'
     public $quantity = 1;
     public $filterPackage = '';
+    public $filterPrinted = '';
     public $perPage = 10;
     public $packages_list = [];
     public $isOpen = false;
@@ -63,6 +64,11 @@ class HotspotManager extends Component
         $this->resetPage();
     }
 
+    public function updatedFilterPrinted()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
@@ -72,6 +78,10 @@ class HotspotManager extends Component
 
         if ($this->filterPackage) {
             $query->where('package_id', $this->filterPackage);
+        }
+
+        if ($this->filterPrinted !== '') {
+            $query->where('is_printed', $this->filterPrinted);
         }
 
         $hotspotUsers = $query->orderBy('id', 'desc')
