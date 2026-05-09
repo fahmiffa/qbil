@@ -150,6 +150,9 @@ class PrintController extends Controller
             ->where('user_id', auth()->id())
             ->get();
             
+        // Mark as printed to prevent re-printing
+        HotspotUser::whereIn('id', $ids)->update(['is_printed' => true]);
+            
         return view('print.hotspot-vouchers', [
             'vouchers' => $vouchers
         ]);

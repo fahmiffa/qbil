@@ -11,12 +11,13 @@ class HotspotUser extends Model
 
     protected $fillable = [
         'user_id', 'username', 'password', 'profile', 'package_id',
-        'voucher_order_id', 'activated_at', 'valid_until',
+        'voucher_order_id', 'activated_at', 'valid_until', 'is_printed',
     ];
 
     protected $casts = [
         'activated_at' => 'datetime',
         'valid_until'  => 'datetime',
+        'is_printed'   => 'boolean',
     ];
 
     public function user()

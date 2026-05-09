@@ -192,22 +192,57 @@
             color: #374151;
             border: 1px solid #d1d5db;
         }
+
+        /* Printed Indicator */
+        .voucher.is-printed {
+            opacity: 0.8;
+        }
+
+        .voucher.is-printed::after {
+            content: 'DUPLIKAT';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 14px;
+            font-weight: 900;
+            color: rgba(220, 38, 38, 0.15);
+            pointer-events: none;
+            border: 2px solid rgba(220, 38, 38, 0.15);
+            padding: 2px 4px;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        @media print {
+            .voucher.is-printed::after {
+                color: rgba(0, 0, 0, 0.1) !important;
+                border-color: rgba(0, 0, 0, 0.1) !important;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="no-print">
-        <a href="javascript:window.history.back()" class="btn btn-secondary">Kembali</a>
-        <button onclick="window.print()" class="btn btn-primary">Cetak Sekarang</button>
-    </div>
-
     @php 
         $chunks = $vouchers->chunk(40); 
+        $allPrinted = $vouchers->every('is_printed');
     @endphp
+
+    <div class="no-print">
+        <a href="javascript:window.history.back()" class="btn btn-secondary">Kembali</a>
+        @if(!$allPrinted)
+            <button onclick="window.print()" class="btn btn-primary">Cetak Sekarang</button>
+        @else
+            <span style="color: #ef4444; font-size: 12px; font-weight: bold; background: #fee2e2; padding: 8px 16px; border-radius: 99px; border: 1px solid #fecaca;">
+                ⚠️ Semua voucher sudah pernah dicetak sebelumnya
+            </span>
+        @endif
+    </div>
 
     @forelse($chunks as $pageVouchers)
     <div class="page">
         @foreach($pageVouchers as $v)
-        <div class="voucher">
+        <div class="voucher {{ $v->is_printed ? 'is-printed' : '' }}">
             <div class="voucher-header">
                 @if($v->user->photo ?? false)
                     <img src="{{ Storage::url($v->user->photo) }}" class="voucher-logo">
