@@ -50,9 +50,7 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
         }
 
         // =====================================================================
-        // TIER 3 + ACTIVATOR: Proses user MikroTik berdasarkan comment
-        // - Activator: Jika uptime > 0 dan belum ada exp: → catat waktu login & hitung exp
-        // - Tier 3: Jika exp: sudah terlewati → hapus
+        // TIER 2: Proses berdasarkan Database (Prioritas Aplikasi)
         // =====================================================================
         $routers = Router::whereHas('user', function ($q) {
             $q->whereHas('features', function($f) {
@@ -62,116 +60,53 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
 
         foreach ($routers as $router) {
             try {
-                $mikrotik  = MikrotikService::getInstance($router);
-                // Sinkronisasi script on-login (hanya berjalan 1x jika belum ada)
-                try {
-                    $mikrotik->pushHotspotOnLoginScript();
-                } catch (\Exception $e) {
-                    Log::warning('[Cleanup] pushHotspotOnLoginScript failed: ' . $e->getMessage());
-                }
+                $mikrotik = MikrotikService::getInstance($router);
+                
+                // Ambil data user dari MikroTik sekali saja untuk dibandingkan
+                $mkUsers = collect($mikrotik->getHotspotUsers());
 
-                $mkUsers   = $mikrotik->getHotspotUsers();
-                $mkActives = $mikrotik->getHotspotActiveSessions();
+                // Ambil semua user di DB yang terdaftar pada router ini
+                $dbUsers = HotspotUser::where('user_id', $router->user_id)
+                    ->with('package')
+                    ->get();
 
-                foreach ($mkUsers as $mkUser) {
-                    $username = $mkUser['name'] ?? '';
-                    $comment  = $mkUser['comment'] ?? '';
-                    $uptime   = $mkUser['uptime'] ?? '';
-
-                    if (empty($username)) continue;
-
-                    // --- TIER 3: Cek "exp:" di comment ---
-                    if (str_contains($comment, 'exp:')) {
-                        $expStr = $this->extractValue($comment, 'exp');
-                        $expTime = null;
-
-                        // Format: exp:2026/05/06-07:00:00
-                        try { $expTime = Carbon::createFromFormat('Y/m/d-H:i:s', $expStr); } catch (\Exception) {}
-                        // Fallback format: exp:2026-05-06 07:00:00
-                        if (!$expTime) {
-                            try { $expTime = Carbon::parse($expStr); } catch (\Exception) {}
-                        }
-
-                        if ($expTime && now()->gte($expTime)) {
-                            $mikrotik->removeHotspotUser($username);
-                            HotspotUser::where('user_id', $router->user_id)
-                                ->where('username', $username)
-                                ->delete();
-                            Log::info("[Cleanup][Tier3] Deleted exp-reached user: {$username} (exp: {$expStr})");
-                            continue; // Skip ke user berikutnya
-                        }
+                foreach ($dbUsers as $dbUser) {
+                    // Cari apakah user di DB ini juga ada di MikroTik
+                    $mkUser = $mkUsers->firstWhere('name', $dbUser->username);
+                    
+                    if (!$mkUser) {
+                        // User ada di DB tapi tidak ada di MikroTik, abaikan atau bisa ditambahkan logika sync ulang
+                        continue;
                     }
 
-                    // --- ACTIVATOR: Jika sudah login (uptime > 0), belum ada exp:, tapi ada masa_aktif: ---
-                    if (
-                        !str_contains($comment, 'exp:') &&
-                        str_contains($comment, 'masa_aktif:') &&
-                        $this->parseMikrotikTime($uptime) > 0
-                    ) {
-                        $masaAktifStr = $this->extractValue($comment, 'masa_aktif');
-                        $masaAktifSec = $this->parseMikrotikTime($masaAktifStr);
+                    $uptime    = $mkUser['uptime'] ?? '0s';
+                    $uptimeSec = $this->parseMikrotikTime($uptime);
+                    
+                    $masaAktif = $dbUser->package?->masa_aktif ?? '0s';
+                    $masaAktifSec = $this->parseMikrotikTime($masaAktif);
 
+                    // --- ACTIVATOR: Jika sudah login (uptime > 0) tapi belum tercatat activated_at di DB ---
+                    if ($uptimeSec > 0 && is_null($dbUser->activated_at)) {
                         if ($masaAktifSec > 0) {
-                            $loginTime = null;
-
-                            // 1. Coba ambil dari comment "login:" (ditulis oleh On-Login script)
-                            if (str_contains($comment, 'login:')) {
-                                $loginStr = $this->extractValue($comment, 'login');
-                                $loginStr = ucfirst($loginStr); // may/06/2026 -> May/06/2026
-                                try {
-                                    $loginTime = \Carbon\Carbon::createFromFormat('M/d/Y-H:i:s', $loginStr);
-                                } catch (\Exception $e) {
-                                    try {
-                                        $loginTime = \Carbon\Carbon::parse($loginStr);
-                                    } catch (\Exception $ex) {
-                                        $loginTime = null;
-                                    }
-                                }
-                            }
-
-                            // 2. Jika tidak ada dari script, cek session aktif saat ini
-                            if (!$loginTime) {
-                                $activeSession = collect($mkActives)->firstWhere('user', $username);
-                                if ($activeSession && isset($activeSession['uptime'])) {
-                                    $uptimeSec = $this->parseMikrotikTime($activeSession['uptime']);
-                                    $loginTime = now()->subSeconds($uptimeSec);
-                                }
-                            }
-
-                            // 3. Fallback: gunakan uptime dari profil user (akumulasi)
-                            if (!$loginTime) {
-                                $uptimeSec = $this->parseMikrotikTime($uptime);
-                                $loginTime = now()->subSeconds($uptimeSec);
-                            }
-
-                            if ($loginTime) {
-                                $expTime   = $loginTime->copy()->addSeconds($masaAktifSec);
-
-                                // Bangun comment baru: pertahankan field lain, tambahkan exp:
-                                $newComment = $comment . '|exp:' . $expTime->format('Y/m/d-H:i:s');
-                                $mikrotik->updateHotspotUserComment($username, $newComment);
-
-                                // Catat activated_at di DB
-                                HotspotUser::where('user_id', $router->user_id)
-                                    ->where('username', $username)
-                                    ->update(['activated_at' => $loginTime]);
-
-                                Log::info("[Cleanup][Activator] Set exp for {$username}: " . $expTime->format('Y/m/d-H:i:s') . " (loginTime: " . $loginTime->format('Y-m-d H:i:s') . ")");
-                            }
+                            $dbUser->update(['activated_at' => now()]);
+                            
+                            // Update comment di MikroTik untuk transparansi di Winbox
+                            $expTime = now()->addSeconds($masaAktifSec);
+                            $newComment = "masa_aktif:{$masaAktif}|exp:" . $expTime->format('Y/m/d-H:i:s');
+                            $mikrotik->updateHotspotUserComment($dbUser->username, $newComment);
+                            
+                            Log::info("[Cleanup][Activator] Activated user: {$dbUser->username} (Exp: " . $expTime->toDateTimeString() . ")");
                         }
                     }
 
-                    // --- TIER 2b: Hapus berdasarkan limit-uptime dari MikroTik (paket lama tanpa masa_aktif) ---
-                    if (isset($mkUser['limit-uptime']) && !empty($mkUser['limit-uptime'])) {
-                        $limitSec = $this->parseMikrotikTime($mkUser['limit-uptime']);
-                        $upSec    = $this->parseMikrotikTime($uptime);
+                    // --- CLEANUP: Jika sudah aktif, cek apakah sudah melewati masa berlaku ---
+                    if (!is_null($dbUser->activated_at)) {
+                        $expTime = $dbUser->activated_at->addSeconds($masaAktifSec);
 
-                        if ($limitSec > 0 && $upSec >= $limitSec) {
-                            $mikrotik->removeHotspotUser($username);
-                            HotspotUser::where('user_id', $router->user_id)
-                                ->where('username', $username)
-                                ->delete();
-                            Log::info("[Cleanup][Tier2b] Deleted limit-uptime reached: {$username}");
+                        if (now()->gte($expTime)) {
+                            $mikrotik->removeHotspotUser($dbUser->username);
+                            $dbUser->delete();
+                            Log::info("[Cleanup][Expired] Deleted user: {$dbUser->username}");
                         }
                     }
                 }
