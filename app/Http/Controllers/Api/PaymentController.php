@@ -44,6 +44,20 @@ class PaymentController extends Controller
             'postTime' => 'required'
         ]);
 
+        // Whitelist Package Validation
+        $whitelist = [
+            'com.bca.mybca.omni.android',
+            'com.bankmandiri.mandirionline',
+            'com.bca.msb',
+            'id.dana',
+            'com.shopeepay.id',
+        ];
+
+        if (!in_array($payload['package'], $whitelist)) {
+            Log::channel('payment')->info('Notification ignored: package not in whitelist', ['package' => $payload['package']]);
+            return response()->json(['message' => 'Package not whitelisted. Notification ignored.'], 200);
+        }
+
         Log::channel('payment')->info(json_encode($payload));
         // Extract number from text. Also include title just in case the amount is there
         $textToParse = $payload['title'] . ' ' . $payload['text'];
