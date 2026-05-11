@@ -53,7 +53,7 @@ class ProvisionCustomerJob implements ShouldQueue
             $this->pullDataIfMissing($mikrotik, $this->customer);
 
             $package  = $this->customer->package;
-            $rateLimit = $package ? ($package->speed_upload . '/' . $package->speed_download) : '0M/0M';
+            $rateLimit = $package ? $package->getMikrotikRateLimit() : '0M/0M';
 
             switch ($this->action) {
                 case 'create':

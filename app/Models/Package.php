@@ -12,6 +12,7 @@ class Package extends Model
     protected $fillable = [
         'name', 'price', 'speed_download', 'speed_upload', 'mikrotik_profile',
         'user_id', 'tipe', 'limit_time', 'masa_aktif', 'valid_duration', 'address_pool',
+        'burst_upload', 'burst_download', 'burst_threshold', 'limit_at', 'burst_duration', 'priority',
     ];
 
     /**
@@ -53,5 +54,59 @@ class Package extends Model
     public function customers()
     {
         return $this->hasMany(Customer::class);
+    }
+
+    /**
+     * Generate MikroTik rate-limit string.
+     * Format: max-limit [burst-limit [burst-threshold [burst-time [priority [limit-at]]]]]
+     */
+    public function getMikrotikRateLimit(): string
+    {
+        $maxLimit = ($this->speed_upload ?: '0') . '/' . ($this->speed_download ?: '0');
+        
+        if (empty($this->burst_upload) && empty($this->burst_download)) {
+            return $maxLimit;
+        }
+
+        $burstLimit = ($this->burst_upload ?: $this->speed_upload) . '/' . ($this->burst_download ?: $this->speed_download);
+        
+        // Threshold
+        $thresholdUpload = '0';
+        $thresholdDownload = '0';
+        if ($this->burst_threshold) {
+            $thresholdUpload = $this->calculatePercentage($this->speed_upload, $this->burst_threshold);
+            $thresholdDownload = $this->calculatePercentage($this->speed_download, $this->burst_threshold);
+        }
+        $burstThreshold = $thresholdUpload . '/' . $thresholdDownload;
+
+        $burstTime = ($this->burst_duration ?: '1') . '/' . ($this->burst_duration ?: '1');
+        $priority = $this->priority ?: '8';
+
+        // Limit At
+        $limitAtUpload = '0';
+        $limitAtDownload = '0';
+        if ($this->limit_at) {
+            $limitAtUpload = $this->calculatePercentage($this->speed_upload, $this->limit_at);
+            $limitAtDownload = $this->calculatePercentage($this->speed_download, $this->limit_at);
+        }
+        $limitAt = $limitAtUpload . '/' . $limitAtDownload;
+
+        return "{$maxLimit} {$burstLimit} {$burstThreshold} {$burstTime} {$priority} {$limitAt}";
+    }
+
+    private function calculatePercentage($value, $percentage): string
+    {
+        if (!$value) return '0';
+        if (preg_match('/^(\d+)(K|M)$/i', $value, $matches)) {
+            $val = (int)$matches[1];
+            $unit = strtoupper($matches[2]);
+            
+            // Convert everything to K for precision
+            $valK = ($unit === 'M') ? $val * 1024 : $val;
+            $resK = floor($valK * ($percentage / 100));
+            
+            return $resK . 'k';
+        }
+        return '0';
     }
 }

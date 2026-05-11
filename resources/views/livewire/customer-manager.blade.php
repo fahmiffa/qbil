@@ -271,6 +271,31 @@
                                                 </div>
                                             </div>
 
+                                            <!-- Tipe Layanan -->
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Layanan</label>
+                                                <select wire:model.live="service_type" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors border-l-4 border-l-orange-500">
+                                                    @if(auth()->user()->hasFeature('static'))
+                                                        <option value="static">STATIC (IP Queue)</option>
+                                                    @endif
+                                                    @if(auth()->user()->hasFeature('pppoe'))
+                                                        <option value="pppoe">PPPOE (User & PW)</option>
+                                                    @endif
+                                                </select>
+                                            </div>
+
+                                            <!-- Paket -->
+                                            <div class="{{ auth()->user()->hasFeature('mikrotik') ? '' : 'sm:col-span-2' }}">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">{{ auth()->user()->hasFeature('mikrotik') ? 'Paket Langganan' : 'Pilih Paket' }}</label>
+                                                <select wire:model="package_id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
+                                                    <option value="">-- Pilih Paket --</option>
+                                                    @foreach($packages as $pkg)
+                                                        <option value="{{ $pkg->id }}">{{ $pkg->name }} [{{ $pkg->speed_upload }}/{{ $pkg->speed_download }}] — Rp {{ number_format($pkg->price, 0, ',', '.') }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('package_id') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                            </div>
+
                                             @if(auth()->user()->hasFeature('mikrotik'))
                                             <!-- Tipe Input -->
                                             <div class="sm:col-span-2">
@@ -337,33 +362,7 @@
                                                 @endif
                                             </div>
                                             @endif
-
-                                            <!-- Tipe Layanan -->
-                                            <div>
-                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Layanan</label>
-                                                <select wire:model.live="service_type" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors border-l-4 border-l-orange-500">
-                                                    @if(auth()->user()->hasFeature('static'))
-                                                        <option value="static">STATIC (IP Queue)</option>
-                                                    @endif
-                                                    @if(auth()->user()->hasFeature('pppoe'))
-                                                        <option value="pppoe">PPPOE (User & PW)</option>
-                                                    @endif
-                                                </select>
-                                            </div>
                                             @endif
-
-
-                                            <!-- Paket -->
-                                            <div class="{{ auth()->user()->hasFeature('mikrotik') ? '' : 'sm:col-span-2' }}">
-                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">{{ auth()->user()->hasFeature('mikrotik') ? 'Paket Langganan' : 'Pilih Paket' }}</label>
-                                                <select wire:model="package_id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                                                    <option value="">-- Pilih Paket --</option>
-                                                    @foreach($packages as $pkg)
-                                                        <option value="{{ $pkg->id }}">{{ $pkg->name }} [{{ $pkg->speed_upload }}/{{ $pkg->speed_download }}] — Rp {{ number_format($pkg->price, 0, ',', '.') }}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('package_id') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
-                                            </div>
 
 
                                             @if(auth()->user()->hasFeature('mikrotik') && $service_type === 'pppoe')

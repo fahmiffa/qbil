@@ -12,6 +12,8 @@ class StaticPackageManager extends Component
 
     public $name, $price, $speed_download, $speed_upload, $mikrotik_profile, $package_id;
     public $download_value, $download_unit = 'M', $upload_value, $upload_unit = 'M';
+    public $burst_download_value, $burst_download_unit = 'M', $burst_upload_value, $burst_upload_unit = 'M';
+    public $burst_threshold, $limit_at, $burst_duration, $priority = 8;
     public $tipe = 'STATIC';
     public $isOpen = false;
 
@@ -53,6 +55,14 @@ class StaticPackageManager extends Component
         $this->download_unit = 'M';
         $this->upload_value = '';
         $this->upload_unit = 'M';
+        $this->burst_download_value = '';
+        $this->burst_download_unit = 'M';
+        $this->burst_upload_value = '';
+        $this->burst_upload_unit = 'M';
+        $this->burst_threshold = '';
+        $this->limit_at = '';
+        $this->burst_duration = '';
+        $this->priority = 8;
         $this->mikrotik_profile = 'default';
         $this->package_id = '';
         $this->tipe = 'STATIC';
@@ -66,6 +76,12 @@ class StaticPackageManager extends Component
             'price' => 'required|numeric|min:0',
             'download_value' => 'required|numeric|min:1',
             'upload_value' => 'required|numeric|min:1',
+            'burst_download_value' => 'nullable|numeric|min:0',
+            'burst_upload_value' => 'nullable|numeric|min:0',
+            'burst_threshold' => 'nullable|numeric|min:0|max:100',
+            'limit_at' => 'nullable|numeric|min:0|max:100',
+            'burst_duration' => 'nullable|numeric|min:0',
+            'priority' => 'nullable|integer|min:1|max:8',
             'mikrotik_profile' => 'nullable|string|max:255',
         ];
 
@@ -90,6 +106,12 @@ class StaticPackageManager extends Component
                 'price' => $this->price,
                 'speed_download' => $this->speed_download,
                 'speed_upload' => $this->speed_upload,
+                'burst_download' => $this->burst_download_value ? $this->burst_download_value . $this->burst_download_unit : null,
+                'burst_upload' => $this->burst_upload_value ? $this->burst_upload_value . $this->burst_upload_unit : null,
+                'burst_threshold' => $this->burst_threshold,
+                'limit_at' => $this->limit_at,
+                'burst_duration' => $this->burst_duration,
+                'priority' => $this->priority,
                 'mikrotik_profile' => $this->name,
                 'tipe' => 'STATIC',
                 'user_id' => auth()->id(),
@@ -138,6 +160,28 @@ class StaticPackageManager extends Component
 
         $this->mikrotik_profile = $package->mikrotik_profile;
         $this->tipe = $package->tipe;
+
+        // Split Value dan Unit untuk burst
+        if ($package->burst_download && preg_match('/^(\d+)(K|M)$/i', $package->burst_download, $m)) {
+            $this->burst_download_value = $m[1];
+            $this->burst_download_unit = strtoupper($m[2]);
+        } else {
+            $this->burst_download_value = preg_replace('/\D/', '', $package->burst_download);
+            $this->burst_download_unit = 'M';
+        }
+
+        if ($package->burst_upload && preg_match('/^(\d+)(K|M)$/i', $package->burst_upload, $m)) {
+            $this->burst_upload_value = $m[1];
+            $this->burst_upload_unit = strtoupper($m[2]);
+        } else {
+            $this->burst_upload_value = preg_replace('/\D/', '', $package->burst_upload);
+            $this->burst_upload_unit = 'M';
+        }
+
+        $this->burst_threshold = $package->burst_threshold;
+        $this->limit_at = $package->limit_at;
+        $this->burst_duration = $package->burst_duration;
+        $this->priority = $package->priority ?? 8;
         
         $this->openModal();
     }

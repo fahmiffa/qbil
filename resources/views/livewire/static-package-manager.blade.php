@@ -26,7 +26,7 @@
                         <div class="fixed z-50 inset-0 overflow-y-auto">
                             <div class="flex items-center justify-center min-h-screen px-4">
                                 <div class="fixed inset-0 bg-black/50" aria-hidden="true" wire:click="closeModal()"></div>
-                                <div class="relative bg-white dark:bg-slate-800 rounded-xl text-left overflow-hidden shadow-xl w-full max-w-lg z-10 border border-transparent dark:border-slate-700 transition-colors" role="dialog" aria-modal="true">
+                                <div class="relative bg-white dark:bg-slate-800 rounded-xl text-left overflow-hidden shadow-xl w-full max-w-2xl z-10 border border-transparent dark:border-slate-700 transition-colors" role="dialog" aria-modal="true">
                                     <form wire:submit.prevent="store">
                                         <div class="px-6 pt-5 pb-4 space-y-4">
                                             <div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-700 pb-3">
@@ -43,51 +43,104 @@
                                                 </button>
                                             </div>
 
-                                            <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Nama Paket:</label>
-                                                <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contoh: 10 Mbps Home" wire:model="name">
-                                                @error('name') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                                            </div>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div class="col-span-2 md:col-span-1">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Nama Paket:</label>
+                                                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contoh: 10 Mbps Home" wire:model="name">
+                                                    @error('name') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                </div>
 
-                                            <div>
-                                                <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Harga Bulanan (Rp):</label>
-                                                <input type="text" 
-                                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                                    placeholder="150.000"
-                                                    x-data="{
-                                                        formatCurrency(val) {
-                                                            if (!val) return '';
-                                                            let num = val.toString().replace(/\D/g, '');
-                                                            return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                                        }
-                                                    }"
-                                                    x-on:input="$event.target.value = formatCurrency($event.target.value); $wire.set('price', $event.target.value.replace(/\D/g, ''))"
-                                                    x-init="$el.value = formatCurrency($wire.get('price') || '')">
-                                                @error('price') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                <div class="col-span-2 md:col-span-1">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Harga Bulanan (Rp):</label>
+                                                    <input type="text" 
+                                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                                        placeholder="150.000"
+                                                        x-data="{
+                                                            formatCurrency(val) {
+                                                                if (!val) return '';
+                                                                let num = val.toString().replace(/\D/g, '');
+                                                                return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                                            }
+                                                        }"
+                                                        x-on:input="$event.target.value = formatCurrency($event.target.value); $wire.set('price', $event.target.value.replace(/\D/g, ''))"
+                                                        x-init="$el.value = formatCurrency($wire.get('price') || '')">
+                                                    @error('price') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                </div>
                                             </div>
 
                                             <div class="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Download Speed:</label>
-                                                    <div class="flex">
-                                                        <input type="number" class="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="10" wire:model="download_value" min="1">
-                                                        <select class="border border-l-0 border-gray-300 rounded-r-lg px-2 py-2 text-sm focus:outline-none bg-gray-50 dark:bg-slate-900 dark:text-slate-300" wire:model="download_unit">
-                                                            <option value="M">M</option>
-                                                            <option value="K">K</option>
-                                                        </select>
+                                                <!-- Max Limit -->
+                                                <div class="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-100 dark:border-slate-700">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-xs font-bold mb-2 uppercase tracking-wider">Max Limit (Limit Awal):</label>
+                                                    <div class="flex items-center gap-1">
+                                                        <div class="flex-1 flex">
+                                                            <input type="number" class="w-full border border-gray-300 rounded-l-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="UL" wire:model="upload_value">
+                                                            <select class="border border-l-0 border-gray-300 rounded-r-lg px-1 py-1 text-xs focus:outline-none bg-white dark:bg-slate-800" wire:model="upload_unit">
+                                                                <option value="M">M</option>
+                                                                <option value="K">K</option>
+                                                            </select>
+                                                        </div>
+                                                        <span class="text-gray-400">/</span>
+                                                        <div class="flex-1 flex">
+                                                            <input type="number" class="w-full border border-gray-300 rounded-l-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="DL" wire:model="download_value">
+                                                            <select class="border border-l-0 border-gray-300 rounded-r-lg px-1 py-1 text-xs focus:outline-none bg-white dark:bg-slate-800" wire:model="download_unit">
+                                                                <option value="M">M</option>
+                                                                <option value="K">K</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                                    @error('download_value') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                    @error('upload_value') <span class="text-red-500 text-[10px]">{{ $message }}</span>@enderror
+                                                    @error('download_value') <span class="text-red-500 text-[10px]">{{ $message }}</span>@enderror
                                                 </div>
-                                                <div>
-                                                    <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Upload Speed:</label>
-                                                    <div class="flex">
-                                                        <input type="number" class="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="10" wire:model="upload_value" min="1">
-                                                        <select class="border border-l-0 border-gray-300 rounded-r-lg px-2 py-2 text-sm focus:outline-none bg-gray-50 dark:bg-slate-900 dark:text-slate-300" wire:model="upload_unit">
-                                                            <option value="M">M</option>
-                                                            <option value="K">K</option>
-                                                        </select>
+
+                                                <!-- Tambahan Limit (Burst) -->
+                                                <div class="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-100 dark:border-slate-700">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-xs font-bold mb-2 uppercase tracking-wider">Tambahan Limit (Burst):</label>
+                                                    <div class="flex items-center gap-1">
+                                                        <div class="flex-1 flex">
+                                                            <input type="number" class="w-full border border-gray-300 rounded-l-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="UL" wire:model="burst_upload_value">
+                                                            <select class="border border-l-0 border-gray-300 rounded-r-lg px-1 py-1 text-xs focus:outline-none bg-white dark:bg-slate-800" wire:model="burst_upload_unit">
+                                                                <option value="M">M</option>
+                                                                <option value="K">K</option>
+                                                            </select>
+                                                        </div>
+                                                        <span class="text-gray-400">/</span>
+                                                        <div class="flex-1 flex">
+                                                            <input type="number" class="w-full border border-gray-300 rounded-l-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="DL" wire:model="burst_download_value">
+                                                            <select class="border border-l-0 border-gray-300 rounded-r-lg px-1 py-1 text-xs focus:outline-none bg-white dark:bg-slate-800" wire:model="burst_download_unit">
+                                                                <option value="M">M</option>
+                                                                <option value="K">K</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                                    @error('upload_value') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                </div>
+
+                                                <!-- Burst Threshold -->
+                                                <div class="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-100 dark:border-slate-700">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-xs font-bold mb-2 uppercase tracking-wider">Burst Threshold (%):</label>
+                                                    <input type="number" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="75" wire:model="burst_threshold">
+                                                </div>
+
+                                                <!-- Limit At -->
+                                                <div class="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-100 dark:border-slate-700">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-xs font-bold mb-2 uppercase tracking-wider">Limit At (%):</label>
+                                                    <input type="number" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="30" wire:model="limit_at">
+                                                </div>
+
+                                                <!-- Burst Duration -->
+                                                <div class="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-100 dark:border-slate-700">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-xs font-bold mb-2 uppercase tracking-wider">Burst Duration (detik):</label>
+                                                    <input type="number" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="10" wire:model="burst_duration">
+                                                </div>
+
+                                                <!-- Prioritas -->
+                                                <div class="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-100 dark:border-slate-700">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-xs font-bold mb-2 uppercase tracking-wider">Prioritas:</label>
+                                                    <select class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-800" wire:model="priority">
+                                                        @for($i=1; $i<=8; $i++)
+                                                            <option value="{{ $i }}">{{ $i }} {{ $i == 8 ? '(Default)' : '' }}</option>
+                                                        @endfor
+                                                    </select>
                                                 </div>
                                             </div>
 
@@ -129,6 +182,11 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
                                             {{ $package->speed_download ?? '-' }} / {{ $package->speed_upload ?? '-' }}
                                         </span>
+                                        @if($package->burst_download || $package->burst_upload)
+                                            <div class="text-[10px] text-gray-500 mt-1">
+                                                Burst: {{ $package->burst_download ?? '-' }} / {{ $package->burst_upload ?? '-' }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center space-x-2">
                                         <button wire:click="edit({{ $package->id }})" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md transition-all shadow-sm disabled:opacity-50">Edit</button>
