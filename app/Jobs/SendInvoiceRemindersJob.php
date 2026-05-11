@@ -60,9 +60,8 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             ->where('status', 'unpaid')
             ->get();
 
-        $sentCount = 0;
         $now = now();
-        $userSentCounts = [];
+        $pendingReminders = []; // Grouped by User ID: [userId => [ [phone, message, customer_name], ... ]]
 
         foreach ($invoices as $invoice) {
             $customer   = $invoice->customer;
@@ -91,7 +90,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $r1Time = Carbon::parse($appSetting->reminder_1_time)->format('H:i');
             
             if ($now->isSameDay($r1Date) && $now->format('H:i') === $r1Time) {
-                // Cek apakah sudah pernah dikirim hari ini
                 if (!$invoice->reminder_1_sent_at || !$invoice->reminder_1_sent_at->isSameDay($now)) {
                     $shouldSend = true;
                     $reminderType = 1;
@@ -104,7 +102,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 $r2Time = Carbon::parse($appSetting->reminder_2_time)->format('H:i');
                 
                 if ($now->isSameDay($r2Date) && $now->format('H:i') === $r2Time) {
-                    // Cek apakah sudah pernah dikirim hari ini
                     if (!$invoice->reminder_2_sent_at || !$invoice->reminder_2_sent_at->isSameDay($now)) {
                         $shouldSend = true;
                         $reminderType = 2;
@@ -116,18 +113,16 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            // Update tracking agar tidak terkirim dua kali
+            // Update tracking agar tidak masuk seleksi lagi jika job berjalan ulang
             if ($reminderType === 1) {
                 $invoice->update(['reminder_1_sent_at' => now()]);
             } elseif ($reminderType === 2) {
                 $invoice->update(['reminder_2_sent_at' => now()]);
             }
 
-            Log::info("[SendInvoiceRemindersJob] Mengirim pengingat untuk {$customer->name}...");
-
             $publicUrl = route('public.invoice', ['invoice' => $invoice->id]);
 
-            // Pilih template berdasarkan jenis pengingat
+            // Pilih template
             $selectedTemplate = ($reminderType === 2 && !empty($appSetting->template_2)) 
                 ? $appSetting->template_2 
                 : $appSetting->template;
@@ -148,42 +143,57 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 'user_name'      => $user->name,
             ]);
 
-            // Dispatch individual job with 10-second delay increments to avoid blocking
-            SendWhatsAppMessageJob::dispatch(
-                $user->phone ?? '',
-                $customer->phone,
-                $message
-            )->delay(now()->addSeconds($sentCount * 10));
+            // Tambahkan ke daftar tunggu (Group by User)
+            $pendingReminders[$user->id][] = [
+                'sender_phone' => $user->phone ?? '',
+                'target_phone' => $customer->phone,
+                'message'      => $message,
+                'customer_name'=> $customer->name,
+                'user'         => $user
+            ];
 
-            // Jika pengingat ke-2 dan ada nomor kedua, kirim juga ke nomor kedua
+            // Jika pengingat ke-2 dan ada nomor kedua, tambahkan juga
             if ($reminderType === 2 && !empty($customer->phone2)) {
-                $sentCount++;
-                SendWhatsAppMessageJob::dispatch(
-                    $user->phone ?? '',
-                    $customer->phone2,
-                    $message
-                )->delay(now()->addSeconds($sentCount * 10));
-            }
-
-            $userId = $user->id;
-            if (!isset($userSentCounts[$userId])) {
-                $userSentCounts[$userId] = [
-                    'user' => $user,
-                    'count' => 0,
+                $pendingReminders[$user->id][] = [
+                    'sender_phone' => $user->phone ?? '',
+                    'target_phone' => $customer->phone2,
+                    'message'      => $message,
+                    'customer_name'=> $customer->name . " (WA 2)",
+                    'user'         => $user
                 ];
             }
-            $userSentCounts[$userId]['count']++;
-
-            // Notify admin about each reminder sent
-            $user->notify(new \App\Notifications\SystemReportNotification(
-                'Pengingat Terkirim',
-                "Pengingat tagihan dikirim ke {$customer->name}. Isi pesan: \"" . Str::limit($message, 50) . "\"",
-                'notif'
-            ));
-
-            $sentCount++;
         }
 
-        Log::info("[SendInvoiceRemindersJob] Selesai. Total pengingat dikirim: {$sentCount}");
+        // Proses pengiriman dengan rate limit 20 per jam per user
+        $totalDispatched = 0;
+        foreach ($pendingReminders as $userId => $reminders) {
+            $chunks = array_chunk($reminders, 25);
+            
+            foreach ($chunks as $chunkIndex => $chunk) {
+                $baseDelaySeconds = $chunkIndex * 3600; // Jeda 1 jam (3600 detik) per batch 20 nomor
+                
+                foreach ($chunk as $msgIndex => $data) {
+                    // Delay mikro 10 detik antar nomor dalam satu batch agar lebih aman
+                    $individualDelay = $baseDelaySeconds + ($msgIndex * 10);
+                    
+                    SendWhatsAppMessageJob::dispatch(
+                        $data['sender_phone'],
+                        $data['target_phone'],
+                        $data['message']
+                    )->delay(now()->addSeconds($individualDelay));
+
+                    // Notify admin about the scheduled reminder
+                    $data['user']->notify(new \App\Notifications\SystemReportNotification(
+                        'Pengingat Dijadwalkan',
+                        "Pengingat untuk {$data['customer_name']} dijadwalkan kirim dalam " . ($individualDelay / 60) . " menit.",
+                        'notif'
+                    ));
+
+                    $totalDispatched++;
+                }
+            }
+        }
+
+        Log::info("[SendInvoiceRemindersJob] Selesai. Total pengingat dijadwalkan: {$totalDispatched}");
     }
 }

@@ -9,6 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('invoice:generate')->everyMinute();
-Schedule::command('invoice:remind')->everyMinute();
+Schedule::command('invoice:remind')->everyMinute()->withoutOverlapping();
 Schedule::command('billing:check-due')->everyMinute();
 Schedule::command('hotspot:cleanup-expired')->everyMinute();
