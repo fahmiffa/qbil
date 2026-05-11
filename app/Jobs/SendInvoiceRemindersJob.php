@@ -13,7 +13,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 {
@@ -88,13 +87,12 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $reminderType = null;
 
             // Logika Notifikasi Pertama
-            $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days)->startOfDay();
+            $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days);
             $r1Time = Carbon::parse($appSetting->reminder_1_time)->format('H:i');
             
-            // Berikan toleransi 7 hari jika sebelumnya terkena limit harian
-            if ($now->startOfDay()->between($r1Date, $r1Date->copy()->addDays(7)) && $now->format('H:i') === $r1Time) {
-                // Cek apakah belum pernah dikirim
-                if (!$invoice->reminder_1_sent_at) {
+            if ($now->isSameDay($r1Date) && $now->format('H:i') === $r1Time) {
+                // Cek apakah sudah pernah dikirim hari ini
+                if (!$invoice->reminder_1_sent_at || !$invoice->reminder_1_sent_at->isSameDay($now)) {
                     $shouldSend = true;
                     $reminderType = 1;
                 }
@@ -102,13 +100,12 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 
             // Logika Notifikasi Kedua
             if (!$shouldSend) {
-                $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days)->startOfDay();
+                $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days);
                 $r2Time = Carbon::parse($appSetting->reminder_2_time)->format('H:i');
                 
-                // Berikan toleransi 7 hari jika sebelumnya terkena limit harian
-                if ($now->startOfDay()->between($r2Date, $r2Date->copy()->addDays(7)) && $now->format('H:i') === $r2Time) {
-                    // Cek apakah belum pernah dikirim
-                    if (!$invoice->reminder_2_sent_at) {
+                if ($now->isSameDay($r2Date) && $now->format('H:i') === $r2Time) {
+                    // Cek apakah sudah pernah dikirim hari ini
+                    if (!$invoice->reminder_2_sent_at || !$invoice->reminder_2_sent_at->isSameDay($now)) {
                         $shouldSend = true;
                         $reminderType = 2;
                     }
@@ -116,18 +113,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             }
 
             if (!$shouldSend) {
-                continue;
-            }
-
-            $senderPhone = $user->phone ?? 'default';
-            $cacheKey = 'wa_daily_limit_' . preg_replace('/[^0-9]/', '', $senderPhone) . '_' . $now->format('Y-m-d');
-            $currentCount = Cache::get($cacheKey, 0);
-            
-            // Jika pengingat ke-2 dan ada nomor customer kedua, akan butuh 2 kuota
-            $neededQuota = ($reminderType === 2 && !empty($customer->phone2)) ? 2 : 1;
-
-            if ($currentCount + $neededQuota > 30) {
-                Log::warning("[SendInvoiceRemindersJob] Limit harian (30) WA tercapai untuk pengirim {$senderPhone}. Mengabaikan pengingat untuk {$customer->name}.");
                 continue;
             }
 
@@ -179,9 +164,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                     $message
                 )->delay(now()->addSeconds($sentCount * 10));
             }
-
-            // Simpan jumlah yang sudah dikirim hari ini ke Cache (berlaku hingga akhir hari)
-            Cache::put($cacheKey, $currentCount + $neededQuota, now()->endOfDay());
 
             $userId = $user->id;
             if (!isset($userSentCounts[$userId])) {
