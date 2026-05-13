@@ -230,12 +230,7 @@
                                                     x-data="{
                                                         formatCurrency(val) {
                                                             if (!val) return '';
-                                                            let str = val.toString();
-                                                            // Jika format database (200000.00), ambil angka depannya saja
-                                                            if (str.indexOf('.') !== -1 && !isNaN(str)) {
-                                                                str = str.split('.')[0];
-                                                            }
-                                                            let num = str.replace(/\D/g, '');
+                                                            let num = val.toString().split('.')[0].replace(/\D/g, '');
                                                             return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                                                         }
                                                     }"

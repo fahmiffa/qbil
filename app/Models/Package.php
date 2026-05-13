@@ -15,6 +15,10 @@ class Package extends Model
         'burst_upload', 'burst_download', 'burst_threshold', 'limit_at', 'burst_duration', 'priority',
     ];
 
+    protected $casts = [
+        'price' => 'integer',
+    ];
+
     /**
      * Konversi string durasi MikroTik (contoh: "1d", "12h", "30d") ke detik.
      */

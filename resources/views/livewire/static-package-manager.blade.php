@@ -58,7 +58,7 @@
                                                         x-data="{
                                                             formatCurrency(val) {
                                                                 if (!val) return '';
-                                                                let num = val.toString().replace(/\D/g, '');
+                                                                let num = val.toString().split('.')[0].replace(/\D/g, '');
                                                                 return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                                                             }
                                                         }"
