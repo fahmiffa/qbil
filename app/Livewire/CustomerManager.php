@@ -11,6 +11,7 @@ use App\Models\PppProfile;
 use App\Services\MikrotikService;
 use App\Services\ExcelImportService;
 use App\Jobs\SyncAllCustomersJob;
+use App\Jobs\BulkSyncToMikrotikJob;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
@@ -527,7 +528,28 @@ class CustomerManager extends Component
 
         SyncAllCustomersJob::dispatch(auth()->user());
 
-        $this->dispatch('toast', type: 'success', message: 'Sinkronisasi seluruh pelanggan telah dijadwalkan ke antrean.');
+        $this->dispatch('toast', type: 'success', message: 'Pemeriksaan jatuh tempo & sinkronisasi isolir telah dijadwalkan.');
+    }
+
+    public function bulkSyncToMikrotik()
+    {
+        if ($this->checkDemoMode()) return;
+
+        if (!auth()->user()->hasFeature('mikrotik')) {
+            $this->dispatch('toast', type: 'error', message: 'Fitur MikroTik tidak aktif untuk akun Anda.');
+            return;
+        }
+
+        BulkSyncToMikrotikJob::dispatch(auth()->user());
+
+        $this->dispatch('toast', type: 'success', message: 'Sinkronisasi data ke MikroTik (Bulk Update) telah dijadwalkan.');
+        
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title' => 'BULK SYNC MIKROTIK',
+            'message' => "Menjalankan sinkronisasi massal data pelanggan ke MikroTik.",
+            'type' => 'bulk_sync',
+        ]);
     }
 
     public function openSyncModal()
