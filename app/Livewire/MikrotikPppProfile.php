@@ -103,7 +103,7 @@ class MikrotikPppProfile extends Component
         if ($p) {
             $this->editId = $id;
             $this->name   = $p->name;
-            $this->price  = (string)$p->price;
+            $this->price  = (string)(int)$p->price;
             $this->sync_mode = 'new'; // Default to new for editing
             
             // Split Speed
@@ -141,7 +141,7 @@ class MikrotikPppProfile extends Component
     public function save(): void
     {
         // Bersihkan format titik harga
-        if (isset($this->price) && !is_numeric($this->price)) {
+        if (isset($this->price)) {
             $this->price = str_replace('.', '', $this->price);
         }
 

@@ -78,8 +78,7 @@ class PackageManager extends Component
             'tipe' => 'required|in:PPPOE,HOTSPOT,STATIC',
         ];
 
-        // Bersihkan format titik sebelum validasi
-        if (isset($this->price) && !is_numeric($this->price)) {
+        if (isset($this->price)) {
             $this->price = str_replace('.', '', $this->price);
         }
 
@@ -144,7 +143,7 @@ class PackageManager extends Component
         $package = Package::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
         $this->package_id = $id;
         $this->name = $package->name;
-        $this->price = $package->price;
+        $this->price = (int)$package->price;
         $this->speed_download = $package->speed_download;
         $this->speed_upload = $package->speed_upload;
         

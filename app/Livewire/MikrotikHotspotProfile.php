@@ -94,7 +94,7 @@ class MikrotikHotspotProfile extends Component
         if ($p) {
             $this->editId = $id;
             $this->name   = $p->name;
-            $this->price  = (string)intval($p->price);
+            $this->price  = (string)(int)$p->price;
             $this->limit_time    = $p->limit_time ?? '';
             $this->masa_aktif    = $p->masa_aktif ?? '';
             $this->valid_duration = $p->valid_duration ?? '';
@@ -136,7 +136,7 @@ class MikrotikHotspotProfile extends Component
     public function save(): void
     {
         // Clean price
-        if (isset($this->price) && !is_numeric($this->price)) {
+        if (isset($this->price)) {
             $this->price = str_replace('.', '', $this->price);
         }
 
