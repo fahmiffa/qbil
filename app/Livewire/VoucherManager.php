@@ -70,6 +70,45 @@ class VoucherManager extends Component
         ]);
     }
 
+    public function sendManualWhatsapp($orderId)
+    {
+        $order = VoucherOrder::where('user_id', auth()->id())
+            ->with(['package', 'hotspotUsers', 'user'])
+            ->findOrFail($orderId);
+        
+        if ($order->hotspotUsers->isEmpty()) {
+            session()->flash('message', 'Voucher belum digenerate. Silakan tunggu atau verifikasi ulang.');
+            return;
+        }
+
+        $voucherList = "";
+        foreach ($order->hotspotUsers as $idx => $voucher) {
+            $voucherList .= ($idx + 1) . ". User: *" . $voucher->username . "* | Pass: *" . $voucher->password . "*\n";
+        }
+
+        $message = "*PEMBAYARAN VOUCHER BERHASIL*\n\n";
+        $message .= "Halo! Terima kasih telah melakukan pembelian voucher WiFi.\n\n";
+        $message .= "*Detail Pesanan:*\n";
+        $message .= "ID Pesanan: " . $order->order_code . "\n";
+        $message .= "Paket: " . ($order->package->name ?? 'Hotspot') . "\n";
+        $message .= "Jumlah: " . $order->quantity . " Voucher\n";
+        $message .= "Total Bayar: Rp " . number_format($order->total_price + $order->unique_amount, 0, ',', '.') . "\n\n";
+        
+        $message .= "*Detail Voucher Anda:*\n";
+        $message .= $voucherList . "\n";
+        
+        $message .= "Silakan gunakan akun di atas untuk login ke jaringan WiFi kami.\n\n";
+        $message .= "Terima kasih!\n";
+        $message .= "-- " . ($order->user->name ?? '') . " --";
+
+        $from = $order->user->phone ?? '';
+        $to = $order->whatsapp;
+
+        \App\Jobs\SendWhatsAppMessageJob::dispatch($from, $to, $message);
+
+        session()->flash('message', 'Pesan WhatsApp sedang dikirim ke antrean sistem.');
+    }
+
     public function render()
     {
         $orders = VoucherOrder::where('user_id', auth()->id())
