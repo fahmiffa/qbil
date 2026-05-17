@@ -55,7 +55,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
 
     public function handle(WhatsappService $whatsappService): void
     {
-        Log::info("[GenerateMonthlyInvoicesJob] Mulai pengecekan generate invoice otomatis...");
+        // Log::info("[GenerateMonthlyInvoicesJob] Mulai pengecekan generate invoice otomatis...");
 
         $totalGenerated = 0;
         $now = now();
@@ -112,7 +112,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 $targetPeriod = $this->period ?: $calculatedDueDate->format('Y-m');
                 $lastTargetPeriod = $targetPeriod;
                 
-                Log::info("[customer: {$user->name} {$customer->name} {$customer->due_date}  {$targetPeriod}]");
+                // Log::info("[customer: {$user->name} {$customer->name} {$customer->due_date}  {$targetPeriod}]");
                 
                 try {
                     $invoiceService = new \App\Services\InvoiceService();

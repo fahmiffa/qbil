@@ -31,6 +31,6 @@ class GenerateMonthlyInvoices extends Command
 
         GenerateMonthlyInvoicesJob::dispatch($period);
 
-        $this->info("Job GenerateMonthlyInvoices telah di-dispatch untuk periode: {$period}");
+        // $this->info("Job GenerateMonthlyInvoices telah di-dispatch untuk periode: {$period}");
     }
 }
