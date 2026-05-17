@@ -11,7 +11,7 @@ class Customer extends Model
 
     protected $fillable = [
         'id_pelanggan', 'name', 'phone', 'phone2', 'address', 'keterangan', 'status', 'due_date', 'user_id',
-        'package_id', 'ppp_profile', 'username', 'password', 'service_type', 'ip_address', 'mac_address', 'dhcp_server', 'creation_method', 
+        'router_id', 'package_id', 'ppp_profile', 'username', 'password', 'service_type', 'ip_address', 'mac_address', 'dhcp_server', 'creation_method', 
         'activated_at', 'latitude', 'longitude', 'isolated_at', 'asset_id', 'wa_notify'
     ];
 
@@ -25,6 +25,11 @@ class Customer extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function router()
+    {
+        return $this->belongsTo(Router::class);
     }
 
     public function package()

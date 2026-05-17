@@ -41,18 +41,43 @@ class BulkSyncToMikrotikJob implements ShouldQueue
         }
 
         try {
-            $mikrotik = MikrotikService::getInstance($router);
             $customers = Customer::where('user_id', $this->user->id)->get();
-            
-            $total = $customers->count();
+
+            // Dapatkan semua router milik user
+            $userRouters = \App\Models\Router::where('user_id', $this->user->id)
+                ->oldest()->get()->keyBy('id');
+
+            // Router default (pertama) sebagai fallback
+            $defaultRouter = $userRouters->first();
+
+            if (!$defaultRouter) {
+                Log::warning("BulkSyncToMikrotikJob: No router found for user {$this->user->id}");
+                return;
+            }
+
+            // Cache MikrotikService per router_id agar tidak reconnect berulang
+            $mikrotikCache = [];
+            $getMikrotik = function (int $routerId) use ($userRouters, $defaultRouter, &$mikrotikCache) {
+                $cacheKey = $routerId ?: 0;
+                if (!isset($mikrotikCache[$cacheKey])) {
+                    $router = $userRouters->get($routerId) ?? $defaultRouter;
+                    $mikrotikCache[$cacheKey] = MikrotikService::getInstance($router);
+                }
+                return $mikrotikCache[$cacheKey];
+            };
+
+            $total   = $customers->count();
             $success = 0;
-            $failed = 0;
+            $failed  = 0;
 
             foreach ($customers as $customer) {
                 try {
-                    $package = $customer->package;
+                    // Gunakan router customer, fallback ke default
+                    $mikrotik = $getMikrotik($customer->router_id ?? 0);
+
+                    $package   = $customer->package;
                     $rateLimit = $package ? $package->getMikrotikRateLimit() : '0M/0M';
-                    $profile = $customer->ppp_profile ?? $package?->mikrotik_profile ?? 'default';
+                    $profile   = $customer->ppp_profile ?? $package?->mikrotik_profile ?? 'default';
 
                     if ($customer->service_type === 'static' && $customer->mac_address && $customer->ip_address) {
                         // Ensure it's static
@@ -93,9 +118,11 @@ class BulkSyncToMikrotikJob implements ShouldQueue
             }
 
             Log::info("BulkSyncToMikrotikJob: Completed for user {$this->user->id}. Success: {$success}, Failed: {$failed}, Total: {$total}");
-            
-            // Clear cache after bulk operation
-            $mikrotik->clearCache();
+
+            // Clear cache untuk semua router yang dipakai
+            foreach ($mikrotikCache as $mk) {
+                $mk->clearCache();
+            }
 
         } catch (\Exception $e) {
             Log::error("BulkSyncToMikrotikJob: Fatal error: " . $e->getMessage());

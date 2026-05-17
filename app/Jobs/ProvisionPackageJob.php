@@ -45,7 +45,11 @@ class ProvisionPackageJob implements ShouldQueue
         }
 
         try {
-            $router = Router::where('user_id', $this->package->user_id)->first();
+            // Prioritas: router yang diasosiasikan ke paket ini
+            // Fallback: router pertama milik user (backward compatible)
+            $router = $this->package->router
+                ?? Router::where('user_id', $this->package->user_id)->oldest()->first();
+
             if (!$router) return;
 
             $mikrotik = MikrotikService::getInstance($router);

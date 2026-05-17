@@ -11,6 +11,7 @@ class StaticPackageManager extends Component
     use WithPagination;
 
     public $name, $price, $speed_download, $speed_upload, $mikrotik_profile, $package_id;
+    public $router_id;
     public $download_value, $download_unit = 'M', $upload_value, $upload_unit = 'M';
     public $burst_download_value, $burst_download_unit = 'M', $burst_upload_value, $burst_upload_unit = 'M';
     public $burst_threshold, $limit_at, $burst_duration, $priority = 8;
@@ -23,8 +24,8 @@ class StaticPackageManager extends Component
             ->where('tipe', 'STATIC')
             ->orderBy('id', 'desc')
             ->paginate(10);
-            
-        return view('livewire.static-package-manager', ['packages' => $packages])
+        $routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
+        return view('livewire.static-package-manager', ['packages' => $packages, 'routers' => $routers])
             ->layout('layouts.app', ['header' => 'Static']);
     }
 
@@ -65,6 +66,7 @@ class StaticPackageManager extends Component
         $this->priority = 8;
         $this->mikrotik_profile = 'default';
         $this->package_id = '';
+        $this->router_id = auth()->user()->routers()->oldest()->value('id') ?? '';
         $this->tipe = 'STATIC';
     }
 
@@ -112,6 +114,7 @@ class StaticPackageManager extends Component
                 'burst_duration' => $this->burst_duration,
                 'priority' => $this->priority,
                 'mikrotik_profile' => $this->name,
+                'router_id' => $this->router_id ?: null,
                 'tipe' => 'STATIC',
                 'user_id' => auth()->id(),
             ];
@@ -158,6 +161,7 @@ class StaticPackageManager extends Component
         }
 
         $this->mikrotik_profile = $package->mikrotik_profile;
+        $this->router_id = $package->router_id;
         $this->tipe = $package->tipe;
 
         // Split Value dan Unit untuk burst

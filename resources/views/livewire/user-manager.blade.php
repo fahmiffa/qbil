@@ -67,6 +67,15 @@
                                              </div>
 
                                              <div>
+                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Izinkan Multi Router?:</label>
+                                                 <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors dark:bg-slate-900 dark:text-slate-100" wire:model="allow_multi_router">
+                                                     <option value="0">Tidak (Limit 1 Router)</option>
+                                                     <option value="1">Ya (Unlimited Router)</option>
+                                                 </select>
+                                                 @error('allow_multi_router') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                             </div>
+
+                                             <div>
                                                  <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Server WhatsApp:</label>
                                                  <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors dark:bg-slate-900 dark:text-slate-100" wire:model="whatsapp_server_id">
                                                      <option value="">-- Pilih Server WhatsApp --</option>
@@ -121,6 +130,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">No. HP</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Role</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Server WA</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Multi Router</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Fitur Tersedia</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aksi</th>
                                 </tr>
@@ -140,6 +150,13 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-slate-400">
                                         {{ $user->whatsappServer->name ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold">
+                                        @if($user->allow_multi_router || $user->role == 0)
+                                            <span class="text-emerald-600 dark:text-emerald-400">Ya</span>
+                                        @else
+                                            <span class="text-red-600 dark:text-red-400">Tidak</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-normal text-center">
                                         @if($user->role == 0)

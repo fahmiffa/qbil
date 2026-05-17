@@ -68,6 +68,21 @@
                             </div>
                         </div>
 
+                        @if(auth()->user()->hasFeature('mikrotik'))
+                        <!-- Filter Router -->
+                        <div class="relative w-full sm:w-44">
+                            <select wire:model.live="filterRouter" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
+                                <option value="">Semua Router</option>
+                                @foreach($routers as $router)
+                                    <option value="{{ $router->id }}">{{ $router->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+                        @endif
+
                         <!-- Filter Paket -->
                         <div class="relative w-full sm:w-44">
                             <select wire:model.live="filterPackage" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
@@ -294,6 +309,19 @@
                                                     <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
                                                 </div>
                                             </div>
+
+                                            @if(auth()->user()->hasFeature('mikrotik'))
+                                            <!-- Router -->
+                                            <div class="sm:col-span-2">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih Router MikroTik <span class="text-red-500">*</span></label>
+                                                <select wire:model.live="router_id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors border-l-4 border-l-blue-500">
+                                                    @foreach($routers as $router)
+                                                        <option value="{{ $router->id }}">{{ $router->name }} ({{ $router->host }})</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('router_id') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                            </div>
+                                            @endif
 
                                             <!-- Tipe Layanan -->
                                             <div>

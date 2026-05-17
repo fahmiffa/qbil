@@ -13,6 +13,7 @@ class UserManager extends Component
     use WithPagination;
 
     public $name, $email, $phone, $password, $role = 1, $user_id, $uri, $whatsapp_server_id;
+    public $allow_multi_router = false;
     public $isOpen = false;
     public $selectedFeatures = [];
     public $allFeatures = [];
@@ -57,6 +58,7 @@ class UserManager extends Component
         $this->selectedFeatures = [];
         $this->uri = '';
         $this->whatsapp_server_id = '';
+        $this->allow_multi_router = false;
     }
 
 
@@ -69,6 +71,7 @@ class UserManager extends Component
             'role' => 'required|in:0,1',
             'uri' => 'nullable|string|max:255',
             'whatsapp_server_id' => 'nullable|exists:whatsapp_servers,id',
+            'allow_multi_router' => 'boolean',
         ];
 
         if (!$this->user_id) {
@@ -84,6 +87,7 @@ class UserManager extends Component
             'role' => $this->role,
             'uri' => $this->uri,
             'whatsapp_server_id' => $this->whatsapp_server_id ?: null,
+            'allow_multi_router' => $this->allow_multi_router ? 1 : 0,
         ];
 
         if ($this->password) {
@@ -130,6 +134,7 @@ class UserManager extends Component
         $this->role = $user->role;
         $this->uri = $user->uri;
         $this->whatsapp_server_id = $user->whatsapp_server_id;
+        $this->allow_multi_router = $user->allow_multi_router;
         $this->selectedFeatures = $user->features->pluck('id')->map(fn($id) => (string)$id)->toArray();
         
         $this->openModal();

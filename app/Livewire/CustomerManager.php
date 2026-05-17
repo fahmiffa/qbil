@@ -23,6 +23,7 @@ class CustomerManager extends Component
     use WithPagination, ChecksDemoMode;
 
     public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date;
+    public $router_id;
     public $package_id, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $sync_mikrotik_id = '';
@@ -40,6 +41,7 @@ class CustomerManager extends Component
     public $filterService = '';
     public $filterStatus = '';
     public $filterDueDate = '';
+    public $filterRouter = '';
     public $perPage = 10;
     public $isOpen = false;
     public $isSyncModalOpen = false;
@@ -71,6 +73,10 @@ class CustomerManager extends Component
 
         if ($this->filterDueDate) {
             $query->whereDay('due_date', $this->filterDueDate);
+        }
+
+        if ($this->filterRouter) {
+            $query->where('router_id', $this->filterRouter);
         }
 
         $totalCount = $query->count();
@@ -108,11 +114,15 @@ class CustomerManager extends Component
             ->get()
             ->groupBy('category');
 
+        // Load routers untuk dropdown pilihan
+        $routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
+
         return view('livewire.customer-manager', [
             'customers'     => $customers,
             'packages'      => $packages,
             'allPackages'   => $allPackages,
             'groupedAssets' => $groupedAssets,
+            'routers'       => $routers,
         ])->layout('layouts.app', ['header' => 'Pelanggan']);
     }
 
@@ -197,6 +207,7 @@ class CustomerManager extends Component
         $this->keterangan   = '';
         $this->status       = 'active';
         $this->due_date     = '';
+        $this->router_id    = auth()->user()->routers()->oldest()->value('id') ?? '';
         $this->package_id   = '';
         $this->ppp_profile  = '';
         $this->username     = '';
@@ -405,6 +416,7 @@ class CustomerManager extends Component
             'keterangan'   => $this->keterangan,
             'status'       => $this->status,
             'due_date'     => $this->due_date ?: null,
+            'router_id'    => $this->router_id ?: null,
             'package_id'   => $this->package_id ?: null,
             'username'     => $this->username ?: null,
             'password'     => $this->password ?: null,
@@ -644,6 +656,7 @@ class CustomerManager extends Component
         $this->keterangan   = $customer->keterangan;
         $this->status       = $customer->status;
         $this->due_date     = $customer->due_date ? $customer->due_date->format('Y-m-d') : '';
+        $this->router_id    = $customer->router_id;
         $this->package_id   = $customer->package_id;
         $this->username     = $customer->username;
         $this->password     = $customer->password;
@@ -709,10 +722,22 @@ class CustomerManager extends Component
 
     private function getMikrotikService(): MikrotikService
     {
-        $router = auth()->user()->router;
+        // Prioritas: router yang dipilih untuk customer ini
+        // Fallback: router pertama milik user (backward compatible)
+        if ($this->router_id) {
+            $router = \App\Models\Router::where('id', $this->router_id)
+                ->where('user_id', auth()->id())
+                ->first();
+        }
+
+        if (empty($router)) {
+            $router = auth()->user()->routers()->oldest()->first();
+        }
+
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
+
         return MikrotikService::getInstance($router);
     }
 }

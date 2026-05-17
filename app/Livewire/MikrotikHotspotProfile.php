@@ -12,6 +12,8 @@ class MikrotikHotspotProfile extends Component
     public array $ip_pools = [];
     public bool $loading = true;
     public string $error = '';
+    public string $router_id = '';
+    public $routers = [];
 
     // Modal
     public bool $showModal = false;
@@ -34,12 +36,20 @@ class MikrotikHotspotProfile extends Component
 
     public function mount(): void
     {
-        // Data will be loaded via wire:init to prevent blocking the initial page load
+        $this->routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
+        $this->router_id = auth()->user()->routers()->oldest()->value('id') ?? '';
+    }
+
+    public function updatedRouterId()
+    {
+        $this->loadProfiles();
     }
 
     private function getMikrotik(): MikrotikService
     {
-        $router = auth()->user()->router;
+        $router = \App\Models\Router::where('user_id', auth()->id())->where('id', $this->router_id)->first() 
+                    ?? auth()->user()->routers()->oldest()->first();
+
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
@@ -66,6 +76,7 @@ class MikrotikHotspotProfile extends Component
 
             // Get packages from DB
             $this->profiles = \App\Models\Package::where('user_id', auth()->id())
+                              ->where('router_id', $this->router_id)
                               ->where('tipe', 'HOTSPOT')
                               ->get()->toArray();
 
@@ -214,6 +225,7 @@ class MikrotikHotspotProfile extends Component
             } else {
                 $package = \App\Models\Package::create([
                     'user_id'          => auth()->id(),
+                    'router_id'        => $this->router_id,
                     'tipe'             => 'HOTSPOT',
                     'name'             => $this->name,
                     'mikrotik_profile' => $profileName,

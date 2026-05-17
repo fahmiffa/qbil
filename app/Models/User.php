@@ -47,7 +47,8 @@ class User extends Authenticatable implements JWTSubject
         'phone',
         'photo',
         'uri',
-        'whatsapp_server_id'
+        'whatsapp_server_id',
+        'allow_multi_router'
     ];
 
     /**
@@ -70,6 +71,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'allow_multi_router' => 'boolean',
         ];
     }
 
@@ -85,7 +87,12 @@ class User extends Authenticatable implements JWTSubject
 
     public function router()
     {
-        return $this->hasOne(Router::class);
+        return $this->hasOne(Router::class)->oldest();
+    }
+
+    public function routers()
+    {
+        return $this->hasMany(Router::class);
     }
 
     public function hotspotUsers()
@@ -167,6 +174,7 @@ class User extends Authenticatable implements JWTSubject
             // Bulk delete other related models
             $user->packages()->delete();
             $user->router()->delete();
+            $user->routers()->delete();
             $user->hotspotUsers()->delete();
             $user->appSetting()->delete();
             $user->assets()->delete();

@@ -22,7 +22,12 @@
                         <h3 class="text-lg font-bold text-gray-800 dark:text-white">PPP Profile</h3>
                         <p class="text-sm text-gray-500 dark:text-slate-400">Profil PPPoE langsung dari <code class="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-1 rounded">/ppp profile</code></p>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex items-center gap-3">
+                        <select wire:model.live="router_id" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors font-semibold text-slate-700 dark:text-slate-300">
+                            @foreach($routers as $router)
+                                <option value="{{ $router->id }}">{{ $router->name }} ({{ $router->host }})</option>
+                            @endforeach
+                        </select>
                         <button wire:click="openCreate()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Tambah Profile

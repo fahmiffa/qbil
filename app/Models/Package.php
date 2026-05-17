@@ -11,7 +11,7 @@ class Package extends Model
 
     protected $fillable = [
         'name', 'price', 'speed_download', 'speed_upload', 'mikrotik_profile',
-        'user_id', 'tipe', 'limit_time', 'masa_aktif', 'valid_duration', 'address_pool',
+        'user_id', 'router_id', 'tipe', 'limit_time', 'masa_aktif', 'valid_duration', 'address_pool',
         'burst_upload', 'burst_download', 'burst_threshold', 'limit_at', 'burst_duration', 'priority',
     ];
 
@@ -53,6 +53,11 @@ class Package extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function router()
+    {
+        return $this->belongsTo(Router::class);
     }
 
     public function customers()

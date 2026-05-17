@@ -15,6 +15,7 @@ class PackageManager extends Component
     use WithPagination;
 
     public $name, $price, $speed_download, $speed_upload, $mikrotik_profile, $package_id;
+    public $router_id;
     public $download_value, $download_unit = 'M', $upload_value, $upload_unit = 'M';
     public $tipe = 'PPPOE';
     public $isOpen = false;
@@ -22,7 +23,8 @@ class PackageManager extends Component
     public function render()
     {
         $packages = auth()->user()->packages()->orderBy('id', 'desc')->paginate(10);
-        return view('livewire.package-manager', ['packages' => $packages])
+        $routers  = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
+        return view('livewire.package-manager', ['packages' => $packages, 'routers' => $routers])
             ->layout('layouts.app');
     }
 
@@ -55,12 +57,23 @@ class PackageManager extends Component
         $this->upload_unit = 'M';
         $this->mikrotik_profile = '';
         $this->package_id = '';
+        $this->router_id = auth()->user()->routers()->oldest()->value('id') ?? '';
         $this->tipe = 'PPPOE';
     }
 
     private function getMikrotikService(): \App\Services\MikrotikService
     {
-        $router = auth()->user()->router;
+        // Prioritas: router_id yang dipilih, fallback ke router pertama
+        if ($this->router_id) {
+            $router = \App\Models\Router::where('id', $this->router_id)
+                ->where('user_id', auth()->id())
+                ->first();
+        }
+
+        if (empty($router)) {
+            $router = auth()->user()->routers()->oldest()->first();
+        }
+
         if (!$router) {
             throw new \Exception('Silakan konfigurasi Router Mikrotik terlebih dahulu.');
         }
@@ -95,6 +108,7 @@ class PackageManager extends Component
                 'speed_download' => $this->speed_download,
                 'speed_upload' => $this->speed_upload,
                 'mikrotik_profile' => $this->name,
+                'router_id' => $this->router_id ?: null,
                 'tipe' => $this->tipe,
                 'user_id' => auth()->id(),
             ];
@@ -165,6 +179,7 @@ class PackageManager extends Component
         }
 
         $this->mikrotik_profile = $package->mikrotik_profile;
+        $this->router_id = $package->router_id;
         $this->tipe = $package->tipe;
         
         $this->openModal();

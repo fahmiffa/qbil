@@ -23,4 +23,14 @@ class Router extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    public function packages()
+    {
+        return $this->hasMany(Package::class);
+    }
 }

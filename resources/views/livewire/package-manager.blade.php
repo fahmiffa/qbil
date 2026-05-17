@@ -47,6 +47,15 @@
                                                 @error('name') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                             </div>
                                             <div>
+                                                <label for="router_id" class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Pilih Router:</label>
+                                                <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="router_id" wire:model="router_id">
+                                                    @foreach($routers as $router)
+                                                        <option value="{{ $router->id }}">{{ $router->name }} ({{ $router->host }})</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('router_id') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                            </div>
+                                            <div>
                                                 <label for="tipe" class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Tipe Koneksi:</label>
                                                 <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="tipe" wire:model="tipe">
                                                     <option value="PPPOE">PPPOE</option>

@@ -57,7 +57,10 @@ class IsolateCustomerJob implements ShouldQueue
             $user = $this->customer->user;
 
             if ($user && $user->hasFeature('mikrotik')) {
-                $router = $user->router;
+                // Prioritas: router yang diasosiasikan ke customer, fallback ke router pertama user
+                $router = $this->customer->router
+                    ?? $user->routers()->oldest()->first();
+
                 if ($router) {
                     try {
                         $mikrotik = MikrotikService::getInstance($router);

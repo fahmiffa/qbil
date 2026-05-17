@@ -12,6 +12,8 @@ class MikrotikPppProfile extends Component
     public array $ip_pools = [];
     public bool $loading = true;
     public string $error = '';
+    public string $router_id = '';
+    public $routers = [];
 
     // Modal
     public bool $showModal = false;
@@ -32,12 +34,21 @@ class MikrotikPppProfile extends Component
 
     public function mount(): void
     {
+        $this->routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
+        $this->router_id = auth()->user()->routers()->oldest()->value('id') ?? '';
+        $this->loadProfiles();
+    }
+
+    public function updatedRouterId()
+    {
         $this->loadProfiles();
     }
 
     private function getMikrotik(): MikrotikService
     {
-        $router = auth()->user()->router;
+        $router = \App\Models\Router::where('user_id', auth()->id())->where('id', $this->router_id)->first() 
+                    ?? auth()->user()->routers()->oldest()->first();
+                    
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
@@ -62,8 +73,9 @@ class MikrotikPppProfile extends Component
                 ->filter(fn($p) => !in_array(strtolower($p['name'] ?? ''), ['default', 'default-encryption']))
                 ->toArray();
 
-            // Get local Packages that are PPPOE
+            // Get local Packages that are PPPOE and belong to this router
             $this->profiles = \App\Models\Package::where('user_id', auth()->id())
+                              ->where('router_id', $this->router_id)
                               ->where('tipe', 'PPPOE')
                               ->get()->toArray();
 
@@ -204,6 +216,7 @@ class MikrotikPppProfile extends Component
             } else {
                 $package = \App\Models\Package::create([
                     'user_id' => auth()->id(),
+                    'router_id' => $this->router_id,
                     'tipe' => 'PPPOE',
                     'name' => $this->name,
                     'mikrotik_profile' => $profileName,

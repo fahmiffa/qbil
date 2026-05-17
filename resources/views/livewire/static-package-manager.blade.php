@@ -69,6 +69,16 @@
                                             </div>
 
                                             <div class="grid grid-cols-2 gap-4">
+                                                <div class="col-span-2">
+                                                    <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Pilih Router MikroTik:</label>
+                                                    <select class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" wire:model="router_id">
+                                                        @foreach($routers as $router)
+                                                            <option value="{{ $router->id }}">{{ $router->name }} ({{ $router->host }})</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('router_id') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                                </div>
+
                                                 <!-- Max Limit -->
                                                 <div class="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-100 dark:border-slate-700">
                                                     <label class="block text-gray-700 dark:text-slate-300 text-xs font-bold mb-2 uppercase tracking-wider">Max Limit (Limit Awal):</label>

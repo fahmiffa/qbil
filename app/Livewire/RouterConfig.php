@@ -6,116 +6,199 @@ use App\Models\Router;
 use App\Models\ActivityLog;
 use App\Services\MikrotikService;
 use Livewire\Component;
-use RouterOS\Client;
-use RouterOS\Query;
 
 class RouterConfig extends Component
 {
+    // Form fields
+    public $router_id_edit = null;
     public $name, $host, $port = 8728, $username, $password;
-    public $status_connection = 'Disconnected';
-    public $ping_ms, $last_checked_at, $connection_error;
-    public $message = '';
     public $showPassword = false;
+    public $isOpen = false;
 
-    public function mount()
-    {
-        $router = auth()->user()->router;
-        if ($router) {
-            $this->name = $router->name;
-            $this->host = $router->host;
-            $this->port = $router->port;
-            $this->username = $router->username;
-            $this->password = $router->password;
-            $this->status_connection = $router->connection_status;
-            $this->ping_ms = $router->ping_ms;
-            $this->last_checked_at = $router->last_checked_at ? $router->last_checked_at->format('Y-m-d H:i:s') : null;
-            $this->connection_error = $router->connection_error;
-        }
-    }
+    // Per-router test state
+    public $testingRouterId = null;
 
     public function render()
     {
-        // Selalu ambil data terbaru dari DB untuk polling status
-        $router = auth()->user()->router;
-        if ($router) {
-            $this->status_connection = $router->connection_status;
-            $this->ping_ms = $router->ping_ms;
-            $this->last_checked_at = $router->last_checked_at ? $router->last_checked_at->format('Y-m-d H:i:s') : null;
-            $this->connection_error = $router->connection_error;
-        }
+        $routers = Router::where('user_id', auth()->id())
+            ->orderBy('id')
+            ->get();
 
-        return view('livewire.router-config')
+        return view('livewire.router-config', ['routers' => $routers])
             ->layout('layouts.app');
     }
+
+    // -------------------------
+    // Modal
+    // -------------------------
+
+    public function create()
+    {
+        $user = auth()->user();
+        if (!$user->allow_multi_router && $user->role != 0 && $user->routers()->count() >= 1) {
+            $this->dispatch('toast', type: 'error', message: 'Limit tercapai. Anda hanya diizinkan memiliki 1 router.');
+            return;
+        }
+        $this->resetForm();
+        $this->isOpen = true;
+        $this->resetValidation();
+    }
+
+    public function edit($id)
+    {
+        $router = Router::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        $this->router_id_edit = $router->id;
+        $this->name           = $router->name;
+        $this->host           = $router->host;
+        $this->port           = $router->port;
+        $this->username       = $router->username;
+        $this->password       = $router->password;
+        $this->showPassword   = false;
+        $this->isOpen         = true;
+        $this->resetValidation();
+    }
+
+    public function closeModal()
+    {
+        $this->isOpen = false;
+        $this->resetForm();
+    }
+
+    private function resetForm()
+    {
+        $this->router_id_edit = null;
+        $this->name           = '';
+        $this->host           = '';
+        $this->port           = 8728;
+        $this->username       = '';
+        $this->password       = '';
+        $this->showPassword   = false;
+    }
+
+    // -------------------------
+    // CRUD
+    // -------------------------
 
     public function save()
     {
         $this->validate([
-            'host' => 'required',
-            'port' => 'required|numeric',
-            'username' => 'required',
-            'password' => 'required',
+            'name'     => 'nullable|string|max:100',
+            'host'     => 'required|string|max:255',
+            'port'     => 'required|numeric|min:1|max:65535',
+            'username' => 'required|string|max:100',
+            'password' => 'required|string|max:255',
         ]);
 
         try {
-            Router::updateOrCreate(
-                ['user_id' => auth()->id()],
-                [
-                    'name' => $this->name,
-                    'host' => $this->host,
-                    'port' => $this->port,
+            if ($this->router_id_edit) {
+                // Update existing router
+                $router = Router::where('id', $this->router_id_edit)
+                    ->where('user_id', auth()->id())
+                    ->firstOrFail();
+
+                $router->update([
+                    'name'     => $this->name,
+                    'host'     => $this->host,
+                    'port'     => $this->port,
                     'username' => $this->username,
                     'password' => $this->password,
-                ]
-            );
+                ]);
 
-            $this->dispatch('toast', type: 'success', message: 'Konfigurasi router berhasil disimpan.');
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'title'   => 'UPDATE ROUTER',
+                    'message' => "Memperbarui router: {$this->name} ({$this->host})",
+                    'type'    => 'router_crud',
+                ]);
 
-            // Log Activity
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'title' => 'UPDATE ROUTER',
-                'message' => "Memperbarui konfigurasi router: {$this->name} ({$this->host})",
-                'type' => 'router_crud'
-            ]);
+                $this->dispatch('toast', type: 'success', message: 'Router berhasil diperbarui.');
+            } else {
+                // Check limit just in case
+                $user = auth()->user();
+                if (!$user->allow_multi_router && $user->role != 0 && $user->routers()->count() >= 1) {
+                    $this->dispatch('toast', type: 'error', message: 'Limit tercapai. Anda hanya diizinkan memiliki 1 router.');
+                    return;
+                }
+
+                // Create new router
+                Router::create([
+                    'user_id'  => auth()->id(),
+                    'name'     => $this->name ?: $this->host,
+                    'host'     => $this->host,
+                    'port'     => $this->port,
+                    'username' => $this->username,
+                    'password' => $this->password,
+                ]);
+
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'title'   => 'TAMBAH ROUTER',
+                    'message' => "Menambahkan router: {$this->name} ({$this->host})",
+                    'type'    => 'router_crud',
+                ]);
+
+                $this->dispatch('toast', type: 'success', message: 'Router baru berhasil ditambahkan.');
+            }
+
+            $this->closeModal();
         } catch (\Exception $e) {
-            $this->dispatch('toast', type: 'error', message: 'Gagal menyimpan konfigurasi: ' . $e->getMessage());
+            $this->dispatch('toast', type: 'error', message: 'Gagal menyimpan: ' . $e->getMessage());
         }
     }
 
-    public function testConnection()
+    public function delete($id)
     {
-        $this->validate([
-            'host' => 'required',
-            'port' => 'required|numeric',
-            'username' => 'required',
-            'password' => 'required',
-        ]);
+        try {
+            $router = Router::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+
+            // Cek apakah masih ada pelanggan atau paket yang menggunakan router ini
+            $customerCount = $router->customers()->count();
+            $packageCount  = $router->packages()->count();
+
+            if ($customerCount > 0 || $packageCount > 0) {
+                $this->dispatch('toast', type: 'error', message: "Router tidak bisa dihapus. Masih digunakan oleh {$customerCount} pelanggan dan {$packageCount} paket.");
+                return;
+            }
+
+            $routerName = $router->name ?: $router->host;
+            $router->delete();
+
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title'   => 'HAPUS ROUTER',
+                'message' => "Menghapus router: {$routerName}",
+                'type'    => 'router_crud',
+            ]);
+
+            $this->dispatch('toast', type: 'success', message: 'Router berhasil dihapus.');
+        } catch (\Exception $e) {
+            $this->dispatch('toast', type: 'error', message: 'Gagal menghapus: ' . $e->getMessage());
+        }
+    }
+
+    // -------------------------
+    // Test Connection
+    // -------------------------
+
+    public function testConnection($id)
+    {
+        $this->testingRouterId = $id;
 
         try {
-            $router = auth()->user()->router;
-            if (!$router) {
-                // If not saved yet, create a temporary router object for the service
-                $router = new \App\Models\Router([
-                    'host' => $this->host,
-                    'username' => $this->username,
-                    'password' => $this->password,
-                    'port' => $this->port,
-                ]);
-            }
-            $service = MikrotikService::getInstance($router);
-            if ($service->checkConnection()) {
-                $this->status_connection = 'Connected';
-                $this->message = 'Koneksi ke MikroTik berhasil!';
-                $this->dispatch('toast', type: 'success', message: $this->message);
+            $router = Router::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+            \App\Jobs\CheckRouterConnectionJob::dispatchSync($router);
+            $router->refresh();
+
+            if ($router->connection_status === 'online') {
+                $this->dispatch('toast', type: 'success', message: "✅ Router {$router->name}: Koneksi berhasil! Ping {$router->ping_ms}ms");
             } else {
-                throw new \Exception("Gagal melakukan handshake dengan MikroTik.");
+                $this->dispatch('toast', type: 'error', message: "❌ Router {$router->name}: Koneksi gagal. " . ($router->connection_error ?? ''));
             }
         } catch (\Exception $e) {
-            $this->status_connection = 'Error';
-            $this->message = 'Koneksi gagal: ' . $e->getMessage();
-            $this->dispatch('toast', type: 'error', message: $this->message);
+            $this->dispatch('toast', type: 'error', message: 'Test gagal: ' . $e->getMessage());
         }
+
+        $this->testingRouterId = null;
     }
 
     public function togglePassword()

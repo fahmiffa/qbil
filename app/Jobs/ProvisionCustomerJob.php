@@ -41,7 +41,11 @@ class ProvisionCustomerJob implements ShouldQueue
         }
 
         try {
-            $router = Router::where('user_id', $this->customer->user_id)->first();
+            // Prioritas: router yang diasosiasikan ke customer ini
+            // Fallback: router pertama milik user (backward compatible untuk data lama)
+            $router = $this->customer->router
+                ?? Router::where('user_id', $this->customer->user_id)->oldest()->first();
+
             if (!$router) {
                 Log::warning("No router found for customer {$this->customer->id} (User: {$this->customer->user_id})");
                 return;
