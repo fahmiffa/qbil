@@ -13,6 +13,6 @@ class CleanupExpiredHotspotUsers extends Command
     public function handle(): void
     {
         CleanupExpiredHotspotUsersJob::dispatch();
-        $this->info('CleanupExpiredHotspotUsersJob dispatched to queue.');
+        // $this->info('CleanupExpiredHotspotUsersJob dispatched to queue.');
     }
 }

@@ -51,7 +51,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
      */
     public function handle(WhatsappService $whatsappService): void
     {
-        Log::info('[SendInvoiceRemindersJob] Mulai pengecekan pengingat tagihan...');
+        // Log::info('[SendInvoiceRemindersJob] Mulai pengecekan pengingat tagihan...');
 
         $invoices = Invoice::whereHas('customer', function ($q) {
                 $q->where('wa_notify', true);
@@ -194,6 +194,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             }
         }
 
-        Log::info("[SendInvoiceRemindersJob] Selesai. Total pengingat dijadwalkan: {$totalDispatched}");
+        // Log::info("[SendInvoiceRemindersJob] Selesai. Total pengingat dijadwalkan: {$totalDispatched}");
     }
 }

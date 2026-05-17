@@ -54,7 +54,7 @@ class PaymentController extends Controller
         ];
 
         if (!in_array($payload['package'], $whitelist)) {
-            Log::channel('payment')->info('Notification ignored: package not in whitelist', ['package' => $payload['package']]);
+            // Log::channel('payment')->info('Notification ignored: package not in whitelist', ['package' => $payload['package']]);
             return response()->json(['message' => 'Package not whitelisted. Notification ignored.'], 200);
         }
 

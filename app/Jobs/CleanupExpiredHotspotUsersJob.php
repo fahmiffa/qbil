@@ -22,7 +22,7 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
 
     public function handle(): void
     {
-        Log::info('[CleanupExpiredHotspotUsersJob] Starting cleanup...');
+        // Log::info('[CleanupExpiredHotspotUsersJob] Starting cleanup...');
 
 
 
@@ -115,7 +115,7 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
             }
         }
 
-        Log::info('[CleanupExpiredHotspotUsersJob] Cleanup complete.');
+        // Log::info('[CleanupExpiredHotspotUsersJob] Cleanup complete.');
     }
 
     /**
