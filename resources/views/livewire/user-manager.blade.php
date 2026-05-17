@@ -65,6 +65,17 @@
                                                  </select>
                                                  @error('role') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                                              </div>
+
+                                             <div>
+                                                 <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Server WhatsApp:</label>
+                                                 <select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors dark:bg-slate-900 dark:text-slate-100" wire:model="whatsapp_server_id">
+                                                     <option value="">-- Pilih Server WhatsApp --</option>
+                                                     @foreach($whatsappServers as $server)
+                                                         <option value="{{ $server->id }}">{{ $server->name }}</option>
+                                                     @endforeach
+                                                 </select>
+                                                 @error('whatsapp_server_id') <span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                                             </div>
                                              
                                              <div>
                                                  <label class="block text-gray-700 dark:text-slate-300 text-sm font-bold mb-2">Hak Akses Fitur:</label>
@@ -109,6 +120,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">URI</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">No. HP</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Role</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Server WA</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Fitur Tersedia</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aksi</th>
                                 </tr>
@@ -125,6 +137,9 @@
                                         <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $user->role == 0 ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' }}">
                                             {{ $user->role == 0 ? 'Super Admin' : 'User' }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-slate-400">
+                                        {{ $user->whatsappServer->name ?? '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-normal text-center">
                                         @if($user->role == 0)

@@ -12,15 +12,16 @@ class UserManager extends Component
 {
     use WithPagination;
 
-    public $name, $email, $phone, $password, $role = 1, $user_id, $uri;
+    public $name, $email, $phone, $password, $role = 1, $user_id, $uri, $whatsapp_server_id;
     public $isOpen = false;
     public $selectedFeatures = [];
     public $allFeatures = [];
+    public $whatsappServers = [];
 
 
     public function render()
     {
-        $users = User::with('features')->orderBy('id', 'desc')->paginate(10);
+        $users = User::with(['features', 'whatsappServer'])->orderBy('id', 'desc')->paginate(10);
         return view('livewire.user-manager', ['users' => $users])
             ->layout('layouts.app');
     }
@@ -35,6 +36,7 @@ class UserManager extends Component
     {
         $this->isOpen = true;
         $this->allFeatures = \App\Models\Feature::all();
+        $this->whatsappServers = \App\Models\WhatsappServer::all();
         $this->resetValidation();
     }
 
@@ -54,6 +56,7 @@ class UserManager extends Component
         $this->user_id = '';
         $this->selectedFeatures = [];
         $this->uri = '';
+        $this->whatsapp_server_id = '';
     }
 
 
@@ -65,6 +68,7 @@ class UserManager extends Component
             'phone' => 'nullable|string|max:20',
             'role' => 'required|in:0,1',
             'uri' => 'nullable|string|max:255',
+            'whatsapp_server_id' => 'nullable|exists:whatsapp_servers,id',
         ];
 
         if (!$this->user_id) {
@@ -79,6 +83,7 @@ class UserManager extends Component
             'phone' => $this->phone,
             'role' => $this->role,
             'uri' => $this->uri,
+            'whatsapp_server_id' => $this->whatsapp_server_id ?: null,
         ];
 
         if ($this->password) {
@@ -124,6 +129,7 @@ class UserManager extends Component
         $this->phone = $user->phone;
         $this->role = $user->role;
         $this->uri = $user->uri;
+        $this->whatsapp_server_id = $user->whatsapp_server_id;
         $this->selectedFeatures = $user->features->pluck('id')->map(fn($id) => (string)$id)->toArray();
         
         $this->openModal();

@@ -46,7 +46,8 @@ class User extends Authenticatable implements JWTSubject
         'role',
         'phone',
         'photo',
-        'uri'
+        'uri',
+        'whatsapp_server_id'
     ];
 
     /**
@@ -140,6 +141,11 @@ class User extends Authenticatable implements JWTSubject
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function whatsappServer()
+    {
+        return $this->belongsTo(WhatsappServer::class);
     }
 
     public function hasFeature(string $parameter): bool

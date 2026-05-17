@@ -262,6 +262,10 @@ new class extends Component
             <x-sidebar-link :href="route('features')" :active="request()->routeIs('features')" icon="cube">
                 Fitur & Modul
             </x-sidebar-link>
+
+            <x-sidebar-link :href="route('whatsapp-servers')" :active="request()->routeIs('whatsapp-servers')" icon="server">
+                Server WA
+            </x-sidebar-link>
             @endif
         </nav>
 

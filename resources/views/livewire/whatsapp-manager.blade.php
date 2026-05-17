@@ -12,6 +12,8 @@
         qr: null,
         status: 'Menghubungkan ke server...',
         deviceId: @entangle('deviceId'),
+        socketUrl: @entangle('socketUrl'),
+        serverName: @entangle('serverName'),
         socket: null,
         isReady: false,
         
@@ -32,7 +34,7 @@
             if (this.socket) this.socket.close();
 
             try {
-                this.socket = io('https://broadcast.qlabcode.com', {
+                this.socket = io(this.socketUrl, {
                     query: { id: this.deviceId, deviceId: this.deviceId, session: this.deviceId },
                     transports: ['websocket', 'polling'] 
                 });
@@ -136,7 +138,12 @@
                         </svg>
                     </div>
                     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Scan WhatsApp</h1>
-                    <p class="text-gray-500 dark:text-slate-400 text-sm">Hubungkan akun WhatsApp Anda untuk pengiriman notifikasi otomatis.</p>
+                    <div class="flex flex-col items-center gap-1">
+                        <p class="text-gray-500 dark:text-slate-400 text-sm">Hubungkan akun WhatsApp Anda untuk pengiriman notifikasi otomatis.</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800 mt-2">
+                            Server: <span x-text="serverName" class="ml-1 font-bold"></span>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Input Session -->

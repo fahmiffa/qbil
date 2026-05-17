@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    protected string $baseUrl = 'https://broadcast.qlabcode.com/api/send';
+    protected string $defaultUrl = 'https://broadcast.qlabcode.com/api/send';
 
     /**
      * Send WhatsApp message.
@@ -19,13 +19,21 @@ class WhatsappService
      */
     public function sendMessage(string $senderPhone, string $receiverPhone, string $message): bool
     {
+        // Resolve dynamic Base URL from User's assigned WhatsApp Server
+        $apiUrl = $this->defaultUrl;
+        
+        $user = \App\Models\User::where('phone', $senderPhone)->with('whatsappServer')->first();
+        if ($user && $user->whatsappServer && !empty($user->whatsappServer->api_url)) {
+            $apiUrl = $user->whatsappServer->api_url;
+        }
+
         // Format receiver phone (replace leading 0 with 62)
         if (str_starts_with($receiverPhone, '0')) {
             $receiverPhone = '62' . substr($receiverPhone, 1);
         }
 
         try {
-            $response = Http::post($this->baseUrl, [
+            $response = Http::post($apiUrl, [
                 'number' => $senderPhone,
                 'message' => $message,
                 'to' => $receiverPhone,
@@ -35,10 +43,10 @@ class WhatsappService
                 return true;
             }
 
-            Log::error('Whatsapp API failed: ' . $response->body());
+            Log::error("[WhatsappService] API failed (URL: {$apiUrl}): " . $response->body());
             return false;
         } catch (\Exception $e) {
-            Log::error('Whatsapp Service Exception: ' . $e->getMessage());
+            Log::error("[WhatsappService] Exception (URL: {$apiUrl}): " . $e->getMessage());
             return false;
         }
     }
