@@ -139,21 +139,21 @@
                     @endif
 
                     {{-- VARIABEL INFO --}}
-                    <div class="bg-slate-900 text-white rounded-3xl p-6 relative overflow-hidden">
+                    <div class="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 relative overflow-hidden transition-colors">
                         <div class="relative z-10">
-                            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Daftar Variabel (Placeholders)</h4>
+                            <h4 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4">Daftar Variabel (Placeholders)</h4>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{id_pelanggan}</span> <span class="text-slate-500">ID</span></div>
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{name}</span> <span class="text-slate-500">Nama</span></div>
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{package_name}</span> <span class="text-slate-500">Paket</span></div>
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{total_amount}</span> <span class="text-slate-500">Total</span></div>
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{due_date}</span> <span class="text-slate-500">Tempo</span></div>
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{period}</span> <span class="text-slate-500">Bulan</span></div>
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{public_url}</span> <span class="text-slate-500">Link</span></div>
-                                <div class="text-[10px] font-mono"><span class="text-blue-400">{user_name}</span> <span class="text-slate-500">Admin</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{id_pelanggan}</span> <span class="text-slate-500 dark:text-slate-400">ID</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{name}</span> <span class="text-slate-500 dark:text-slate-400">Nama</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{package_name}</span> <span class="text-slate-500 dark:text-slate-400">Paket</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{total_amount}</span> <span class="text-slate-500 dark:text-slate-400">Total</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{due_date}</span> <span class="text-slate-500 dark:text-slate-400">Tempo</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{period}</span> <span class="text-slate-500 dark:text-slate-400">Bulan</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{public_url}</span> <span class="text-slate-500 dark:text-slate-400">Link</span></div>
+                                <div class="text-[10px] font-mono"><span class="text-blue-600 dark:text-blue-400">{user_name}</span> <span class="text-slate-500 dark:text-slate-400">Admin</span></div>
                             </div>
                         </div>
-                        <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <div class="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 text-slate-400 dark:text-slate-600">
                             <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 11H7V9h2v2zm4 0h-2V9h2v2zm4 0h-2V9h2v2z"/></svg>
                         </div>
                     </div>
