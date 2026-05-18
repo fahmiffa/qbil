@@ -22,7 +22,7 @@ class InvoiceManager extends Component
     public $search = '';
     public $filter_status = '';
     public $filter_due_date = '';
-    public $filter_package = '';
+    public $filter_service_type = '';
     public $billing_period = '';
     public $perPage = 10;
     public $paid_at;
@@ -33,11 +33,11 @@ class InvoiceManager extends Component
     public $showIsolationModal = false;
     public $isAlertDismissed = false;
 
-    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_package', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
+    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
 
     public function updated($property)
     {
-        if (in_array($property, ['search', 'filter_status', 'filter_due_date', 'filter_package', 'billing_period', 'perPage'])) {
+        if (in_array($property, ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'billing_period', 'perPage'])) {
             $this->resetPage();
         }
     }
@@ -430,15 +430,11 @@ class InvoiceManager extends Component
             $query->whereDay('due_date', $this->filter_due_date);
         }
 
-        if ($this->filter_package) {
-            $query->where(function ($q) {
-                $q->where('package_id', $this->filter_package)
-                    ->orWhere(function ($sq) {
-                        $sq->whereNull('package_id')
-                            ->whereHas('customer', function ($cq) {
-                                $cq->where('package_id', $this->filter_package);
-                            });
-                    });
+
+
+        if ($this->filter_service_type) {
+            $query->whereHas('customer', function ($q) {
+                $q->where('service_type', $this->filter_service_type);
             });
         }
 
@@ -524,9 +520,7 @@ class InvoiceManager extends Component
             }
         }
 
-        $packages = \App\Models\Package::where('user_id', auth()->id())->get();
-
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'packages'))
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }
