@@ -119,7 +119,26 @@ class AppManager extends Component
 
     public function save()
     {
-        $this->validate();
+        try {
+            $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->validator->errors();
+            $hasNotificationError = false;
+            foreach (['reminder_1_days', 'reminder_1_time', 'reminder_2_days', 'reminder_2_time'] as $field) {
+                if ($errors->has($field)) {
+                    $hasNotificationError = true;
+                    break;
+                }
+            }
+
+            if ($hasNotificationError) {
+                $this->dispatch('toast', type: 'error', message: 'Waktu Pengiriman Notifikasi 1 & 2 tidak boleh lebih cepat dari waktu Generate Invoice!');
+            } else {
+                $this->dispatch('toast', type: 'error', message: 'Gagal menyimpan pengaturan. Silakan periksa kembali inputan Anda.');
+            }
+
+            throw $e;
+        }
 
         try {
             AppSetting::updateOrCreate(
