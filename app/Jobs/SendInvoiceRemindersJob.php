@@ -136,7 +136,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 'unique_code'    => $invoice->unique_code,
                 'total_amount'   => $invoice->total_amount,
                 'period'         => \Carbon\Carbon::parse($invoice->billing_period)->translatedFormat('F Y'),
-                'due_date'       => $invoice->due_date->translatedFormat('d F Y'),
+                'due_date'       => $customer->due_date ? $customer->due_date->translatedFormat('d F Y') : '-',
                 'package'        => $customer->package->name ?? '-',
                 'id_pelanggan'   => $customer->id_pelanggan ?? '-',
                 'address'        => $customer->address ?? '-',

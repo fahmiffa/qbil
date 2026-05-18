@@ -44,9 +44,21 @@ class CheckDueInvoices extends Command
             $setting = $user->appSetting;
             if (!$setting) continue;
 
-            // Cek waktu eksekusi (Jam & Menit)
-            $configTime = Carbon::parse($setting->isolate_time)->format('H:i');
-            if ($now->format('H:i') !== $configTime) continue;
+            // Cek waktu eksekusi (Jam & Menit) - Menggunakan cache harian agar tidak terlewat jika ada delay scheduler
+            $cacheKey = "isolate_run_" . $user->id . "_" . $now->format('Y-m-d');
+            if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                continue;
+            }
+
+            $configTimeParsed = Carbon::parse($setting->isolate_time);
+            $isolateDateTime = $now->copy()->setTime($configTimeParsed->hour, $configTimeParsed->minute, 0);
+
+            if ($now->lessThan($isolateDateTime)) {
+                continue;
+            }
+
+            // Tandai sudah berjalan hari ini untuk user ini
+            \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->endOfDay());
 
             $offsetDays = (int) $setting->isolate_days;
             $targetDate = $now->copy()->subDays($offsetDays);

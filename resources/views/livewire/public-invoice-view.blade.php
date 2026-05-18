@@ -89,7 +89,7 @@
                     </div>
                     <div class="flex justify-end gap-2 text-slate-500 italic">
                         <span>Jatuh Tempo:</span>
-                        <span class="font-bold text-rose-500 non-italic">{{ $invoice->due_date->translatedFormat('d F Y') }}</span>
+                        <span class="font-bold text-rose-500 non-italic">{{ $invoice->customer->due_date ? $invoice->customer->due_date->translatedFormat('d F Y') : '-' }}</span>
                     </div>
                 </div>
             </div>

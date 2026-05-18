@@ -84,7 +84,7 @@ class SendRegistrationWhatsappJob implements ShouldQueue
             'invoice_number' => $latestInvoice ? $latestInvoice->invoice_number : '-',
             'total_amount'   => $latestInvoice ? $latestInvoice->total_amount : $amount,
             'period'         => $latestInvoice ? \Carbon\Carbon::parse($latestInvoice->billing_period)->translatedFormat('F Y') : '-',
-            'due_date'       => ($latestInvoice && $latestInvoice->due_date) ? $latestInvoice->due_date->translatedFormat('d F Y') : '-',
+            'due_date'       => $customer->due_date ? $customer->due_date->translatedFormat('d F Y') : '-',
             'user_name'      => $user->name,
         ]);
 
