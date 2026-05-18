@@ -90,7 +90,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $r1TimeParsed = Carbon::parse($appSetting->reminder_1_time);
             $r1DateTime = $r1Date->copy()->setTime($r1TimeParsed->hour, $r1TimeParsed->minute, 0);
 
-            if ($now->greaterThanOrEqualTo($r1DateTime)) {
+            if ($now->isSameDay($r1Date) && $now->greaterThanOrEqualTo($r1DateTime)) {
                 if (!$invoice->reminder_1_sent_at || !$invoice->reminder_1_sent_at->isSameDay($now)) {
                     $shouldSend = true;
                     $reminderType = 1;
@@ -103,7 +103,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 $r2TimeParsed = Carbon::parse($appSetting->reminder_2_time);
                 $r2DateTime = $r2Date->copy()->setTime($r2TimeParsed->hour, $r2TimeParsed->minute, 0);
 
-                if ($now->greaterThanOrEqualTo($r2DateTime)) {
+                if ($now->isSameDay($r2Date) && $now->greaterThanOrEqualTo($r2DateTime)) {
                     if (!$invoice->reminder_2_sent_at || !$invoice->reminder_2_sent_at->isSameDay($now)) {
                         $shouldSend = true;
                         $reminderType = 2;
