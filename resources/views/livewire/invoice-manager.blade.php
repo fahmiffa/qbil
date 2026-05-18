@@ -120,9 +120,12 @@
                         <div class="relative">
                             <select wire:model.live="filter_service_type" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all">
                                 <option value="">Semua Tipe Layanan</option>
-                                <option value="pppoe">PPPoE</option>
-                                <option value="static">Static</option>
-                                <option value="hotspot">Hotspot</option>
+                                @if(in_array('pppoe', $availableServiceTypes))
+                                    <option value="pppoe">PPPoE</option>
+                                @endif
+                                @if(in_array('static', $availableServiceTypes))
+                                    <option value="static">Static</option>
+                                @endif
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>

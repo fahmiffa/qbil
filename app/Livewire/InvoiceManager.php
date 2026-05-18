@@ -520,7 +520,14 @@ class InvoiceManager extends Component
             }
         }
 
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation'))
+        $availableServiceTypes = Customer::where('user_id', auth()->id())
+            ->whereNotNull('service_type')
+            ->where('service_type', '!=', '')
+            ->distinct()
+            ->pluck('service_type')
+            ->toArray();
+
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'availableServiceTypes'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }
