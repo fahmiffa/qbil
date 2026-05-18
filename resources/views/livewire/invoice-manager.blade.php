@@ -85,7 +85,7 @@
                     </div>
 
                     {{-- Row 2: Search and Filters --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                         <div class="relative sm:col-span-2 lg:col-span-2">
                             <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -111,6 +111,18 @@
                                 @for($i = 1; $i <= 31; $i++)
                                     <option value="{{ $i }}">Tanggal {{ $i }}</option>
                                 @endfor
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <select wire:model.live="filter_package" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all">
+                                <option value="">Semua Paket Layanan</option>
+                                @foreach($packages as $pkg)
+                                    <option value="{{ $pkg->id }}">{{ $pkg->name }}</option>
+                                @endforeach
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>

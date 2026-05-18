@@ -22,6 +22,7 @@ class InvoiceManager extends Component
     public $search = '';
     public $filter_status = '';
     public $filter_due_date = '';
+    public $filter_package = '';
     public $billing_period = '';
     public $perPage = 10;
     public $paid_at;
@@ -32,7 +33,14 @@ class InvoiceManager extends Component
     public $showIsolationModal = false;
     public $isAlertDismissed = false;
 
-    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
+    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_package', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
+
+    public function updated($property)
+    {
+        if (in_array($property, ['search', 'filter_status', 'filter_due_date', 'filter_package', 'billing_period', 'perPage'])) {
+            $this->resetPage();
+        }
+    }
 
 
 
@@ -158,7 +166,13 @@ class InvoiceManager extends Component
             ]);
 
             // If it was already in piutang table, mark it as paid there too
-            \App\Models\Piutang::where('invoice_id', $invoice->id)->update(['status' => 'paid']);
+            $piutangs = \App\Models\Piutang::where('invoice_id', $invoice->id)->get();
+            foreach ($piutangs as $piutang) {
+                $piutang->update([
+                    'status' => 'paid',
+                    'paid_at' => $this->paid_at ?? now()
+                ]);
+            }
 
             $customer = $invoice->customer;
             $oldStatus = $customer->status;
@@ -416,6 +430,18 @@ class InvoiceManager extends Component
             $query->whereDay('due_date', $this->filter_due_date);
         }
 
+        if ($this->filter_package) {
+            $query->where(function ($q) {
+                $q->where('package_id', $this->filter_package)
+                    ->orWhere(function ($sq) {
+                        $sq->whereNull('package_id')
+                            ->whereHas('customer', function ($cq) {
+                                $cq->where('package_id', $this->filter_package);
+                            });
+                    });
+            });
+        }
+
         if ($this->billing_period) {
             $query->where('billing_period', $this->billing_period);
         }
@@ -498,7 +524,9 @@ class InvoiceManager extends Component
             }
         }
 
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation'))
+        $packages = \App\Models\Package::where('user_id', auth()->id())->get();
+
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'packages'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }

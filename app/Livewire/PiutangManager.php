@@ -45,12 +45,18 @@ class PiutangManager extends Component
 
     public function markAsPaid($customerId)
     {
-        $updatedRows = Piutang::where('customer_id', $customerId)
+        $piutangs = Piutang::where('customer_id', $customerId)
             ->where('status', 'unpaid')
-            ->update([
+            ->get();
+
+        $updatedRows = 0;
+        foreach ($piutangs as $piutang) {
+            $piutang->update([
                 'status' => 'paid',
                 'paid_at' => now()
             ]);
+            $updatedRows++;
+        }
 
         if ($updatedRows > 0) {
             $this->dispatch('toast', type: 'success', message: 'Seluruh piutang pelanggan ini telah ditandai lunas.');

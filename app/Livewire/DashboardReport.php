@@ -26,20 +26,53 @@ class DashboardReport extends Component
         $period = $this->year . '-' . $this->month;
         $userId = auth()->id();
 
-        // Total Statistics
-        $stats = Invoice::whereHas('customer', function ($q) use ($userId) {
+        // Total Statistics from Transaction (actual cash flow)
+        $totalPaidIncome = \App\Models\Transaction::where('user_id', $userId)
+            ->where('type', 'income')
+            ->whereYear('transaction_date', $this->year)
+            ->whereMonth('transaction_date', $this->month)
+            ->sum('amount');
+
+        $countPaidTransactions = \App\Models\Transaction::where('user_id', $userId)
+            ->where('type', 'income')
+            ->whereYear('transaction_date', $this->year)
+            ->whereMonth('transaction_date', $this->month)
+            ->count();
+
+        // Piutang Tagihan yang Belum Terbayar (Tetap Berbasis Periode Tagihan Aktif)
+        $unpaidStats = Invoice::whereHas('customer', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })
             ->where('billing_period', $period)
+            ->where('status', 'unpaid')
             ->select(
-                DB::raw('SUM(CASE WHEN invoices.status = "paid" THEN total_amount ELSE 0 END) as total_paid'),
-                DB::raw('SUM(CASE WHEN invoices.status = "paid" THEN amount ELSE 0 END) as total_paid_base'),
-                DB::raw('SUM(CASE WHEN invoices.status = "paid" THEN unique_code ELSE 0 END) as total_paid_unique'),
-                DB::raw('SUM(CASE WHEN invoices.status = "unpaid" THEN total_amount ELSE 0 END) as total_unpaid'),
-                DB::raw('COUNT(CASE WHEN invoices.status = "paid" THEN 1 END) as count_paid'),
-                DB::raw('COUNT(CASE WHEN invoices.status = "unpaid" THEN 1 END) as count_unpaid')
+                DB::raw('SUM(total_amount) as total_unpaid'),
+                DB::raw('COUNT(*) as count_unpaid')
             )
             ->first();
+
+        // Rincian Nominal Terbayar untuk Invoice Bulanan (Berdasarkan Tanggal Pembayaran di Bulan Ini)
+        $invoicePaidStats = Invoice::whereHas('customer', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            })
+            ->where('status', 'paid')
+            ->whereYear('paid_at', $this->year)
+            ->whereMonth('paid_at', $this->month)
+            ->select(
+                DB::raw('SUM(amount) as total_paid_base'),
+                DB::raw('SUM(unique_code) as total_paid_unique')
+            )
+            ->first();
+
+        // Konstruksi objek stats untuk digunakan di blade template (menjaga kompatibilitas)
+        $stats = (object) [
+            'total_paid' => $totalPaidIncome,
+            'count_paid' => $countPaidTransactions,
+            'total_paid_base' => $invoicePaidStats->total_paid_base ?? 0,
+            'total_paid_unique' => $invoicePaidStats->total_paid_unique ?? 0,
+            'total_unpaid' => $unpaidStats->total_unpaid ?? 0,
+            'count_unpaid' => $unpaidStats->count_unpaid ?? 0,
+        ];
 
         // Breakdown by Service Type (PPPOE, STATIC, HOTSPOT)
         $allowedTypes = [];

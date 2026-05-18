@@ -167,6 +167,31 @@ class FinanceManager extends Component
             }
         }
 
+        // 3. Sync Paid Piutangs
+        $paidPiutangs = \App\Models\Piutang::where('user_id', $userId)
+            ->where('status', 'paid')
+            ->get();
+
+        foreach ($paidPiutangs as $piutang) {
+            $exists = Transaction::where('reference_type', \App\Models\Piutang::class)
+                ->where('reference_id', $piutang->id)
+                ->exists();
+
+            if (!$exists) {
+                Transaction::create([
+                    'user_id' => $userId,
+                    'type' => 'income',
+                    'amount' => $piutang->amount,
+                    'category' => 'Pelunasan Piutang',
+                    'description' => 'Pelunasan piutang dari invoice ' . ($piutang->invoice->invoice_number ?? $piutang->billing_period),
+                    'reference_type' => \App\Models\Piutang::class,
+                    'reference_id' => $piutang->id,
+                    'transaction_date' => $piutang->paid_at ?? $piutang->updated_at ?? now(),
+                ]);
+                $syncedCount++;
+            }
+        }
+
         if ($syncedCount > 0) {
             session()->flash('message', "Berhasil menyinkronkan {$syncedCount} data transaksi lama.");
         } else {

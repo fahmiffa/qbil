@@ -34,4 +34,29 @@ class Piutang extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    protected static function booted()
+    {
+        static::updated(function ($piutang) {
+            if ($piutang->wasChanged('status') && $piutang->status === 'paid') {
+                $exists = Transaction::where('reference_type', self::class)
+                    ->where('reference_id', $piutang->id)
+                    ->exists();
+
+                if (!$exists) {
+                    Transaction::create([
+                        'user_id' => $piutang->user_id,
+                        'type' => 'income',
+                        'amount' => $piutang->amount,
+                        'category' => 'Pelunasan Piutang',
+                        'description' => 'Pelunasan piutang dari invoice ' . ($piutang->invoice->invoice_number ?? $piutang->billing_period),
+                        'reference_type' => self::class,
+                        'reference_id' => $piutang->id,
+                        'transaction_date' => $piutang->paid_at ?? now(),
+                    ]);
+                }
+            }
+        });
+    }
 }
+
