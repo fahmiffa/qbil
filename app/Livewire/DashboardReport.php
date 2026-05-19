@@ -160,13 +160,21 @@ class DashboardReport extends Component
         $mapData = Customer::where('user_id', $userId)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->select('name', 'latitude', 'longitude', 'status', 'service_type')
+            ->select('name', 'latitude', 'longitude', 'status', 'service_type', 'asset_id')
+            ->get();
+
+        // Asset Locations for Map
+        $assetsData = \App\Models\Asset::where('user_id', $userId)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->select('id', 'name', 'latitude', 'longitude', 'category')
             ->get();
 
         return view('livewire.dashboard-report', [
             'stats' => $stats,
             'serviceBreakdown' => $serviceBreakdown,
-            'mapData' => $mapData
+            'mapData' => $mapData,
+            'assetsData' => $assetsData
         ])->layout('layouts.app', ['header' => 'Dashboard']);
     }
 }
