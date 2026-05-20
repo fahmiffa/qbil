@@ -57,8 +57,8 @@ new #[Layout('layouts.guest')] class extends Component
             <div>
                 <x-input-label for="password" :value="__('Password')" class="font-bold text-white/70 ml-1 mb-1.5" />
                 <x-password-input wire:model="form.password" id="password" class="block w-full !rounded-2xl border-white/10 bg-white/5 text-white focus:ring-blue-600 focus:border-blue-600 px-4 py-3 placeholder-white/20"
-                                name="password"
-                                required placeholder="••••••••" />
+                    name="password"
+                    required placeholder="••••••••" />
 
                 <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
             </div>
@@ -69,12 +69,20 @@ new #[Layout('layouts.guest')] class extends Component
                     <input wire:model="form.remember" id="remember" type="checkbox" class="rounded-lg border-white/10 bg-white/5 text-blue-600 shadow-sm focus:ring-blue-600" name="remember">
                     <span class="ms-2 text-sm font-bold text-white/50">{{ __('Stay signed in') }}</span>
                 </label>
+
+                @if (Route::has('password.request'))
+                <a class="text-sm font-bold text-white/50 hover:text-white transition-colors focus:outline-none focus:underline" href="{{ route('password.request') }}" wire:navigate>
+                    {{ __('Forgot password?') }}
+                </a>
+                @endif
             </div>
 
             <div class="pt-2">
                 <button type="submit" class="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-600/20 transition-all duration-200 active:scale-[0.97]">
                     {{ __('Sign in') }}
-                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
                 </button>
             </div>
         </form>

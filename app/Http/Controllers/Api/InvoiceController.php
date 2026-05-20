@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Customer;
 use App\Services\QrisLogic;
 use Illuminate\Http\Request;
+use App\Jobs\SendManualInvoiceWhatsappJob;
 
 class InvoiceController extends Controller
 {
@@ -82,6 +83,8 @@ class InvoiceController extends Controller
             'status' => 'paid',
             'paid_at' => now(),
         ]);
+
+        SendManualInvoiceWhatsappJob::dispatch($invoice);
 
         return response()->json([
             'message' => 'Payment confirmed successfully',
