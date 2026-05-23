@@ -21,6 +21,7 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('static-packages', \App\Livewire\StaticPackageManager::class)->name('static-packages');
     Route::get('hotspot', \App\Livewire\HotspotManager::class)->name('hotspot');
     Route::get('whatsapp', \App\Livewire\WhatsappManager::class)->name('whatsapp');
+    Route::get('broadcast', \App\Livewire\BroadcastManager::class)->name('broadcast');
     // Route::get('interface', \App\Livewire\MikrotikInterface::class)->name('interface');
     // Route::get('ip-pool', \App\Livewire\MikrotikIpPool::class)->name('ip-pool');
     Route::get('ppp-profiles', \App\Livewire\MikrotikPppProfile::class)->name('ppp-profiles');
@@ -55,4 +56,4 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

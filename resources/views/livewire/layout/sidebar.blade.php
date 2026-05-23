@@ -237,6 +237,10 @@ new class extends Component
             <x-sidebar-link :href="route('whatsapp')" :active="request()->routeIs('whatsapp')" icon="message">
                 WhatsApp
             </x-sidebar-link>
+
+            <x-sidebar-link :href="route('broadcast')" :active="request()->routeIs('broadcast')" icon="megaphone">
+                Broadcast
+            </x-sidebar-link>
             @endif
 
             <x-sidebar-link :href="route('activities')" :active="request()->routeIs('activities')" icon="clock">

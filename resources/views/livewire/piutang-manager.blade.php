@@ -10,9 +10,11 @@
                     <div class="flex items-center gap-4 flex-1 min-w-0">
                         <div class="relative w-full sm:w-80">
                             <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
                             </span>
-                            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari Nama Pelanggan..." 
+                            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari Nama Pelanggan..."
                                 class="w-full pl-11 bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white">
                         </div>
                         <select wire:model.live="filterStatus" class="bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
@@ -36,69 +38,71 @@
                         </thead>
                         <tbody class="divide-y divide-slate-50 dark:divide-slate-700">
                             @forelse($customers as $customer)
-                                @php 
-                                    $totalAmount = $customer->piutangs->sum('amount');
-                                    $hasUnpaid = $customer->piutangs->where('status', 'unpaid')->count() > 0;
-                                @endphp
-                                <tr wire:key="cust-{{ $customer->id }}" class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                                    <td class="px-6 py-5">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-sm uppercase">
-                                                {{ substr($customer->name, 0, 1) }}
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-slate-800 dark:text-white">{{ $customer->name }}</p>
-                                                <p class="text-[10px] text-slate-400 font-mono tracking-tighter">{{ $customer->id_pelanggan }}</p>
-                                            </div>
+                            @php
+                            $totalAmount = $customer->piutangs->sum('amount');
+                            $hasUnpaid = $customer->piutangs->where('status', 'unpaid')->count() > 0;
+                            @endphp
+                            <tr wire:key="cust-{{ $customer->id }}" class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                                <td class="px-6 py-5">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-sm uppercase">
+                                            {{ substr($customer->name, 0, 1) }}
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <div class="flex flex-col gap-1.5 max-w-xs items-start">
-                                            @foreach($customer->piutangs as $item)
-                                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold border flex items-center justify-between min-w-[140px] {{ $item->status == 'paid' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' : 'bg-slate-50 border-slate-100 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400' }}">
-                                                    <span>{{ \Carbon\Carbon::parse($item->billing_period)->translatedFormat('F Y') }}</span>
-                                                    <span class="ml-3 opacity-80 font-black">Rp {{ number_format($item->amount, 0, ',', '.') }}</span>
-                                                </span>
-                                            @endforeach
+                                        <div>
+                                            <p class="font-bold text-slate-800 dark:text-white">{{ $customer->name }}</p>
+                                            <p class="text-[10px] text-slate-400 font-mono tracking-tighter">{{ $customer->id_pelanggan }}</p>
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <p class="font-black text-slate-800 dark:text-white text-sm">Rp {{ number_format($totalAmount, 0, ',', '.') }}</p>
-                                        <p class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">{{ $customer->piutangs->count() }} Invoice</p>
-                                    </td>
-                                    <td class="px-6 py-5 uppercase">
-                                        @if($hasUnpaid)
-                                            <div class="flex items-center gap-1.5">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                                <span class="text-[10px] font-black tracking-widest text-amber-600 dark:text-amber-400">Terutang</span>
-                                            </div>
-                                        @else
-                                            <div class="flex flex-col gap-0.5">
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                    <span class="text-[10px] font-black tracking-widest text-emerald-600 dark:text-emerald-400">Lunas</span>
-                                                </div>
-                                                @php $latestPaid = $customer->piutangs->whereNotNull('paid_at')->max('paid_at'); @endphp
-                                                @if($latestPaid)
-                                                    <p class="text-[8px] text-slate-400 normal-case font-medium">Brt: {{ $latestPaid instanceof \Carbon\Carbon ? $latestPaid->format('d/m/Y') : \Carbon\Carbon::parse($latestPaid)->format('d/m/Y') }}</p>
-                                                @endif
-                                            </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="flex flex-col gap-1.5 max-w-xs items-start">
+                                        @foreach($customer->piutangs as $item)
+                                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold border flex items-center justify-between min-w-[140px] {{ $item->status == 'paid' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' : 'bg-slate-50 border-slate-100 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400' }}">
+                                            <span>{{ \Carbon\Carbon::parse($item->billing_period)->translatedFormat('F Y') }}</span>
+                                            <span class="ml-3 opacity-80 font-black">Rp {{ number_format($item->amount, 0, ',', '.') }}</span>
+                                        </span>
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <p class="font-black text-slate-800 dark:text-white text-sm">Rp {{ number_format($totalAmount, 0, ',', '.') }}</p>
+                                    <p class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">{{ $customer->piutangs->count() }} Invoice</p>
+                                </td>
+                                <td class="px-6 py-5 uppercase">
+                                    @if($hasUnpaid)
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                        <span class="text-[10px] font-black tracking-widest text-amber-600 dark:text-amber-400">Terutang</span>
+                                    </div>
+                                    @else
+                                    <div class="flex flex-col gap-0.5">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span class="text-[10px] font-black tracking-widest text-emerald-600 dark:text-emerald-400">Lunas</span>
+                                        </div>
+                                        @php $latestPaid = $customer->piutangs->whereNotNull('paid_at')->max('paid_at'); @endphp
+                                        @if($latestPaid)
+                                        <p class="text-[8px] text-slate-400 normal-case font-medium">Brt: {{ $latestPaid instanceof \Carbon\Carbon ? $latestPaid->format('d/m/Y') : \Carbon\Carbon::parse($latestPaid)->format('d/m/Y') }}</p>
                                         @endif
-                                    </td>
-                                    <td class="px-6 py-5 text-right flex items-center justify-end gap-2">
-                                        <a href="{{ route('print.piutang', $customer->piutangs->first()->id) }}" target="_blank" 
-                                            class="p-2 text-slate-400 hover:text-blue-600 transition-colors" title="Cetak Riwayat">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                                        </a>
+                                    </div>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-5 text-right flex items-center justify-end gap-2">
+                                    <a href="{{ route('print.piutang', $customer->piutangs->first()->id) }}" target="_blank"
+                                        class="p-2 text-slate-400 hover:text-blue-600 transition-colors" title="Cetak Riwayat">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                        </svg>
+                                    </a>
 
-                                        @if($hasUnpaid)
-                                            <button wire:click="markAsPaid('{{ $customer->id }}')" 
-                                                class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20">
-                                                Verifikasi Lunas
-                                            </button>
-                                        @endif
-                                        
-                                        <button @click="Swal.fire({
+                                    @if($hasUnpaid)
+                                    <button wire:click="openPaymentModal('{{ $customer->id }}')"
+                                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                                        Verifikasi Lunas
+                                    </button>
+                                    @endif
+
+                                    <button @click="Swal.fire({
                                             title: 'Hapus Riwayat?',
                                             text: 'Menghapus data piutang tidak akan menghapus invoice terkait.',
                                             icon: 'warning',
@@ -108,16 +112,18 @@
                                             confirmButtonText: 'Ya, Hapus',
                                             background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
                                             color: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a'
-                                        }).then((result) => { if (result.isConfirmed) { $wire.delete('{{ $customer->piutangs->first()->id }}') } })" 
-                                            class="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    </td>
-                                </tr>
+                                        }).then((result) => { if (result.isConfirmed) { $wire.delete('{{ $customer->piutangs->first()->id }}') } })"
+                                        class="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
                             @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">Belum ada data piutang ditemukan.</td>
-                                </tr>
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">Belum ada data piutang ditemukan.</td>
+                            </tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -128,4 +134,87 @@
             </div>
         </div>
     </div>
+
+    {{-- MODAL VERIFIKASI LUNAS --}}
+    @if($isOpen)
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" wire:click="closeModal"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200 dark:border-slate-700">
+                <div class="p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Verifikasi Pembayaran</h3>
+                            <p class="text-xs text-slate-400 font-bold tracking-widest mt-1 uppercase">{{ $selectedCustomerName }}</p>
+                        </div>
+                        <button wire:click="closeModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Pilih Periode Yang Dilunasi</span>
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox"
+                                    x-data="{ allIds: {{ json_encode(array_column($availablePiutangs, 'id')) }} }"
+                                    @change="if($event.target.checked) { $wire.selectedPiutangIds = allIds } else { $wire.selectedPiutangIds = [] }"
+                                    class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                                    {{ count($selectedPiutangIds) === count($availablePiutangs) ? 'checked' : '' }}>
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pilih Semua</span>
+                            </label>
+                        </div>
+
+                        <div class="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                            @foreach($availablePiutangs as $piutang)
+                            <label class="flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer group {{ in_array($piutang['id'], $selectedPiutangIds) ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : 'bg-white border-slate-100 hover:border-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-slate-600' }}">
+                                <div class="flex items-center gap-4">
+                                    <input type="checkbox" wire:model.live="selectedPiutangIds" value="{{ $piutang['id'] }}"
+                                        class="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer">
+                                    <div>
+                                        <p class="text-sm font-bold {{ in_array($piutang['id'], $selectedPiutangIds) ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300' }}">
+                                            {{ \Carbon\Carbon::parse($piutang['billing_period'])->translatedFormat('F Y') }}
+                                        </p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Billing Period</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-black {{ in_array($piutang['id'], $selectedPiutangIds) ? 'text-blue-800 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200' }}">Rp {{ number_format($piutang['amount'], 0, ',', '.') }}</p>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-col gap-4">
+                        <div class="flex items-center justify-between px-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Bayar</span>
+                            <span class="text-xl font-black text-slate-800 dark:text-white">
+                                Rp {{ number_format(collect($availablePiutangs)->whereIn('id', $selectedPiutangIds)->sum('amount'), 0, ',', '.') }}
+                            </span>
+                        </div>
+
+                        <div class="flex gap-4 mt-2">
+                            <button wire:click="closeModal"
+                                class="flex-1 py-4 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
+                                Batal
+                            </button>
+                            <button wire:click="confirmPayment"
+                                wire:loading.attr="disabled"
+                                class="flex-1 py-4 rounded-2xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
+                                <span wire:loading.remove wire:target="confirmPayment">Verifikasi</span>
+                                <span wire:loading wire:target="confirmPayment">Memproses...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
