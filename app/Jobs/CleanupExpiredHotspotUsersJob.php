@@ -38,7 +38,7 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
         foreach ($unactivatedExpired as $user) {
             try {
                 $router = Router::where('user_id', $user->user_id)->first();
-                if ($router) {
+                if ($router && $router->is_active) {
                     $mikrotik = MikrotikService::getInstance($router);
                     $mikrotik->removeHotspotUser($user->username);
                 }
@@ -53,15 +53,17 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
         // TIER 2: Proses berdasarkan Database (Prioritas Aplikasi)
         // =====================================================================
         $routers = Router::whereHas('user', function ($q) {
-            $q->whereHas('features', function($f) {
+            $q->whereHas('features', function ($f) {
                 $f->where('parameter', 'hotspot');
             });
         })->get();
 
         foreach ($routers as $router) {
+            if (!$router->is_active) continue;
+
             try {
                 $mikrotik = MikrotikService::getInstance($router);
-                
+
                 // Ambil data user dari MikroTik sekali saja untuk dibandingkan
                 $mkUsers = collect($mikrotik->getHotspotUsers());
 
@@ -73,7 +75,7 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
                 foreach ($dbUsers as $dbUser) {
                     // Cari apakah user di DB ini juga ada di MikroTik
                     $mkUser = $mkUsers->firstWhere('name', $dbUser->username);
-                    
+
                     if (!$mkUser) {
                         // User ada di DB tapi tidak ada di MikroTik, abaikan atau bisa ditambahkan logika sync ulang
                         continue;
@@ -81,7 +83,7 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
 
                     $uptime    = $mkUser['uptime'] ?? '0s';
                     $uptimeSec = $this->parseMikrotikTime($uptime);
-                    
+
                     $masaAktif = $dbUser->package?->masa_aktif ?? '0s';
                     $masaAktifSec = $this->parseMikrotikTime($masaAktif);
 
@@ -89,12 +91,12 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
                     if ($uptimeSec > 0 && is_null($dbUser->activated_at)) {
                         if ($masaAktifSec > 0) {
                             $dbUser->update(['activated_at' => now()]);
-                            
+
                             // Update comment di MikroTik untuk transparansi di Winbox
                             $expTime = now()->addSeconds($masaAktifSec);
                             $newComment = "masa_aktif:{$masaAktif}|exp:" . $expTime->format('Y/m/d-H:i:s');
                             $mikrotik->updateHotspotUserComment($dbUser->username, $newComment);
-                            
+
                             Log::info("[Cleanup][Activator] Activated user: {$dbUser->username} (Exp: " . $expTime->toDateTimeString() . ")");
                         }
                     }
@@ -146,11 +148,21 @@ class CleanupExpiredHotspotUsersJob implements ShouldQueue
         foreach ($matches as $match) {
             $value = (int) $match[1];
             switch (strtolower($match[2])) {
-                case 'w': $totalSeconds += $value * 604800; break;
-                case 'd': $totalSeconds += $value * 86400;  break;
-                case 'h': $totalSeconds += $value * 3600;   break;
-                case 'm': $totalSeconds += $value * 60;     break;
-                case 's': $totalSeconds += $value;          break;
+                case 'w':
+                    $totalSeconds += $value * 604800;
+                    break;
+                case 'd':
+                    $totalSeconds += $value * 86400;
+                    break;
+                case 'h':
+                    $totalSeconds += $value * 3600;
+                    break;
+                case 'm':
+                    $totalSeconds += $value * 60;
+                    break;
+                case 's':
+                    $totalSeconds += $value;
+                    break;
             }
         }
 

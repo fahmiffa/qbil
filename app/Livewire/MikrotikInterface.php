@@ -35,6 +35,9 @@ class MikrotikInterface extends Component
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
+        if (!$router->is_active) {
+            throw new \Exception("Router '{$router->name}' sedang dinonaktifkan.");
+        }
         return MikrotikService::getInstance($router);
     }
 
@@ -46,11 +49,11 @@ class MikrotikInterface extends Component
             $mikrotik = $this->getMikrotik();
             $routerId = auth()->user()->router->id ?? 0;
 
-            $interfaces = Cache::remember("mk_interfaces_{$routerId}", 300, function() use ($mikrotik) {
+            $interfaces = Cache::remember("mk_interfaces_{$routerId}", 300, function () use ($mikrotik) {
                 return $mikrotik->getInterfaces();
             });
 
-            $this->interfaces = collect($interfaces)->map(function($iface) {
+            $this->interfaces = collect($interfaces)->map(function ($iface) {
                 $iface['id'] = $iface['.id'] ?? null;
                 $iface['running']  = ($iface['running'] ?? 'false') === 'true';
                 $iface['disabled'] = ($iface['disabled'] ?? 'false') === 'true';
@@ -134,10 +137,10 @@ class MikrotikInterface extends Component
         try {
             $mikrotik = $this->getMikrotik();
             $mikrotik->setInterfaceDisabled($id, !$currentlyDisabled);
-            
+
             $routerId = auth()->user()->router->id ?? 0;
             Cache::forget("mk_interfaces_{$routerId}");
-            
+
             $this->loadInterfaces();
             session()->flash('message', 'Status interface berhasil diubah.');
         } catch (\Exception $e) {

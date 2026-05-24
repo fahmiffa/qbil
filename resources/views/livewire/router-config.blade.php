@@ -56,6 +56,7 @@
                                 <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-slate-300 text-xs uppercase tracking-wider">Router</th>
                                 <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-slate-300 text-xs uppercase tracking-wider">Host / Port</th>
                                 <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-slate-300 text-xs uppercase tracking-wider">Status</th>
+                                <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-slate-300 text-xs uppercase tracking-wider">Aktif</th>
                                 <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-slate-300 text-xs uppercase tracking-wider">Pelanggan</th>
                                 <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-slate-300 text-xs uppercase tracking-wider">Paket</th>
                                 <th class="px-5 py-3.5 font-semibold text-gray-600 dark:text-slate-300 text-xs uppercase tracking-wider">Dicek</th>
@@ -98,6 +99,13 @@
                                         <span class="text-gray-400 dark:text-slate-500 text-xs">Belum dicek</span>
                                     </div>
                                     @endif
+                                </td>
+                                {{-- Aktif/Disable Toggle --}}
+                                <td class="px-5 py-4">
+                                    <button wire:click="toggleStatus({{ $router->id }})"
+                                        class="relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 {{ $router->is_active ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-700' }}">
+                                        <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $router->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                                    </button>
                                 </td>
                                 {{-- Jumlah Pelanggan --}}
                                 <td class="px-5 py-4">
@@ -260,6 +268,18 @@
                         </button>
                     </div>
                     @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Status Aktif Toggle di Modal --}}
+                <div class="flex items-center justify-between py-2">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300">Status Router</label>
+                        <p class="text-xs text-gray-400 dark:text-slate-500">Jika dinonaktifkan, semua job otomasi akan dilewati.</p>
+                    </div>
+                    <button type="button" wire:click="$set('is_active', {{ !$is_active ? 'true' : 'false' }})"
+                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 {{ $is_active ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-700' }}">
+                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                    </button>
                 </div>
 
                 {{-- Buttons --}}

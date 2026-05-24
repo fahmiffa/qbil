@@ -24,7 +24,7 @@ class CustomerManager extends Component
 
     public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date;
     public $router_id;
-    public $package_id, $username, $password, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
+    public $package_id, $username, $password, $ppp_profile, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $sync_mikrotik_id = '';
     public $availableMikrotikData = [];
@@ -48,6 +48,7 @@ class CustomerManager extends Component
     public $unmatchedStatic = [];
     public $unmatchedPppoe = [];
     public $is_trial = false;
+    public $syncError = '';
     public function render()
     {
         $query = auth()->user()->customers()->with('package')->latest();
@@ -212,7 +213,7 @@ class CustomerManager extends Component
         $this->ppp_profile  = '';
         $this->username     = '';
         $this->password     = '';
-        
+
         // Default service type based on features
         if (auth()->user()->hasFeature('static')) {
             $this->service_type = 'static';
@@ -517,7 +518,7 @@ class CustomerManager extends Component
                     'type' => 'customer_create',
                     'data' => ['customer_id' => $customer->id]
                 ]);
-                
+
                 // Refresh table (kembali ke halaman 1 agar pelanggan baru yang diurutkan 'latest' terlihat)
                 $this->resetPage();
             }
@@ -555,7 +556,7 @@ class CustomerManager extends Component
         BulkSyncToMikrotikJob::dispatch(auth()->user());
 
         $this->dispatch('toast', type: 'success', message: 'Sinkronisasi data ke MikroTik (Bulk Update) telah dijadwalkan.');
-        
+
         ActivityLog::create([
             'user_id' => auth()->id(),
             'title' => 'BULK SYNC MIKROTIK',
@@ -566,6 +567,7 @@ class CustomerManager extends Component
 
     public function openSyncModal()
     {
+        $this->syncError = '';
         $this->isSyncModalOpen = true;
         $this->loadUnmatchedMikrotikData();
     }
@@ -581,7 +583,7 @@ class CustomerManager extends Component
     {
         try {
             $mikrotik = $this->getMikrotikService();
-            
+
             // 1. Get all from Mikrotik
             $leases = $mikrotik->getDhcpLeases();
             $actives = $mikrotik->getPppActives();
@@ -590,7 +592,7 @@ class CustomerManager extends Component
             $localCustomers = \App\Models\Customer::where('user_id', auth()->id())->get();
 
             // 3. Find unmatched Static (Leases)
-            $localMacs = $localCustomers->where('service_type', 'static')->pluck('mac_address')->filter()->map(function($mac) {
+            $localMacs = $localCustomers->where('service_type', 'static')->pluck('mac_address')->filter()->map(function ($mac) {
                 return strtoupper(str_replace(['-', ' '], ':', $mac));
             })->toArray();
             $localIps = $localCustomers->where('service_type', 'static')->pluck('ip_address')->filter()->toArray();
@@ -600,7 +602,7 @@ class CustomerManager extends Component
                 foreach ($leases as $lease) {
                     $mac = strtoupper($lease['mac-address'] ?? '');
                     $ip = $lease['address'] ?? '';
-                    
+
                     if (empty($mac) && empty($ip)) continue;
 
                     if (!in_array($mac, $localMacs) && !in_array($ip, $localIps)) {
@@ -637,7 +639,7 @@ class CustomerManager extends Component
                 }
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal memuat data MikroTik: ' . $e->getMessage());
+            $this->syncError = $e->getMessage();
         }
     }
 
@@ -736,6 +738,10 @@ class CustomerManager extends Component
 
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
+        }
+
+        if (!$router->is_active) {
+            throw new \Exception("Router '{$router->name}' sedang dinonaktifkan.");
         }
 
         return MikrotikService::getInstance($router);

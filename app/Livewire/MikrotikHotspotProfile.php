@@ -47,12 +47,17 @@ class MikrotikHotspotProfile extends Component
 
     private function getMikrotik(): MikrotikService
     {
-        $router = \App\Models\Router::where('user_id', auth()->id())->where('id', $this->router_id)->first() 
-                    ?? auth()->user()->routers()->oldest()->first();
+        $router = \App\Models\Router::where('user_id', auth()->id())->where('id', $this->router_id)->first()
+            ?? auth()->user()->routers()->oldest()->first();
 
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
+
+        if (!$router->is_active) {
+            throw new \Exception("Router '{$router->name}' sedang dinonaktifkan.");
+        }
+
         return MikrotikService::getInstance($router);
     }
 
@@ -63,23 +68,22 @@ class MikrotikHotspotProfile extends Component
             $this->error = '';
             $mikrotik = $this->getMikrotik();
             $routerId = auth()->user()->router->id ?? 0;
-            
+
             // Get IP Pools (Cached - 1 hour)
             $this->ip_pools = Cache::remember("mk_pools_{$routerId}", 3600, fn() => $mikrotik->getIpPools());
 
             // Get existing Mikrotik Profiles (Cached - 1 hour)
             $allM = Cache::remember("mk_hs_profiles_{$routerId}", 3600, fn() => $mikrotik->getHotspotProfiles());
-            
+
             $this->mikrotik_profiles_list = collect($allM)
                 ->filter(fn($p) => strtolower($p['name'] ?? '') !== 'default')
                 ->toArray();
 
             // Get packages from DB
             $this->profiles = \App\Models\Package::where('user_id', auth()->id())
-                              ->where('router_id', $this->router_id)
-                              ->where('tipe', 'HOTSPOT')
-                              ->get()->toArray();
-
+                ->where('router_id', $this->router_id)
+                ->where('tipe', 'HOTSPOT')
+                ->get()->toArray();
         } catch (\Exception $e) {
             $this->error = $e->getMessage();
         } finally {
@@ -110,7 +114,7 @@ class MikrotikHotspotProfile extends Component
             $this->masa_aktif    = $p->masa_aktif ?? '';
             $this->valid_duration = $p->valid_duration ?? '';
             $this->sync_mode = 'new';
-            
+
             // Fetch current settings from Mikrotik since they aren't in our DB
             try {
                 $mikrotik = $this->getMikrotik();
@@ -122,7 +126,7 @@ class MikrotikHotspotProfile extends Component
             } catch (\Exception $e) {
                 // Ignore
             }
-            
+
             // Split Speed
             if (preg_match('/^(\d+)(K|M)$/i', $p->speed_download, $m)) {
                 $this->download_value = $m[1];
@@ -174,7 +178,7 @@ class MikrotikHotspotProfile extends Component
 
         try {
             $mikrotik = $this->getMikrotik();
-            
+
             $profileName = $this->sync_mode === 'sync' ? $this->selected_mikrotik_profile : $this->name;
             $upload = $this->upload_value . $this->upload_unit;
             $download = $this->download_value . $this->download_unit;
@@ -191,7 +195,7 @@ class MikrotikHotspotProfile extends Component
                         } else {
                             // Jika hanya ada satu nilai, asumsikan itu download, upload default
                             $download = $mProfile['rate-limit'];
-                            $upload = '1M'; 
+                            $upload = '1M';
                         }
                     }
                     $pool = $mProfile['address-pool'] ?? 'none';
@@ -202,7 +206,7 @@ class MikrotikHotspotProfile extends Component
 
             if ($this->isEditing) {
                 $package = \App\Models\Package::find($this->editId);
-                
+
                 $package->update([
                     'name'             => $this->name,
                     'mikrotik_profile' => $profileName,
@@ -238,7 +242,7 @@ class MikrotikHotspotProfile extends Component
                 ]);
 
                 if ($this->sync_mode === 'new') {
-                     \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'create', null, [
+                    \App\Jobs\ProvisionPackageJob::dispatchSync($package, 'create', null, [
                         'address_pool' => $pool,
                     ]);
                 }
@@ -255,9 +259,9 @@ class MikrotikHotspotProfile extends Component
     public function delete(string $id): void
     {
         $package = \App\Models\Package::where('user_id', auth()->id())
-                     ->where('tipe', 'hotspot')
-                     ->where('id', $id)
-                     ->first();
+            ->where('tipe', 'hotspot')
+            ->where('id', $id)
+            ->first();
         if ($package) {
             try {
                 // Dispatch Job Sync untuk delete

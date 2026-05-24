@@ -35,6 +35,15 @@ class CheckRouterConnectionJob implements ShouldQueue
             return;
         }
 
+        if (!$this->router->is_active) {
+            $this->router->update([
+                'connection_status' => 'offline',
+                'connection_error' => 'Router dinonaktifkan.',
+                'last_checked_at' => now(),
+            ]);
+            return;
+        }
+
         $startTime = microtime(true);
         $status = 'offline';
         $error = null;

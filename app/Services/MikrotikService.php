@@ -14,11 +14,17 @@ class MikrotikService
 
     public static function getInstance(Router $router): self
     {
+        if (!$router->is_active) {
+            throw new \Exception("Router MikroTik '{$router->name}' sedang dinonaktifkan.");
+        }
         return new self($router);
     }
 
     public function __construct(Router $router)
     {
+        if (!$router->is_active) {
+            throw new \Exception("Router MikroTik '{$router->name}' sedang dinonaktifkan.");
+        }
         $this->router = $router;
         $this->client = new Client([
             'host'    => $router->host,
@@ -76,7 +82,7 @@ class MikrotikService
             ->equal('rate-limit', $rateLimit)
             ->equal('only-one', 'yes')
             ->equal('dns-server', '8.8.8.8,8.8.4.4');
-        
+
         if ($localAddress) $query->equal('local-address', $localAddress);
         if ($remoteAddress) $query->equal('remote-address', $remoteAddress);
 
@@ -188,7 +194,7 @@ class MikrotikService
                 ->equal('name', $newUsername)
                 ->equal('password', $password)
                 ->equal('profile', $profile);
-            
+
             if ($comment) $setQuery->equal('comment', $comment);
 
             $this->client->query($setQuery)->read();
@@ -354,7 +360,7 @@ class MikrotikService
             ->equal('password', $password)
             ->equal('profile', $profile)
             ->equal('comment', $comment);
-            
+
         if ($limitUptime) {
             $query->equal('limit-uptime', $limitUptime);
         }
@@ -371,7 +377,7 @@ class MikrotikService
                 ->equal('name', $newUsername)
                 ->equal('password', $password)
                 ->equal('profile', $profile);
-            
+
             if ($comment) $setQuery->equal('comment', $comment);
             if ($limitUptime) $setQuery->equal('limit-uptime', $limitUptime);
 
@@ -550,7 +556,7 @@ class MikrotikService
         if (empty($pools)) return null;
 
         $ranges = explode(',', $pools[0]['ranges']);
-        
+
         // 2. Collect Used IPs — use Cache to avoid repeated slow API calls
         // Each cache entry lives for 60 seconds. Acceptable trade-off for UX speed.
         $routerId = $this->router->id;
@@ -591,7 +597,7 @@ class MikrotikService
                     if (!isset($usedIps[$candidate])) {
                         return $candidate;
                     }
-                    
+
                     $count++;
                     if ($count > 2000) break;
                 }
@@ -655,7 +661,7 @@ class MikrotikService
                 ->equal('name', $newName)
                 ->equal('target', $target)
                 ->equal('max-limit', $maxLimit);
-            
+
             if ($comment) $setQuery->equal('comment', $comment);
 
             $this->client->query($setQuery)->read();
@@ -663,13 +669,13 @@ class MikrotikService
             // Check if name exists before adding to avoid "already has such name" error
             $query = (new Query('/queue/simple/print'))->where('name', $newName);
             $existsByName = $this->client->query($query)->read();
-            
+
             if (!empty($existsByName)) {
                 $setQuery = (new Query('/queue/simple/set'))
                     ->equal('.id', $existsByName[0]['.id'])
                     ->equal('target', $target)
                     ->equal('max-limit', $maxLimit);
-                
+
                 if ($comment) $setQuery->equal('comment', $comment);
 
                 $this->client->query($setQuery)->read();
@@ -734,12 +740,12 @@ class MikrotikService
             ->equal('address', $ip)
             ->equal('server', $server)
             ->equal('comment', $comment);
-        
+
         if ($rateLimit) {
             $query->equal('rate-limit', $rateLimit);
         }
 
-        $this->client->query($query)->read();   
+        $this->client->query($query)->read();
     }
 
     public function updateDhcpLeaseByMac(string $oldMac, string $newMac, string $newIp, string $server = 'all', ?string $comment = null, string $rateLimit = ''): void
@@ -753,10 +759,10 @@ class MikrotikService
                 ->equal('mac-address', $newMac)
                 ->equal('address', $newIp)
                 ->equal('server', $server);
-            
+
             if ($comment) $setQuery->equal('comment', $comment);
             if ($rateLimit) $setQuery->equal('rate-limit', $rateLimit);
-            
+
             $a = $this->client->query($setQuery)->read();
         } else {
             $this->addDhcpLease($newMac, $newIp, $server, $comment ?? '', $rateLimit);

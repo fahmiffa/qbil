@@ -52,6 +52,11 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                 return;
             }
 
+            if (!$router->is_active) {
+                Log::info("[BulkGenerateHotspotVouchersJob] Router '{$router->name}' is disabled. Skipping generation.");
+                return;
+            }
+
             $package = Package::find($this->packageId);
             if (!$package) {
                 Log::warning("[BulkGenerateHotspotVouchersJob] Package not found: {$this->packageId}");
@@ -81,7 +86,7 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
             for ($i = 0; $i < $this->quantity; $i++) {
                 $code = '';
                 $isUnique = false;
-                
+
                 // Cek keunikan kode di database
                 while (!$isUnique) {
                     $code = substr(str_shuffle("ABCDEFGHJKLMNPQRSTUVWXYZ23456789"), 0, 5);
@@ -92,7 +97,7 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                         $isUnique = true;
                     }
                 }
-                
+
                 // 1. Save to Database
                 HotspotUser::create([
                     'user_id'          => $this->userId,

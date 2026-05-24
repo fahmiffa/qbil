@@ -47,6 +47,11 @@ class ProvisionHotspotUserJob implements ShouldQueue
                 return;
             }
 
+            if (!$router->is_active) {
+                Log::info("ProvisionHotspotUserJob: Router '{$router->name}' is disabled. Skipping provisioning.");
+                return;
+            }
+
             $mikrotik = MikrotikService::getInstance($router);
 
             $limitUptime = '';

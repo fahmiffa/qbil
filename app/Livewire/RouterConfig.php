@@ -11,7 +11,7 @@ class RouterConfig extends Component
 {
     // Form fields
     public $router_id_edit = null;
-    public $name, $host, $port = 8728, $username, $password;
+    public $name, $host, $port = 8728, $username, $password, $is_active = true;
     public $showPassword = false;
     public $isOpen = false;
 
@@ -53,6 +53,7 @@ class RouterConfig extends Component
         $this->port           = $router->port;
         $this->username       = $router->username;
         $this->password       = $router->password;
+        $this->is_active      = $router->is_active;
         $this->showPassword   = false;
         $this->isOpen         = true;
         $this->resetValidation();
@@ -72,6 +73,7 @@ class RouterConfig extends Component
         $this->port           = 8728;
         $this->username       = '';
         $this->password       = '';
+        $this->is_active      = true;
         $this->showPassword   = false;
     }
 
@@ -102,6 +104,7 @@ class RouterConfig extends Component
                     'port'     => $this->port,
                     'username' => $this->username,
                     'password' => $this->password,
+                    'is_active' => $this->is_active,
                 ]);
 
                 ActivityLog::create([
@@ -128,6 +131,7 @@ class RouterConfig extends Component
                     'port'     => $this->port,
                     'username' => $this->username,
                     'password' => $this->password,
+                    'is_active' => $this->is_active,
                 ]);
 
                 ActivityLog::create([
@@ -143,6 +147,27 @@ class RouterConfig extends Component
             $this->closeModal();
         } catch (\Exception $e) {
             $this->dispatch('toast', type: 'error', message: 'Gagal menyimpan: ' . $e->getMessage());
+        }
+    }
+
+    public function toggleStatus($id)
+    {
+        try {
+            $router = Router::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+            $router->is_active = !$router->is_active;
+            $router->save();
+
+            $statusText = $router->is_active ? 'diaktifkan' : 'dinonaktifkan';
+            $this->dispatch('toast', type: 'success', message: "Router {$router->name} berhasil {$statusText}.");
+
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title'   => 'TOGGLE STATUS ROUTER',
+                'message' => "Mengubah status router {$router->name} menjadi " . ($router->is_active ? 'Active' : 'Disabled'),
+                'type'    => 'router_crud',
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatch('toast', type: 'error', message: 'Gagal mengubah status: ' . $e->getMessage());
         }
     }
 

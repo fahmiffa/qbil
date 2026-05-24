@@ -40,9 +40,13 @@ class RemoveIsolirJob implements ShouldQueue
                     ?? $user->routers()->oldest()->first();
 
                 if ($router) {
+                    if (!$router->is_active) {
+                        Log::info("RemoveIsolirJob: Router '{$router->name}' is disabled. Skipping removal from isolation.");
+                        return;
+                    }
                     try {
                         $mikrotik = MikrotikService::getInstance($router);
-                        
+
                         if ($this->customer->ip_address) {
                             $mikrotik->removeFromAddressList($this->customer->ip_address, 'ISOLIR');
                             Log::info("Customer {$this->customer->name} berhasil dihapus dari address-list ISOLIR.");
@@ -62,7 +66,6 @@ class RemoveIsolirJob implements ShouldQueue
             if ($this->customer->status !== 'active') {
                 $this->customer->update(['status' => 'active']);
             }
-
         } catch (\Exception $e) {
             Log::error("Gagal menghapus pelanggan {$this->customer->name}: " . $e->getMessage());
             throw $e; // Rethrow agar Queue mencoba lagi (retry)

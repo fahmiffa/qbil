@@ -31,8 +31,13 @@ class SyncMikrotikResourcesJob implements ShouldQueue
     public function handle(): void
     {
         $router = $this->user->router;
-        
+
         if (!$router) {
+            return;
+        }
+
+        if (!$router->is_active) {
+            Log::info("SyncMikrotikResourcesJob: Router '{$router->name}' is disabled. Skipping sync.");
             return;
         }
 
@@ -42,12 +47,12 @@ class SyncMikrotikResourcesJob implements ShouldQueue
 
         try {
             $mikrotik = MikrotikService::getInstance($router);
-            
+
             // Sync all relevant network resources to local DB
             $mikrotik->syncPoolsToDb();
             $mikrotik->syncDhcpServersToDb();
             $mikrotik->syncPppProfilesToDb();
-            
+
             Log::info("MikroTik resources sync completed for user: {$this->user->name}");
         } catch (\Exception $e) {
             Log::error("Failed to sync MikroTik resources for user {$this->user->name}: " . $e->getMessage());

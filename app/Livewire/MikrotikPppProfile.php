@@ -46,12 +46,17 @@ class MikrotikPppProfile extends Component
 
     private function getMikrotik(): MikrotikService
     {
-        $router = \App\Models\Router::where('user_id', auth()->id())->where('id', $this->router_id)->first() 
-                    ?? auth()->user()->routers()->oldest()->first();
-                    
+        $router = \App\Models\Router::where('user_id', auth()->id())->where('id', $this->router_id)->first()
+            ?? auth()->user()->routers()->oldest()->first();
+
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
+
+        if (!$router->is_active) {
+            throw new \Exception("Router '{$router->name}' sedang dinonaktifkan.");
+        }
+
         return MikrotikService::getInstance($router);
     }
 
@@ -62,23 +67,22 @@ class MikrotikPppProfile extends Component
             $this->error = '';
             $mikrotik = $this->getMikrotik();
             $routerId = auth()->user()->router->id ?? 0;
-            
+
             // Get IP Pools from Mikrotik (Cached)
             $this->ip_pools = Cache::remember("mk_pools_{$routerId}", 300, fn() => $mikrotik->getIpPools());
 
             // Get PPP Profiles from Mikrotik (Cached)
             $allM = Cache::remember("mk_ppp_profiles_{$routerId}", 300, fn() => $mikrotik->getPppProfiles());
-            
+
             $this->mikrotik_profiles_list = collect($allM)
                 ->filter(fn($p) => !in_array(strtolower($p['name'] ?? ''), ['default', 'default-encryption']))
                 ->toArray();
 
             // Get local Packages that are PPPOE and belong to this router
             $this->profiles = \App\Models\Package::where('user_id', auth()->id())
-                              ->where('router_id', $this->router_id)
-                              ->where('tipe', 'PPPOE')
-                              ->get()->toArray();
-
+                ->where('router_id', $this->router_id)
+                ->where('tipe', 'PPPOE')
+                ->get()->toArray();
         } catch (\Exception $e) {
             $this->error = $e->getMessage();
         } finally {
@@ -89,7 +93,7 @@ class MikrotikPppProfile extends Component
     public function updatedRemoteAddress($value)
     {
         if (!$value) return;
-        
+
         $pool = collect($this->ip_pools)->firstWhere('name', $value);
         if ($pool && !empty($pool['ranges'])) {
             $range = $pool['ranges']; // e.g. "192.168.10.2-192.168.10.254"
@@ -105,7 +109,7 @@ class MikrotikPppProfile extends Component
         $this->sync_mode = 'new';
         $this->isEditing = false;
         $this->showModal = true;
-        
+
         $this->loadProfiles();
     }
 
@@ -117,7 +121,7 @@ class MikrotikPppProfile extends Component
             $this->name   = $p->name;
             $this->price  = (string)(int)$p->price;
             $this->sync_mode = 'new'; // Default to new for editing
-            
+
             // Split Speed
             if (preg_match('/^(\d+)(K|M)$/i', $p->speed_download, $m)) {
                 $this->download_value = $m[1];
@@ -137,7 +141,8 @@ class MikrotikPppProfile extends Component
                     $this->local_address = $mProfile['local-address'] ?? '';
                     $this->remote_address = $mProfile['remote-address'] ?? '';
                 }
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
 
             $this->isEditing = true;
             $this->showModal = true;
@@ -176,7 +181,7 @@ class MikrotikPppProfile extends Component
 
         try {
             $mikrotik = $this->getMikrotik();
-            
+
             $profileName = $this->sync_mode === 'sync' ? $this->selected_mikrotik_profile : $this->name;
             $upload = $this->upload_value . $this->upload_unit;
             $download = $this->download_value . $this->download_unit;
@@ -195,7 +200,7 @@ class MikrotikPppProfile extends Component
 
             if ($this->isEditing) {
                 $package = \App\Models\Package::find($this->editId);
-                
+
                 $package->update([
                     'name' => $this->name,
                     'mikrotik_profile' => $profileName,
@@ -243,9 +248,9 @@ class MikrotikPppProfile extends Component
     public function delete(string $id): void
     {
         $package = \App\Models\Package::where('user_id', auth()->id())
-                     ->where('tipe', 'PPPOE')
-                     ->where('id', $id)
-                     ->first();
+            ->where('tipe', 'PPPOE')
+            ->where('id', $id)
+            ->first();
         if ($package) {
             try {
                 // Dispatch Job Sync untuk delete

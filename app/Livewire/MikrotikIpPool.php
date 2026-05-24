@@ -33,6 +33,9 @@ class MikrotikIpPool extends Component
         if (!$router) {
             throw new \Exception('Router MikroTik belum dikonfigurasi.');
         }
+        if (!$router->is_active) {
+            throw new \Exception("Router '{$router->name}' sedang dinonaktifkan.");
+        }
         return MikrotikService::getInstance($router);
     }
 
@@ -44,11 +47,11 @@ class MikrotikIpPool extends Component
             $mikrotik = $this->getMikrotik();
             $routerId = auth()->user()->router->id ?? 0;
 
-            $pools = Cache::remember("mk_pools_{$routerId}", 300, function() use ($mikrotik) {
+            $pools = Cache::remember("mk_pools_{$routerId}", 300, function () use ($mikrotik) {
                 return $mikrotik->getIpPools();
             });
 
-            $this->pools = collect($pools)->map(function($pool) {
+            $this->pools = collect($pools)->map(function ($pool) {
                 $pool['id'] = $pool['.id'] ?? null;
                 return $pool;
             })->toArray();
@@ -122,10 +125,10 @@ class MikrotikIpPool extends Component
         try {
             $mikrotik = $this->getMikrotik();
             $mikrotik->removeIpPool($id);
-            
+
             $routerId = auth()->user()->router->id ?? 0;
             Cache::forget("mk_pools_{$routerId}");
-            
+
             $this->loadPools();
             session()->flash('message', 'IP Pool berhasil dihapus.');
         } catch (\Exception $e) {

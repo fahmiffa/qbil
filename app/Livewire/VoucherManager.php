@@ -51,6 +51,11 @@ class VoucherManager extends Component
             'paid_at' => now(),
         ]);
 
+        $router = auth()->user()->router;
+        if ($router && !$router->is_active) {
+            $this->dispatch('toast', type: 'warning', message: "Pembayaran terverifikasi, namun sinkronisasi MikroTik tertunda karena router '{$router->name}' nonaktif.");
+        }
+
         // Dispatch Job for Generation & MikroTik Sync
         BulkGenerateHotspotVouchersJob::dispatch(
             auth()->id(),
@@ -75,7 +80,7 @@ class VoucherManager extends Component
         $order = VoucherOrder::where('user_id', auth()->id())
             ->with(['package', 'hotspotUsers', 'user'])
             ->findOrFail($orderId);
-        
+
         if ($order->hotspotUsers->isEmpty()) {
             session()->flash('message', 'Voucher belum digenerate. Silakan tunggu atau verifikasi ulang.');
             return;
@@ -93,10 +98,10 @@ class VoucherManager extends Component
         $message .= "Paket: " . ($order->package->name ?? 'Hotspot') . "\n";
         $message .= "Jumlah: " . $order->quantity . " Voucher\n";
         $message .= "Total Bayar: Rp " . number_format($order->total_price + $order->unique_amount, 0, ',', '.') . "\n\n";
-        
+
         $message .= "*Detail Voucher Anda:*\n";
         $message .= $voucherList . "\n";
-        
+
         $message .= "Silakan gunakan akun di atas untuk login ke jaringan WiFi kami.\n\n";
         $message .= "Terima kasih!\n";
         $message .= "-- " . ($order->user->name ?? '') . " --";

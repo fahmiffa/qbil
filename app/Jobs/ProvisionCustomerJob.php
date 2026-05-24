@@ -51,8 +51,13 @@ class ProvisionCustomerJob implements ShouldQueue
                 return;
             }
 
+            if (!$router->is_active) {
+                Log::info("ProvisionCustomerJob: Router '{$router->name}' is disabled. Skipping provisioning.");
+                return;
+            }
+
             $mikrotik = MikrotikService::getInstance($router);
-            
+
             // PULL DATA: Jika MAC kosong tapi ada IP, coba tarik dari MikroTik
             $this->pullDataIfMissing($mikrotik, $this->customer);
 
@@ -80,14 +85,14 @@ class ProvisionCustomerJob implements ShouldQueue
         if ($customer->service_type === 'static' && $customer->mac_address && $customer->ip_address) {
             // Coba ubah dynamic menjadi static dulu jika ada
             $mikrotik->makeLeaseStatic($customer->mac_address);
-            
+
             // Kemudian update atau create lease static-nya
             $mikrotik->updateDhcpLeaseByMac(
-                $customer->mac_address, 
-                $customer->mac_address, 
-                $customer->ip_address, 
-                $customer->dhcp_server ?: 'all', 
-                $customer->name, 
+                $customer->mac_address,
+                $customer->mac_address,
+                $customer->ip_address,
+                $customer->dhcp_server ?: 'all',
+                $customer->name,
                 $rateLimit
             );
         } else {
@@ -139,8 +144,11 @@ class ProvisionCustomerJob implements ShouldQueue
             }
         } elseif ($customer->service_type === 'static') {
             // Cleanup legacy simple queue if any
-            try { $mikrotik->removeSimpleQueue($customer->name); } catch(\Exception $e) {}
-            
+            try {
+                $mikrotik->removeSimpleQueue($customer->name);
+            } catch (\Exception $e) {
+            }
+
             if ($customer->mac_address) {
                 $mikrotik->removeDhcpLeaseByMac($customer->mac_address);
             }
@@ -195,7 +203,7 @@ class ProvisionCustomerJob implements ShouldQueue
                     $customer->refresh();
                 }
             }
-            
+
             // Case 2: PPPOE - Sync Password from Mikrotik to DB
             if ($customer->service_type === 'pppoe' && !empty($customer->username)) {
                 $secret = $mikrotik->getPppSecretByName($customer->username);

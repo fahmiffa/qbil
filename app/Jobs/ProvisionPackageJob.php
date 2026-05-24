@@ -52,6 +52,11 @@ class ProvisionPackageJob implements ShouldQueue
 
             if (!$router) return;
 
+            if (!$router->is_active) {
+                Log::info("ProvisionPackageJob: Router '{$router->name}' is disabled. Skipping provisioning.");
+                return;
+            }
+
             $mikrotik = MikrotikService::getInstance($router);
             $rateLimit = $this->package->speed_upload . '/' . $this->package->speed_download;
 

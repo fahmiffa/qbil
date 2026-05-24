@@ -22,8 +22,7 @@ class BulkSyncToMikrotikJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public User $user)
-    {}
+    public function __construct(public User $user) {}
 
     /**
      * Execute the job.
@@ -61,6 +60,10 @@ class BulkSyncToMikrotikJob implements ShouldQueue
                 $cacheKey = $routerId ?: 0;
                 if (!isset($mikrotikCache[$cacheKey])) {
                     $router = $userRouters->get($routerId) ?? $defaultRouter;
+                    if ($router && !$router->is_active) {
+                        $mikrotikCache[$cacheKey] = null;
+                        return null;
+                    }
                     $mikrotikCache[$cacheKey] = MikrotikService::getInstance($router);
                 }
                 return $mikrotikCache[$cacheKey];
@@ -75,6 +78,11 @@ class BulkSyncToMikrotikJob implements ShouldQueue
                     // Gunakan router customer, fallback ke default
                     $mikrotik = $getMikrotik($customer->router_id ?? 0);
 
+                    if (!$mikrotik) {
+                        Log::info("BulkSyncToMikrotikJob: Skipping customer {$customer->id} because router is disabled.");
+                        continue;
+                    }
+
                     $package   = $customer->package;
                     $rateLimit = $package ? $package->getMikrotikRateLimit() : '0M/0M';
                     $profile   = $customer->ppp_profile ?? $package?->mikrotik_profile ?? 'default';
@@ -82,23 +90,23 @@ class BulkSyncToMikrotikJob implements ShouldQueue
                     if ($customer->service_type === 'static' && $customer->mac_address && $customer->ip_address) {
                         // Ensure it's static
                         $mikrotik->makeLeaseStatic($customer->mac_address);
-                        
+
                         // Update/Create Lease
                         $mikrotik->updateDhcpLeaseByMac(
-                            $customer->mac_address, 
-                            $customer->mac_address, 
-                            $customer->ip_address, 
-                            $customer->dhcp_server ?: 'all', 
-                            $customer->name, 
+                            $customer->mac_address,
+                            $customer->mac_address,
+                            $customer->ip_address,
+                            $customer->dhcp_server ?: 'all',
+                            $customer->name,
                             $rateLimit
                         );
                     } elseif ($customer->service_type === 'pppoe' && $customer->username) {
                         // Update/Create PPP Secret
                         $mikrotik->updatePppSecret(
-                            $customer->username, 
-                            $customer->username, 
-                            $customer->password, 
-                            $profile, 
+                            $customer->username,
+                            $customer->username,
+                            $customer->password,
+                            $profile,
                             $customer->name
                         );
                     }
@@ -123,7 +131,6 @@ class BulkSyncToMikrotikJob implements ShouldQueue
             foreach ($mikrotikCache as $mk) {
                 $mk->clearCache();
             }
-
         } catch (\Exception $e) {
             Log::error("BulkSyncToMikrotikJob: Fatal error: " . $e->getMessage());
         }

@@ -39,10 +39,10 @@ class IsolateCustomerJob implements ShouldQueue
                 ->where('billing_period', $currentPeriod)
                 ->where('status', 'unpaid')
                 ->exists();
-                
+
             if (!$hasUnpaid) {
                 Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan periode {$currentPeriod} sudah dibayar.");
-                
+
                 // Notify admin about cancellation
                 $user = $this->customer->user;
                 $user->notify(new \App\Notifications\SystemReportNotification(
@@ -62,9 +62,13 @@ class IsolateCustomerJob implements ShouldQueue
                     ?? $user->routers()->oldest()->first();
 
                 if ($router) {
+                    if (!$router->is_active) {
+                        Log::info("IsolateCustomerJob: Router '{$router->name}' is disabled. Skipping isolation.");
+                        return;
+                    }
                     try {
                         $mikrotik = MikrotikService::getInstance($router);
-                        
+
                         if ($this->customer->service_type === 'static' && $this->customer->ip_address) {
                             $mikrotik->addToAddressList($this->customer->ip_address, 'ISOLIR', 'Jatuh Tempo: ' . $this->customer->name);
                             Log::info("Customer {$this->customer->name} (Static) added to ISOLIR address list FROM {$this->customer->user->name}");
@@ -95,7 +99,6 @@ class IsolateCustomerJob implements ShouldQueue
                     'notif'
                 ));
             }
-
         } catch (\Exception $e) {
             Log::error("Failed to isolate customer {$this->customer->name}: " . $e->getMessage());
             throw $e; // Rethrow for retry
