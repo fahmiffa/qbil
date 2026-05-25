@@ -19,21 +19,33 @@ class CustomerDetail extends Component
     public $payment_date;
     public $selected_months = [];
     public $selected_year;
-    
+
     // For printing multiple invoices
     public $selected_invoices = [];
     public $select_all = false;
 
     public $month_names = [
-        '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
-        '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
-        '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+        '01' => 'Januari',
+        '02' => 'Februari',
+        '03' => 'Maret',
+        '04' => 'April',
+        '05' => 'Mei',
+        '06' => 'Juni',
+        '07' => 'Juli',
+        '08' => 'Agustus',
+        '09' => 'September',
+        '10' => 'Oktober',
+        '11' => 'November',
+        '12' => 'Desember'
     ];
 
     public function mount(Customer $customer)
     {
         // Pastikan customer milik user yang login
         abort_if($customer->user_id !== auth()->id(), 403);
+
+        $customer->load(['router', 'package', 'asset']);
+
         $this->customer = $customer;
         $this->payment_date = now()->format('Y-m-d\TH:i');
         $this->selected_year = now()->year;
@@ -70,7 +82,7 @@ class CustomerDetail extends Component
     public function printSelected()
     {
         if (empty($this->selected_invoices)) return;
-        
+
         $ids = implode(',', $this->selected_invoices);
         return redirect()->route('print.invoices.bulk', ['ids' => $ids]);
     }
@@ -108,11 +120,11 @@ class CustomerDetail extends Component
         \Illuminate\Support\Facades\DB::transaction(function () use ($invoiceService) {
             foreach ($this->selected_months as $monthStr) {
                 $period = $monthStr; // Y-m format
-                
+
                 $invoice = \App\Models\Invoice::where('customer_id', $this->customer->id)
                     ->where('billing_period', $period)
                     ->first();
-                
+
                 if ($invoice) {
                     // Update status lunas tanpa kode unik
                     $invoice->update([
@@ -125,7 +137,7 @@ class CustomerDetail extends Component
                 } else {
                     // Generate baru dan langsung lunas tanpa kode unik
                     $invoice = $invoiceService->generateForCustomer($this->customer, $period);
-                    
+
                     if ($invoice) {
                         $invoice->update([
                             'amount' => $this->amount_per_month,
