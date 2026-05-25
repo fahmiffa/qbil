@@ -145,6 +145,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(VoucherOrder::class);
     }
 
+    public function olts()
+    {
+        return $this->hasMany(Olt::class);
+    }
+
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);
@@ -170,7 +175,7 @@ class User extends Authenticatable implements JWTSubject
         static::deleting(function ($user) {
             // Delete related models one by one to trigger their own deleting hooks (e.g. Customer -> Invoices)
             $user->customers->each->delete();
-            
+
             // Bulk delete other related models
             $user->packages()->delete();
             $user->router()->delete();
@@ -184,7 +189,7 @@ class User extends Authenticatable implements JWTSubject
             $user->ipPools()->delete();
             $user->dhcpServers()->delete();
             $user->voucherOrders()->delete();
-            
+
             // Detach features
             $user->features()->detach();
         });

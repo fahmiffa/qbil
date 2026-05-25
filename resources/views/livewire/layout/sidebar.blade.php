@@ -107,6 +107,12 @@ new class extends Component
             </x-sidebar-link>
             @endif
 
+            @if(auth()->user()->hasFeature('olt'))
+            <x-sidebar-link :href="route('olts')" :active="request()->routeIs('olts')" icon="server">
+                OLT
+            </x-sidebar-link>
+            @endif
+
             {{-- Collapsible Paket Group --}}
             @php
             $paketActive = request()->routeIs('static-packages') || request()->routeIs('ppp-profiles') || request()->routeIs('hotspot-profiles');
