@@ -23,6 +23,7 @@ class InvoiceManager extends Component
     public $filter_status = '';
     public $filter_due_date = '';
     public $filter_service_type = '';
+    public $filter_router = '';
     public $billing_period = '';
     public $perPage = 10;
     public $paid_at;
@@ -33,11 +34,11 @@ class InvoiceManager extends Component
     public $showIsolationModal = false;
     public $isAlertDismissed = false;
 
-    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
+    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'filter_router', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
 
     public function updated($property)
     {
-        if (in_array($property, ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'billing_period', 'perPage'])) {
+        if (in_array($property, ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'filter_router', 'billing_period', 'perPage'])) {
             $this->resetPage();
         }
     }
@@ -111,7 +112,7 @@ class InvoiceManager extends Component
             'status' => 'processing'
         ];
 
-        $msg = $customerIds 
+        $msg = $customerIds
             ? "Proses generate invoice untuk " . count($customerIds) . " pelanggan terpilih telah dimulai di latar belakang."
             : "Proses generate invoice untuk SEMUA pelanggan telah dimulai di latar belakang.";
 
@@ -209,7 +210,7 @@ class InvoiceManager extends Component
         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice);
 
         $this->dispatch('toast', type: 'success', message: "Invoice {$invoice->invoice_number} ditandai sebagai LUNAS.");
-        
+
         // Log Activity
         ActivityLog::create([
             'user_id' => auth()->id(),
@@ -272,7 +273,7 @@ class InvoiceManager extends Component
         });
 
         $this->dispatch('toast', type: 'info', message: "Invoice {$invoice->invoice_number} dimasukkan ke daftar PIUTANG. Internet dibuka.");
-        
+
         // Log Activity
         ActivityLog::create([
             'user_id' => auth()->id(),
@@ -345,11 +346,11 @@ class InvoiceManager extends Component
     public function confirmSendWhatsapp($phone)
     {
         $invoice = Invoice::findOrFail($this->phoneSelectionInvoiceId);
-        
+
         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, $phone, true);
 
         $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} dikirim ke nomor {$phone}.");
-        
+
         $this->closePhoneSelectionModal();
     }
 
@@ -438,6 +439,12 @@ class InvoiceManager extends Component
             });
         }
 
+        if ($this->filter_router) {
+            $query->whereHas('customer', function ($q) {
+                $q->where('router_id', $this->filter_router);
+            });
+        }
+
         if ($this->billing_period) {
             $query->where('billing_period', $this->billing_period);
         }
@@ -486,27 +493,27 @@ class InvoiceManager extends Component
             // 1. Pelanggan yang isolir HARI INI
             $isTodayBefore = $now->format('H:i') < $isolateTime->format('H:i');
             $targetToday = $now->copy()->subDays($offsetDays);
-            
+
             // 2. Pelanggan yang isolir BESOK (Peringatan H-1)
             $targetTomorrow = $now->copy()->addDay()->subDays($offsetDays);
 
             $customersToIsolate = Customer::where('user_id', auth()->id())
                 ->where('status', 'active')
                 ->whereNotNull('due_date')
-                ->where(function($q) use ($targetToday, $targetTomorrow, $isTodayBefore) {
+                ->where(function ($q) use ($targetToday, $targetTomorrow, $isTodayBefore) {
                     if ($isTodayBefore) {
                         $q->whereDate('due_date', '=', $targetToday)
-                          ->orWhereDate('due_date', '=', $targetTomorrow);
+                            ->orWhereDate('due_date', '=', $targetTomorrow);
                     } else {
                         $q->whereDate('due_date', '=', $targetTomorrow);
                     }
                 })
-                ->whereHas('invoices', function($query) {
+                ->whereHas('invoices', function ($query) {
                     $query->where('status', 'unpaid')
                         ->where('billing_period', now()->format('Y-m'));
                 })
                 ->get();
-            
+
             if ($customersToIsolate->isNotEmpty()) {
                 $isBeforeIsolation = true;
                 if ($isTodayBefore && $customersToIsolate->contains('due_date', $targetToday->format('Y-m-d'))) {
@@ -527,7 +534,9 @@ class InvoiceManager extends Component
             ->pluck('service_type')
             ->toArray();
 
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'availableServiceTypes'))
+        $routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
+
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'availableServiceTypes', 'routers'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }
