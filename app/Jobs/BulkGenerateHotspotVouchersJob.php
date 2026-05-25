@@ -83,23 +83,30 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
 
             $cacheKey = "voucher_progress_{$this->userId}";
 
+            // Optimization 1: Load existing codes into memory for uniqueness check
+            $existingCodes = HotspotUser::where('user_id', $this->userId)
+                ->pluck('username')
+                ->flip()
+                ->toArray();
+
+            $vouchersToInsert = [];
+            $now = now();
+
             for ($i = 0; $i < $this->quantity; $i++) {
                 $code = '';
                 $isUnique = false;
 
-                // Cek keunikan kode di database
+                // Optimization 2: Unique check in memory
                 while (!$isUnique) {
                     $code = substr(str_shuffle("ABCDEFGHJKLMNPQRSTUVWXYZ23456789"), 0, 5);
-                    $exists = HotspotUser::where('user_id', $this->userId)
-                        ->where('username', $code)
-                        ->exists();
-                    if (!$exists) {
+                    if (!isset($existingCodes[$code])) {
                         $isUnique = true;
+                        $existingCodes[$code] = true; // Add to in-memory set
                     }
                 }
 
-                // 1. Save to Database
-                HotspotUser::create([
+                // Collect for Bulk Insert
+                $vouchersToInsert[] = [
                     'user_id'          => $this->userId,
                     'username'         => $code,
                     'password'         => $code,
@@ -107,21 +114,33 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                     'package_id'       => $this->packageId,
                     'voucher_order_id' => $this->voucherOrderId,
                     'valid_until'      => $validUntil,
-                ]);
+                    'created_at'       => $now,
+                    'updated_at'       => $now,
+                ];
 
-                // 2. Provision to Mikrotik
+                // Provision to Mikrotik (Still individual due to API limitations)
                 try {
                     $mikrotik->addHotspotUser($code, $code, $profile, $comment, $package->limit_time ?? '');
                 } catch (\Exception $e) {
                     Log::error("[BulkGenerateHotspotVouchersJob] MikroTik Provisioning Error: " . $e->getMessage());
                 }
 
-                // 3. Update progress in Cache (TTL 5 menit)
-                Cache::put($cacheKey, [
-                    'current' => $i + 1,
-                    'total'   => $this->quantity,
-                    'status'  => 'processing',
-                ], 300);
+                // Optimization 3: Throttle Cache update (every 10 vouchers or start/end)
+                if (($i + 1) % 10 === 0 || $i === 0 || ($i + 1) === $this->quantity) {
+                    Cache::put($cacheKey, [
+                        'current' => $i + 1,
+                        'total'   => $this->quantity,
+                        'status'  => 'processing',
+                    ], 300);
+                }
+            }
+
+            // Optimization 4: Bulk insert database records
+            if (!empty($vouchersToInsert)) {
+                $chunks = array_chunk($vouchersToInsert, 200); // Chunk to avoid SQL limits if very large
+                foreach ($chunks as $chunk) {
+                    HotspotUser::insert($chunk);
+                }
             }
 
             // Mark as done
