@@ -46,6 +46,8 @@ class User extends Authenticatable implements JWTSubject
         'role',
         'phone',
         'photo',
+        'address',
+        'status',
         'uri',
         'whatsapp_server_id',
         'allow_multi_router'

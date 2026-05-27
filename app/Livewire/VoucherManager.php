@@ -15,6 +15,7 @@ class VoucherManager extends Component
     use WithPagination;
 
     public $selectedOrderId = null;
+    public $activeTab = 'vouchers';
 
     protected $listeners = ['confirmMarkAsPaid' => 'markAsPaid'];
 

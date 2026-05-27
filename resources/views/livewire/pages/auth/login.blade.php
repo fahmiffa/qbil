@@ -38,7 +38,7 @@ new #[Layout('layouts.guest')] class extends Component
                     <circle cx="12" cy="12" r="2" />
                 </svg>
             </div>
-            <h2 class="text-3xl font-black text-white tracking-tight leading-none mb-3">{{ __('Welcome back') }}</h2>
+            <h2 class="text-3xl font-black text-white tracking-tight leading-none mb-3">{{ __('Selamat Datang') }}</h2>
             <p class="text-white/40 font-medium">{{ __('Sign in to manage your billing system.') }}</p>
         </div>
 
@@ -84,6 +84,15 @@ new #[Layout('layouts.guest')] class extends Component
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                 </button>
+            </div>
+
+            <div class="text-center pt-4 border-t border-white/5 mt-6">
+                <p class="text-sm font-bold text-white/40">
+                    {{ __('Belum punya akun?') }}
+                    <a href="{{ route('register') }}" class="text-blue-500 hover:text-blue-400 transition-colors ml-1" wire:navigate>
+                        {{ __('Daftar Sekarang') }}
+                    </a>
+                </p>
             </div>
         </form>
     </div>

@@ -7,7 +7,43 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    protected string $defaultUrl = 'https://broadcast.qlabcode.com/api/send';
+    protected string $defaultUrl = 'https://broadcast.qlabcode.com/api';
+
+    /**
+     * Check if a number is registered on WhatsApp.
+     *
+     * @param string $senderPhone
+     * @param string $targetPhone
+     * @return bool
+     */
+    public function checkNumber(string $senderPhone, string $targetPhone): bool
+    {
+        $baseApiUrl = $this->defaultUrl;
+
+        $user = \App\Models\User::where('phone', $senderPhone)->with('whatsappServer')->first();
+        if ($user && $user->whatsappServer && !empty($user->whatsappServer->api_url)) {
+            $baseApiUrl = $user->whatsappServer->api_url;
+        }
+
+        $apiUrl = rtrim($baseApiUrl, '/') . '/number';
+
+        // Format target phone (replace leading 0 with 62)
+        if (str_starts_with($targetPhone, '0')) {
+            $targetPhone = '62' . substr($targetPhone, 1);
+        }
+
+        try {
+            $response = Http::timeout(10)->post($apiUrl, [
+                'number' => $senderPhone,
+                'to' => $targetPhone
+            ]);
+
+            return $response->successful() && $response->json('status') === true;
+        } catch (\Exception $e) {
+            Log::error("[WhatsappService] checkNumber failed: " . $e->getMessage());
+            return false;
+        }
+    }
 
     /**
      * Send WhatsApp message.
@@ -20,12 +56,15 @@ class WhatsappService
     public function sendMessage(string $senderPhone, string $receiverPhone, string $message): bool
     {
         // Resolve dynamic Base URL from User's assigned WhatsApp Server
-        $apiUrl = $this->defaultUrl;
-        
+        $baseApiUrl = $this->defaultUrl;
+
         $user = \App\Models\User::where('phone', $senderPhone)->with('whatsappServer')->first();
         if ($user && $user->whatsappServer && !empty($user->whatsappServer->api_url)) {
-            $apiUrl = $user->whatsappServer->api_url;
+            $baseApiUrl = $user->whatsappServer->api_url;
         }
+
+        // Hardcode endpoint /send on top of base URL
+        $apiUrl = rtrim($baseApiUrl, '/') . '/send';
 
         // Format receiver phone (replace leading 0 with 62)
         if (str_starts_with($receiverPhone, '0')) {

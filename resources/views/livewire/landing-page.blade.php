@@ -17,7 +17,7 @@
                         <circle cx="12" cy="12" r="2" />
                     </svg>
                 </div>
-                <span class="text-2xl font-black tracking-tighter uppercase italic">QBILL</span>
+                <span class="text-2xl font-black tracking-tighter uppercase italic">QBIL</span>
             </div>
 
             <div class="hidden md:flex items-center gap-8 text-sm font-bold text-white/60">
@@ -26,7 +26,10 @@
             </div>
 
             <div class="flex items-center gap-4">
-                <a href="{{ route('login') }}" class="bg-white text-black px-8 py-2.5 rounded-full font-black text-sm hover:bg-blue-500 hover:text-white transition-all transform active:scale-95 shadow-lg shadow-white/5 uppercase tracking-[0.2em]">
+                <a href="{{ route('register') }}" class="hidden sm:block text-white/60 hover:text-white font-black text-xs transition-all uppercase tracking-[0.2em] px-2 py-2" wire:navigate>
+                    Daftar
+                </a>
+                <a href="{{ route('login') }}" class="bg-white text-black px-8 py-2.5 rounded-full font-black text-sm hover:bg-blue-500 hover:text-white transition-all transform active:scale-95 shadow-lg shadow-white/5 uppercase tracking-[0.2em]" wire:navigate>
                     Login
                 </a>
             </div>
@@ -53,11 +56,15 @@
                 Sistem billing otomatis, manajemen pelanggan terpadu, dan<br class="hidden md:block" /> pelaporan real-time untuk bisnis ISP rumahan Anda.
             </p>
 
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="#harga" class="group bg-gradient-to-r from-blue-500 to-blue-600 p-[1px] rounded-2xl shadow-2xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">
-                    <div class="bg-black/20 group-hover:bg-transparent transition-colors px-10 py-4 rounded-[15px] flex items-center gap-3">
-                        <span class="font-black text-lg uppercase tracking-widest">Cek Simulasi Harga</span>
-                        <svg class="size-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <a href="{{ route('register') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-black text-lg shadow-2xl shadow-blue-600/30 transition-all transform active:scale-95 uppercase tracking-[0.2em]" wire:navigate>
+                    Daftar Sekarang
+                </a>
+
+                <a href="#harga" class="group bg-white/5 hover:bg-white/10 border border-white/10 px-10 py-4 rounded-2xl transition-all active:scale-95">
+                    <div class="flex items-center gap-3">
+                        <span class="font-black text-lg uppercase tracking-widest text-white/60 group-hover:text-white">Cek Simulasi Harga</span>
+                        <svg class="size-5 transition-transform group-hover:translate-x-1 text-white/40 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </div>
