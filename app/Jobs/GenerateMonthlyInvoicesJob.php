@@ -33,7 +33,10 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
      */
     public int $timeout = 300;
 
-    public function __construct(public readonly string $period) {}
+    public function __construct(
+        public readonly string $period,
+        public readonly ?int $userId = null
+    ) {}
 
     /**
      * Unique key — dibuat unik per jam agar pengecekan setiap jam
@@ -60,7 +63,11 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
         $totalGenerated = 0;
         $now = now();
 
-        $users = User::with('appSetting')->get();
+        $query = User::with('appSetting');
+        if ($this->userId) {
+            $query->where('id', $this->userId);
+        }
+        $users = $query->get();
 
         foreach ($users as $user) {
             $setting = $user->appSetting;
@@ -69,10 +76,14 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            // Cek apakah waktu sekarang sesuai dengan konfigurasi waktu eksekusi (Jam & Menit)
-            $configTime = Carbon::parse($setting->invoice_gen_time)->format('H:i');
-            if ($now->format('H:i') !== $configTime) {
-                continue;
+            // Jika dipicu secara otomatis oleh scheduler (tanpa period manual),
+            // kita sudah memfilter waktu di level Command. 
+            // Namun jika period diisi manual (cli), kita tetap proses.
+            if (!$this->period && !$this->userId) {
+                $configTime = Carbon::parse($setting->invoice_gen_time)->format('H:i');
+                if ($now->format('H:i') !== $configTime) {
+                    continue;
+                }
             }
 
             $offsetDays = (int) $setting->invoice_gen_days;
@@ -100,20 +111,20 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 // Cek apakah hari ini adalah tanggal eksekusi (berdasarkan hari jatuh tempo + offset)
                 $originalDueDate = Carbon::parse($customer->due_date);
                 $dueDay = $originalDueDate->format('d');
-                
+
                 // Hitung kapan jatuh tempo seharusnya jika invoice digenerate hari ini
                 $calculatedDueDate = $now->copy()->subDays($offsetDays);
-                
+
                 if ($calculatedDueDate->format('d') !== $dueDay) {
                     continue;
                 }
-                
+
                 // Tentukan periode billing berdasarkan tanggal jatuh tempo yang dihitung
                 $targetPeriod = $this->period ?: $calculatedDueDate->format('Y-m');
                 $lastTargetPeriod = $targetPeriod;
-                
+
                 // Log::info("[customer: {$user->name} {$customer->name} {$customer->due_date}  {$targetPeriod}]");
-                
+
                 try {
                     $invoiceService = new \App\Services\InvoiceService();
                     $invoice = $invoiceService->generateForCustomer($customer, $targetPeriod);

@@ -26,8 +26,22 @@ class SendInvoiceReminders extends Command
      */
     public function handle(): void
     {
-        SendInvoiceRemindersJob::dispatch();
+        $now = now();
+        $currentTime = $now->format('H:i');
 
-        $this->info('Job SendInvoiceReminders telah di-dispatch ke queue.');
+        // Cari user yang memiliki setting reminder_1_time atau reminder_2_time cocok dengan waktu sekarang
+        $users = \App\Models\User::whereHas('appSetting', function ($query) use ($currentTime) {
+            $query->where('reminder_1_time', $currentTime)
+                ->orWhere('reminder_2_time', $currentTime);
+        })->get();
+
+        if ($users->isEmpty()) {
+            return;
+        }
+
+        foreach ($users as $user) {
+            SendInvoiceRemindersJob::dispatch($user->id);
+            // $this->info("Job SendInvoiceReminders di-dispatch untuk user: {$user->name}");
+        }
     }
 }

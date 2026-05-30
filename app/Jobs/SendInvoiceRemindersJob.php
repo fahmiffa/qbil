@@ -18,6 +18,8 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public function __construct(public readonly ?int $userId = null) {}
+
     /**
      * Jumlah percobaan ulang jika job gagal.
      * Set 1 karena retry bisa menyebabkan WA reminder terkirim 2x ke pelanggan.
@@ -53,12 +55,16 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
     {
         // Log::info('[SendInvoiceRemindersJob] Mulai pengecekan pengingat tagihan...');
 
-        $invoices = Invoice::whereHas('customer', function ($q) {
-                $q->where('wa_notify', true);
-            })
+        $invoicesQuery = Invoice::whereHas('customer', function ($q) {
+            $q->where('wa_notify', true);
+            if ($this->userId) {
+                $q->where('user_id', $this->userId);
+            }
+        })
             ->with(['customer.user', 'customer.package', 'customer.user.appSetting'])
-            ->where('status', 'unpaid')
-            ->get();
+            ->where('status', 'unpaid');
+
+        $invoices = $invoicesQuery->get();
 
         $now = now();
         $pendingReminders = []; // Grouped by User ID: [userId => [ [phone, message, customer_name], ... ]]
@@ -66,7 +72,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
         foreach ($invoices as $invoice) {
             $customer   = $invoice->customer;
             $user       = $customer->user;
-            
+
             if (!$user || !$user->hasFeature('whatsapp') || (!$user->hasFeature('static') && !$user->hasFeature('pppoe'))) {
                 continue;
             }
@@ -125,8 +131,8 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $publicUrl = route('public.invoice', ['invoice' => $invoice->id]);
 
             // Pilih template
-            $selectedTemplate = ($reminderType === 2 && !empty($appSetting->template_2)) 
-                ? $appSetting->template_2 
+            $selectedTemplate = ($reminderType === 2 && !empty($appSetting->template_2))
+                ? $appSetting->template_2
                 : $appSetting->template;
 
             $message = $whatsappService->formatMessage($selectedTemplate, [
@@ -150,7 +156,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 'sender_phone' => $user->phone ?? '',
                 'target_phone' => $customer->phone,
                 'message'      => $message,
-                'customer_name'=> $customer->name,
+                'customer_name' => $customer->name,
                 'user'         => $user
             ];
 
@@ -160,7 +166,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                     'sender_phone' => $user->phone ?? '',
                     'target_phone' => $customer->phone2,
                     'message'      => $message,
-                    'customer_name'=> $customer->name . " (WA 2)",
+                    'customer_name' => $customer->name . " (WA 2)",
                     'user'         => $user
                 ];
             }
@@ -170,14 +176,14 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
         $totalDispatched = 0;
         foreach ($pendingReminders as $userId => $reminders) {
             $chunks = array_chunk($reminders, 25);
-            
+
             foreach ($chunks as $chunkIndex => $chunk) {
                 $baseDelaySeconds = $chunkIndex * 3600; // Jeda 1 jam (3600 detik) per batch 20 nomor
-                
+
                 foreach ($chunk as $msgIndex => $data) {
                     // Delay mikro 10 detik antar nomor dalam satu batch agar lebih aman
                     $individualDelay = $baseDelaySeconds + ($msgIndex * 10);
-                    
+
                     SendWhatsAppMessageJob::dispatch(
                         $data['sender_phone'],
                         $data['target_phone'],

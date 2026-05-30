@@ -26,11 +26,30 @@ class GenerateMonthlyInvoices extends Command
      */
     public function handle(): void
     {
-        // Kosongkan default period agar Job bisa menghitung dinamis (bulan depan/bulan ini)
         $period = $this->argument('period') ?: '';
+        $now = now();
 
-        GenerateMonthlyInvoicesJob::dispatch($period);
+        // Cari user yang memiliki setting invoice_gen_time cocok dengan waktu sekarang (H:i)
+        // Jika period diisi manual via CLI, kita abaikan filter waktu dan proses semua.
+        if ($period) {
+            GenerateMonthlyInvoicesJob::dispatch($period);
+            $this->info("Job GenerateMonthlyInvoices telah di-dispatch untuk periode: {$period}");
+            return;
+        }
 
-        // $this->info("Job GenerateMonthlyInvoices telah di-dispatch untuk periode: {$period}");
+        $currentTime = $now->format('H:i');
+
+        $users = \App\Models\User::whereHas('appSetting', function ($query) use ($currentTime) {
+            $query->where('invoice_gen_time', $currentTime);
+        })->get();
+
+        if ($users->isEmpty()) {
+            return;
+        }
+
+        foreach ($users as $user) {
+            GenerateMonthlyInvoicesJob::dispatch($period, $user->id);
+            // $this->info("Job GenerateMonthlyInvoices di-dispatch untuk user: {$user->name}");
+        }
     }
 }
