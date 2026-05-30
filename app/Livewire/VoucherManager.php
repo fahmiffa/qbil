@@ -115,6 +115,33 @@ class VoucherManager extends Component
         session()->flash('message', 'Pesan WhatsApp sedang dikirim ke antrean sistem.');
     }
 
+    public function syncVoucherAccounts($orderId)
+    {
+        $order = VoucherOrder::where('user_id', auth()->id())
+            ->withCount('hotspotUsers')
+            ->findOrFail($orderId);
+
+        if ($order->payment_status !== 'paid') {
+            $this->dispatch('toast', type: 'error', message: "Hanya pesanan lunas yang dapat disinkronkan.");
+            return;
+        }
+
+        if ($order->hotspot_users_count > 0) {
+            $this->dispatch('toast', type: 'info', message: "Akun voucher sudah dibuat untuk pesanan ini.");
+            return;
+        }
+
+        // Jika belum ada akun, jalankan Job Generate
+        BulkGenerateHotspotVouchersJob::dispatch(
+            auth()->id(),
+            $order->package_id,
+            $order->quantity,
+            $order->id
+        );
+
+        $this->dispatch('toast', type: 'success', message: "Sinkronisasi sedang diproses. Voucher akan segera muncul.");
+    }
+
     public function render()
     {
         $orders = VoucherOrder::where('user_id', auth()->id())

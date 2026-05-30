@@ -12,3 +12,4 @@ Schedule::command('invoice:generate')->everyMinute();
 Schedule::command('invoice:remind')->everyMinute()->withoutOverlapping();
 Schedule::command('billing:check-due')->everyMinute();
 Schedule::command('hotspot:cleanup-expired')->hourly();
+Schedule::command('voucher:cleanup')->hourly();
