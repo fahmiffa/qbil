@@ -127,7 +127,9 @@ class VoucherManager extends Component
         }
 
         if ($order->hotspot_users_count > 0) {
-            $this->dispatch('toast', type: 'info', message: "Akun voucher sudah dibuat untuk pesanan ini.");
+            // Jika sudah ada akun di DB, paksa sinkron ke MikroTik
+            \App\Jobs\SyncVoucherToMikrotikJob::dispatch($order->id);
+            $this->dispatch('toast', type: 'success', message: "Pengecekan akun selesai. Sinkronisasi ulang ke MikroTik sedang diproses.");
             return;
         }
 
@@ -139,7 +141,7 @@ class VoucherManager extends Component
             $order->id
         );
 
-        $this->dispatch('toast', type: 'success', message: "Sinkronisasi sedang diproses. Voucher akan segera muncul.");
+        $this->dispatch('toast', type: 'success', message: "Pengecekan akun selesai. Pembuatan akun dan sinkronisasi MikroTik sedang diproses.");
     }
 
     public function render()
