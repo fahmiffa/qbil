@@ -46,18 +46,29 @@ class BulkGenerateHotspotVouchersJob implements ShouldQueue
                 Log::warning("[BulkGenerateHotspotVouchersJob] MikroTik feature disabled for user {$this->userId}");
                 return;
             }
-            $router = Router::where('user_id', $this->userId)->first();
+            $package = Package::find($this->packageId);
+            if (!$package) {
+                Log::warning("[BulkGenerateHotspotVouchersJob] Package not found: {$this->packageId}");
+                return;
+            }
+
+            // Pilih router: Dari paket (jika ada), fallback ke pertama
+            $routerId = $package->router_id;
+            if ($routerId) {
+                $router = Router::where('id', $routerId)->where('user_id', $this->userId)->first();
+            } else {
+                $router = Router::where('user_id', $this->userId)->first();
+            }
+
             if (!$router) {
                 Log::warning("[BulkGenerateHotspotVouchersJob] No router found for user {$this->userId}");
                 return;
             }
 
             if (!$router->is_active) {
-                Log::info("[BulkGenerateHotspotVouchersJob] Router '{$router->name}' is disabled. Skipping generation.");
+                Log::info("[BulkGenerateHotspotVouchersJob] Router '{$router->name}' (ID: {$router->id}) is disabled. Skipping generation.");
                 return;
             }
-
-            $package = Package::find($this->packageId);
             if (!$package) {
                 Log::warning("[BulkGenerateHotspotVouchersJob] Package not found: {$this->packageId}");
                 return;

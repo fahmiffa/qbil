@@ -19,17 +19,24 @@ class SyncVoucherToMikrotikJob implements ShouldQueue
         try {
             $order = \App\Models\VoucherOrder::with(['hotspotUsers', 'package', 'user'])->findOrFail($this->orderId);
             $user = $order->user;
+            $package = $order->package;
 
             if (!$user->hasFeature('mikrotik')) {
                 return;
             }
 
-            $router = \App\Models\Router::where('user_id', $user->id)->first();
+            // Pilih router: Dari paket (jika ada), fallback ke pertama
+            $routerId = $package->router_id;
+            if ($routerId) {
+                $router = \App\Models\Router::where('id', $routerId)->where('user_id', $user->id)->first();
+            } else {
+                $router = \App\Models\Router::where('user_id', $user->id)->first();
+            }
+
             if (!$router || !$router->is_active) {
                 return;
             }
 
-            $package = $order->package;
             $profile = $package->mikrotik_profile ?: 'default';
             $mikrotik = \App\Services\MikrotikService::getInstance($router);
 
