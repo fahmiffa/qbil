@@ -189,6 +189,18 @@
                             </label>
                             @endforeach
                         </div>
+
+                        @if(count($available_methods) > 0)
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Metode Pembayaran</label>
+                            <select wire:model="selected_payment_method" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-200 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500 transition-all font-bold appearance-none">
+                                <option value="">Pilih Metode (Opsional)</option>
+                                @foreach($available_methods as $method)
+                                <option value="{{ $method->nama }}">{{ $method->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
                     </div>
 
                     <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-col gap-4">

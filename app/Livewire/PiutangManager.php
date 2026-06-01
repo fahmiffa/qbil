@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Piutang;
 use App\Models\ActivityLog;
+use App\Models\MethodPayment;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -21,6 +22,8 @@ class PiutangManager extends Component
     public $selectedCustomerName;
     public $availablePiutangs = [];
     public $selectedPiutangIds = [];
+    public $selected_payment_method = '';
+    public $available_methods = [];
 
     public function render()
     {
@@ -63,13 +66,18 @@ class PiutangManager extends Component
             ->toArray();
 
         $this->selectedPiutangIds = array_column($this->availablePiutangs, 'id');
+
+        // Load available payment methods
+        $this->available_methods = MethodPayment::where('user_id', auth()->id())->get();
+        $this->selected_payment_method = '';
+
         $this->isOpen = true;
     }
 
     public function closeModal()
     {
         $this->isOpen = false;
-        $this->reset(['selectedCustomerId', 'selectedCustomerName', 'availablePiutangs', 'selectedPiutangIds']);
+        $this->reset(['selectedCustomerId', 'selectedCustomerName', 'availablePiutangs', 'selectedPiutangIds', 'selected_payment_method', 'available_methods']);
     }
 
     public function confirmPayment()
@@ -85,7 +93,8 @@ class PiutangManager extends Component
         foreach ($piutangs as $piutang) {
             $piutang->update([
                 'status' => 'paid',
-                'paid_at' => now()
+                'paid_at' => now(),
+                'payment_method' => $this->selected_payment_method ?: null
             ]);
             $totalPaid++;
         }
@@ -116,7 +125,8 @@ class PiutangManager extends Component
         foreach ($piutangs as $piutang) {
             $piutang->update([
                 'status' => 'paid',
-                'paid_at' => now()
+                'paid_at' => now(),
+                'payment_method' => $this->selected_payment_method ?: null
             ]);
             $updatedRows++;
         }

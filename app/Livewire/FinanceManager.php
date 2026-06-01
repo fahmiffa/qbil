@@ -16,9 +16,10 @@ class FinanceManager extends Component
     public $startDate;
     public $endDate;
     public $filterType = 'all'; // all, income, expense
+    public $filterPaymentMethod = '';
     public $perPage = 20;
 
-    
+
     // Form fields for manual entry
     public $isOpen = false;
     public $type = 'expense';
@@ -35,7 +36,7 @@ class FinanceManager extends Component
         'Gaji / Operasional',
         'Lain-lain'
     ];
-    
+
     public $incomeCategories = [
         'Pemasangan Baru',
         'Donasi / Tip',
@@ -52,7 +53,7 @@ class FinanceManager extends Component
 
     public function updated($property)
     {
-        if (in_array($property, ['startDate', 'endDate', 'filterType', 'perPage'])) {
+        if (in_array($property, ['startDate', 'endDate', 'filterType', 'filterPaymentMethod', 'perPage'])) {
             $this->resetPage();
         }
     }
@@ -115,7 +116,7 @@ class FinanceManager extends Component
         $syncedCount = 0;
 
         // 1. Sync Invoices
-        $invoices = Invoice::whereHas('customer', function($q) use ($userId) {
+        $invoices = Invoice::whereHas('customer', function ($q) use ($userId) {
             $q->where('user_id', $userId);
         })->where('status', 'paid')->get();
 
@@ -137,6 +138,7 @@ class FinanceManager extends Component
                     'reference_type' => Invoice::class,
                     'reference_id' => $invoice->id,
                     'transaction_date' => $invoice->paid_at ?? $invoice->updated_at ?? now(),
+                    'payment_method' => $invoice->payment_method,
                 ]);
                 $syncedCount++;
             }
@@ -187,6 +189,7 @@ class FinanceManager extends Component
                     'reference_type' => \App\Models\Piutang::class,
                     'reference_id' => $piutang->id,
                     'transaction_date' => $piutang->paid_at ?? $piutang->updated_at ?? now(),
+                    'payment_method' => $piutang->payment_method,
                 ]);
                 $syncedCount++;
             }
@@ -215,17 +218,24 @@ class FinanceManager extends Component
             $query->where('type', $this->filterType);
         }
 
+        if ($this->filterPaymentMethod) {
+            $query->where('payment_method', $this->filterPaymentMethod);
+        }
+
         // Determine pagination
         $paginationCount = $this->perPage === 'all' ? ($query->count() > 0 ? $query->count() : 1) : $this->perPage;
 
         // Fetch paginated data
         $transactions = $query->orderBy('transaction_date', 'desc')->paginate($paginationCount);
 
+        $user_payment_methods = \App\Models\MethodPayment::where('user_id', auth()->id())->get();
+
         return view('livewire.finance-manager', [
             'transactions' => $transactions,
             'totalIncome' => $totalIncome,
             'totalExpense' => $totalExpense,
             'netProfit' => $netProfit,
+            'user_payment_methods' => $user_payment_methods,
         ])->layout('layouts.app');
     }
 }

@@ -2,16 +2,13 @@
     <div class="w-full py-6 sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-3xl border border-slate-100 dark:border-slate-700 transition-colors">
             <div class="p-8">
-                
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Konfigurasi Sistem & Notifikasi</h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold mt-1">Kelola otomasi tagihan, isolir, dan template pesan WhatsApp</p>
                     </div>
                 </div>
-
                 <form wire:submit.prevent="save" class="space-y-8">
-                    
                     @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
                     <!-- SECTION: OTOMASI SISTEM -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 bg-slate-50/50 dark:bg-slate-900/30 rounded-[2rem] border border-slate-100 dark:border-slate-700 transition-colors">
@@ -19,11 +16,13 @@
                         <div class="space-y-4">
                             <div class="flex items-center gap-3 mb-2">
                                 <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
                                 </div>
                                 <label class="font-black text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">Otomasi: Generate Invoice</label>
                             </div>
-                            
+
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block">Rentang Hari</span>
@@ -48,11 +47,13 @@
                         <div class="space-y-4">
                             <div class="flex items-center gap-3 mb-2">
                                 <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
                                 </div>
                                 <label class="font-black text-xs text-red-600 dark:text-red-400 uppercase tracking-[0.2em]">Otomasi: Isolir Otomatis</label>
                             </div>
-                            
+
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Rentang Hari</span>
@@ -78,7 +79,7 @@
                     @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
                     <!-- SECTION: JADWAL NOTIFIKASI & TEMPLATE -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        
+
                         {{-- Notifikasi 1 --}}
                         <div class="space-y-4 p-6 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100/50 dark:border-blue-800/30">
                             <div class="flex items-center justify-between mb-4">
@@ -154,7 +155,9 @@
                             </div>
                         </div>
                         <div class="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 text-slate-400 dark:text-slate-600">
-                            <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 11H7V9h2v2zm4 0h-2V9h2v2zm4 0h-2V9h2v2z"/></svg>
+                            <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 11H7V9h2v2zm4 0h-2V9h2v2zm4 0h-2V9h2v2z" />
+                            </svg>
                         </div>
                     </div>
 
@@ -195,7 +198,49 @@
                     </div>
                 </form>
 
+                <!-- SECTION: METODE PEMBAYARAN -->
+                <div class="mt-12 p-6 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-[2rem] shadow-sm transition-all hover:shadow-md">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                        <label class="font-black text-xs text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em]">Metode Pembayaran</label>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="flex gap-2">
+                                <input wire:model="new_method_name" type="text" class="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl text-sm px-4 py-2.5 font-bold focus:ring-2 focus:ring-indigo-500" placeholder="Tambah Nama Metode (ex: Bank BCA, Dana, dll)">
+                                <button type="button" wire:click="addMethod" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-indigo-500/20">
+                                    Tambah
+                                </button>
+                            </div>
+                            @error('new_method_name') <span class="text-[10px] text-red-500 mt-1 font-bold">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-3">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Daftar Metode</span>
+                            <div class="flex flex-wrap gap-2">
+                                @forelse($methods as $method)
+                                <div class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm group">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ $method->nama }}</span>
+                                    <button type="button" wire:click="deleteMethod({{ $method->id }})" class="text-slate-400 hover:text-red-500 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                @empty
+                                <div class="text-[10px] font-bold text-slate-400 uppercase italic">Belum ada metode pembayaran.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 </div>

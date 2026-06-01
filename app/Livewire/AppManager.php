@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\AppSetting;
 use App\Models\ActivityLog;
+use App\Models\MethodPayment;
 use Livewire\Component;
 
 class AppManager extends Component
@@ -14,7 +15,7 @@ class AppManager extends Component
     public $payment_template = "@{user_name}\n*{user_name}*\nAlhamdulillah Semoga Allah SWT. Selalu memberikan Keberkahan,Kesehatan dan Kemudahan Rizki Kepada Kita semua,Amiin\n\nBerikut terlampir kwitansi pembayaran yang baru saja dilakukan silahkan di download\n\nNama : {name}\nAlamat : {address}\nJumlah Bayar : Rp. {amount}\nUntuk Pembayaran : {package_name}\nBulan : {period}\nJatuh Tempo : {due_date}\nDownload Bukti Pembayaran: {public_url}\nKami Ucapkan Terimakasih\n\n*@{user_name}*\n\nTerima Kasih,\nAdmin @{user_name}";
     public $payment_instruction = "";
     public $qr = "";
-    
+
     public $reminder_1_days = -1;
     public $reminder_1_time = '08:00';
     public $reminder_2_days = 0;
@@ -24,6 +25,9 @@ class AppManager extends Component
     public $invoice_gen_time = '00:00';
     public $isolate_days = 0;
     public $isolate_time = '00:05';
+
+    public $new_method_name = "";
+    public $methods = [];
 
     public function rules()
     {
@@ -56,7 +60,7 @@ class AppManager extends Component
                             return;
                         }
                     }
-                    
+
                     // Cek terhadap waktu notifikasi pertama (jika harinya sama)
                     if ($this->reminder_2_days == $this->reminder_1_days) {
                         if ($value <= $this->reminder_1_time) {
@@ -115,6 +119,8 @@ class AppManager extends Component
             $this->isolate_days = $setting->isolate_days;
             $this->isolate_time = $setting->isolate_time;
         }
+
+        $this->methods = MethodPayment::where('user_id', auth()->id())->get();
     }
 
     public function save()
@@ -174,6 +180,29 @@ class AppManager extends Component
         } catch (\Exception $e) {
             $this->dispatch('toast', type: 'error', message: 'Gagal menyimpan pengaturan: ' . $e->getMessage());
         }
+    }
+
+    public function addMethod()
+    {
+        $this->validate([
+            'new_method_name' => 'required|string|max:255'
+        ]);
+
+        MethodPayment::create([
+            'user_id' => auth()->id(),
+            'nama' => $this->new_method_name
+        ]);
+
+        $this->new_method_name = "";
+        $this->methods = MethodPayment::where('user_id', auth()->id())->get();
+        $this->dispatch('toast', type: 'success', message: 'Metode pembayaran berhasil ditambahkan.');
+    }
+
+    public function deleteMethod($id)
+    {
+        MethodPayment::where('user_id', auth()->id())->where('id', $id)->delete();
+        $this->methods = MethodPayment::where('user_id', auth()->id())->get();
+        $this->dispatch('toast', type: 'success', message: 'Metode pembayaran berhasil dihapus.');
     }
 
     public function render()

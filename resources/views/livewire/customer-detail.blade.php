@@ -198,6 +198,7 @@
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Jatuh Tempo</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tgl Bayar</th>
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Catatan</th>
                                 <th class="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Aksi</th>
                             </tr>
                         </thead>
@@ -238,6 +239,9 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-xs text-slate-600 dark:text-slate-400">{{ $invoice->paid_at ? $invoice->paid_at->translatedFormat('d F Y') : '-' }}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-[10px] text-slate-500 italic line-clamp-1 max-w-[120px]" title="{{ $invoice->notes }}">{{ $invoice->notes ?: '-' }}</p>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <a href="{{ route('public.invoice', $invoice->id) }}" target="_blank"
@@ -347,20 +351,42 @@
                         </div>
                     </div>
 
-                    <!-- Input Harga Per Bulan (Optional Override) -->
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Biaya Per Bulan (Manual)</label>
-                        <input type="number" wire:model.live.debounce.500ms="amount_per_month" wire:change="calculateTotal"
-                            class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-bold shadow-inner ring-1 ring-slate-100 dark:ring-slate-800">
+                        <input type="number" wire:model.live.debounce.500ms="amount_per_month" wire:change="calculateTotal" readonly
+                            class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-4 py-3 text-xs focus:ring-0 outline-none transition-all text-slate-500 dark:text-slate-400 font-bold shadow-inner ring-1 ring-slate-100 dark:ring-slate-800 cursor-not-allowed">
                         @error('amount_per_month') <p class="text-red-500 text-[10px] mt-1 font-bold">{{ $message }}</p> @enderror
                     </div>
+
+                    <!-- Diskon -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Diskon (Nominal)</label>
+                        <input type="number" wire:model.live.debounce.500ms="discount" wire:change="calculateTotal"
+                            class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-bold shadow-inner ring-1 ring-slate-100 dark:ring-slate-800">
+                        @error('discount') <p class="text-red-500 text-[10px] mt-1 font-bold">{{ $message }}</p> @enderror
+                    </div>
+
+                    @if(count($available_methods) > 0)
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5 ml-1">Metode Pembayaran</label>
+                        <select wire:model="selected_payment_method" class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-bold shadow-inner ring-1 ring-slate-100 dark:ring-slate-800 appearance-none">
+                            <option value="">Pilih Metode (Opsional)</option>
+                            @foreach($available_methods as $method)
+                            <option value="{{ $method->nama }}">{{ $method->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
 
                     <!-- Total Calculation -->
                     <div class="bg-blue-50 dark:bg-slate-950 rounded-3xl p-6 overflow-hidden relative shadow-sm border border-blue-100 dark:border-slate-800">
                         <div class="relative z-10">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-[10px] font-bold text-blue-600/70 dark:text-slate-500 uppercase tracking-[0.2em]">Kalkulasi Total</span>
-                                <span class="text-[10px] text-blue-600/70 dark:text-slate-500 font-bold uppercase tracking-widest">{{ $months_count }} Bln x Rp {{ number_format($amount_per_month, 0, ',', '.') }}</span>
+                                <span class="text-[10px] text-blue-600/70 dark:text-slate-500 font-bold uppercase tracking-widest">
+                                    ({{ $months_count }} Bln x Rp {{ number_format($amount_per_month, 0, ',', '.') }})
+                                    @if($discount > 0) - Disc: Rp {{ number_format($discount, 0, ',', '.') }} @endif
+                                </span>
                             </div>
                             <div class="text-3xl font-black text-blue-700 dark:text-white flex items-end gap-1">
                                 <span class="text-sm text-blue-500 mb-1.5 font-black uppercase tracking-tighter">Rp</span>
@@ -374,7 +400,8 @@
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Catatan Internal</label>
                         <textarea wire:model="notes" rows="2" placeholder="Keterangan tambahan..."
-                            class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium shadow-inner ring-1 ring-slate-100 dark:ring-slate-800"></textarea>
+                            class="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium shadow-inner ring-1 ring-slate-100 dark:ring-slate-800 {{ $errors->has('notes') ? 'ring-2 ring-red-500' : '' }}"></textarea>
+                        @error('notes') <p class="text-red-500 text-[10px] mt-1 font-bold">{{ $message }}</p> @enderror
                     </div>
                 </div>
 

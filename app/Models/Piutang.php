@@ -12,7 +12,15 @@ class Piutang extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'customer_id', 'invoice_id', 'user_id', 'amount', 'billing_period', 'status', 'notes', 'paid_at'
+        'customer_id',
+        'invoice_id',
+        'user_id',
+        'amount',
+        'billing_period',
+        'status',
+        'notes',
+        'paid_at',
+        'payment_method'
     ];
 
     protected $casts = [
@@ -49,14 +57,14 @@ class Piutang extends Model
                         'type' => 'income',
                         'amount' => $piutang->amount,
                         'category' => 'Pelunasan Piutang',
-                        'description' => 'Pelunasan piutang dari invoice ' . ($piutang->invoice->invoice_number ?? $piutang->billing_period),
+                        'description' => 'Pelunasan piutang dari invoice ' . ($piutang->invoice->invoice_number ?? $piutang->billing_period) . ($piutang->payment_method ? ' via ' . $piutang->payment_method : ''),
                         'reference_type' => self::class,
                         'reference_id' => $piutang->id,
                         'transaction_date' => $piutang->paid_at ?? now(),
+                        'payment_method' => $piutang->payment_method,
                     ]);
                 }
             }
         });
     }
 }
-

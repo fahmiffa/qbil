@@ -10,9 +10,9 @@
 
             <!-- Flash Messages -->
             @if (session()->has('message'))
-                <div class="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded relative" role="alert">
-                    <span class="block sm:inline">{{ session('message') }}</span>
-                </div>
+            <div class="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded relative" role="alert">
+                <span class="block sm:inline">{{ session('message') }}</span>
+            </div>
             @endif
 
             <!-- Summary Cards -->
@@ -72,7 +72,7 @@
             <!-- Main Content Area -->
             <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-slate-700">
                 <div class="p-6">
-                    
+
                     <!-- Filters & Actions -->
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 mb-6">
                         <div class="grid grid-cols-2 lg:flex w-full lg:w-auto gap-3">
@@ -101,8 +101,19 @@
                                     <option value="all">Semua</option>
                                 </select>
                             </div>
+                            @if(count($user_payment_methods) > 0)
+                            <div class="col-span-1">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Metode Bayar</label>
+                                <select wire:model.live="filterPaymentMethod" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500">
+                                    <option value="">Semua</option>
+                                    @foreach($user_payment_methods as $method)
+                                    <option value="{{ $method->nama }}">{{ $method->nama }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
                         </div>
-                        
+
                         <div class="w-full lg:w-auto mt-2 lg:mt-0 flex flex-col sm:flex-row gap-3">
                             <button wire:click="syncOldData" wire:loading.attr="disabled" class="w-full lg:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
                                 <svg wire:loading.class="animate-spin" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -111,7 +122,7 @@
                                 <span wire:loading.remove wire:target="syncOldData">Sinkronisasi Data</span>
                                 <span wire:loading wire:target="syncOldData">Menyingkronkan...</span>
                             </button>
-                            
+
                             <button wire:click="openModal" class="w-full lg:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -136,53 +147,53 @@
                             </thead>
                             <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
                                 @forelse($transactions as $t)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
-                                            {{ $t->transaction_date->format('d M Y H:i') }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            @if($t->type === 'income')
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Pemasukan</span>
-                                            @else
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Pengeluaran</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300 font-semibold">
-                                            {{ $t->category }}
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
-                                            @if($t->category === 'Tagihan Bulanan' && $t->reference_type === 'App\Models\Invoice' && $t->reference && $t->reference->customer)
-                                                <div class="font-bold text-gray-800 dark:text-gray-200 mb-1">
-                                                    👤 {{ $t->reference->customer->name }}
-                                                </div>
-                                            @endif
-                                            {{ $t->description ?: '-' }}
-                                            @if($t->reference_type)
-                                                <div class="text-xs text-blue-500 mt-1">Otomatis dari Sistem</div>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-right {{ $t->type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                            {{ $t->type === 'income' ? '+' : '-' }} Rp {{ number_format($t->amount, 0, ',', '.') }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                            @if(!$t->reference_type)
-                                                <button wire:click="delete({{ $t->id }})" wire:confirm="Yakin ingin menghapus transaksi manual ini?" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                                    Hapus
-                                                </button>
-                                            @else
-                                                <span class="text-gray-400 text-xs italic">Sistem</span>
-                                            @endif
-                                        </td>
-                                    </tr>
+                                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
+                                        {{ $t->transaction_date->format('d M Y H:i') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        @if($t->type === 'income')
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Pemasukan</span>
+                                        @else
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Pengeluaran</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300 font-semibold">
+                                        {{ $t->category }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                                        @if($t->category === 'Tagihan Bulanan' && $t->reference_type === 'App\Models\Invoice' && $t->reference && $t->reference->customer)
+                                        <div class="font-bold text-gray-800 dark:text-gray-200 mb-1">
+                                            👤 {{ $t->reference->customer->name }}
+                                        </div>
+                                        @endif
+                                        {{ $t->description ?: '-' }}
+                                        @if($t->reference_type)
+                                        <div class="text-xs text-blue-500 mt-1">Otomatis dari Sistem</div>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-right {{ $t->type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ $t->type === 'income' ? '+' : '-' }} Rp {{ number_format($t->amount, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                        @if(!$t->reference_type)
+                                        <button wire:click="delete({{ $t->id }})" wire:confirm="Yakin ingin menghapus transaksi manual ini?" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                            Hapus
+                                        </button>
+                                        @else
+                                        <span class="text-gray-400 text-xs italic">Sistem</span>
+                                        @endif
+                                    </td>
+                                </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada transaksi pada periode ini.</td>
-                                    </tr>
+                                <tr>
+                                    <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada transaksi pada periode ini.</td>
+                                </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="mt-4">
                         {{ $transactions->links() }}
                     </div>
@@ -202,7 +213,7 @@
                 <form wire:submit.prevent="store">
                     <div class="px-6 py-5">
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Catat Transaksi Manual</h3>
-                        
+
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Tipe Transaksi</label>
@@ -219,14 +230,14 @@
                                     <input type="text" wire:model="category" list="category-options" class="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 rounded-lg px-3 py-2 focus:ring-blue-500" placeholder="Pilih atau ketik kategori baru...">
                                     <datalist id="category-options">
                                         @if($type === 'expense')
-                                            @foreach($expenseCategories as $cat)
-                                                <option value="{{ $cat }}">
+                                        @foreach($expenseCategories as $cat)
+                                        <option value="{{ $cat }}">
                                             @endforeach
-                                        @else
+                                            @else
                                             @foreach($incomeCategories as $cat)
-                                                <option value="{{ $cat }}">
+                                        <option value="{{ $cat }}">
                                             @endforeach
-                                        @endif
+                                            @endif
                                     </datalist>
                                 </div>
                                 @error('category') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
@@ -251,7 +262,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="bg-gray-50 dark:bg-slate-900/50 px-6 py-4 flex justify-end gap-3 rounded-b-xl">
                         <button type="button" wire:click="closeModal" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 font-medium transition-colors">
                             Batal

@@ -23,6 +23,9 @@ class Invoice extends Model
         'package_id',
         'reminder_1_sent_at',
         'reminder_2_sent_at',
+        'payment_method',
+        'notes',
+        'discount',
     ];
 
     protected $casts = [
@@ -62,10 +65,11 @@ class Invoice extends Model
                         'type' => 'income',
                         'amount' => $invoice->total_amount,
                         'category' => 'Tagihan Bulanan',
-                        'description' => 'Pembayaran tagihan ' . $invoice->billing_period . ' (' . $invoice->invoice_number . ')',
+                        'description' => 'Pembayaran tagihan ' . $invoice->billing_period . ' (' . $invoice->invoice_number . ')' . ($invoice->payment_method ? ' via ' . $invoice->payment_method : ''),
                         'reference_type' => self::class,
                         'reference_id' => $invoice->id,
                         'transaction_date' => $invoice->paid_at ?? now(),
+                        'payment_method' => $invoice->payment_method,
                     ]);
                 }
             }

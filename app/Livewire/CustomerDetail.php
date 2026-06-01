@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Customer;
+use App\Models\MethodPayment;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,10 +16,13 @@ class CustomerDetail extends Component
     public $months_count = 1;
     public $amount_per_month = 0;
     public $total_amount = 0;
+    public $discount = 0;
     public $notes = '';
     public $payment_date;
     public $selected_months = [];
     public $selected_year;
+    public $selected_payment_method = '';
+    public $available_methods = [];
 
     // For printing multiple invoices
     public $selected_invoices = [];
@@ -67,7 +71,8 @@ class CustomerDetail extends Component
 
     public function calculateTotal()
     {
-        $this->total_amount = $this->months_count * $this->amount_per_month;
+        $this->total_amount = ($this->months_count * $this->amount_per_month) - $this->discount;
+        if ($this->total_amount < 0) $this->total_amount = 0;
     }
 
     public function updatedSelectAll($value)
@@ -92,6 +97,11 @@ class CustomerDetail extends Component
         $this->amount_per_month = $this->customer->package->price ?? 0;
         $this->months_count = max(1, count($this->selected_months));
         $this->calculateTotal();
+
+        // Load available payment methods
+        $this->available_methods = MethodPayment::where('user_id', auth()->id())->get();
+        $this->selected_payment_method = '';
+
         $this->isOpen = true;
     }
 
@@ -102,8 +112,11 @@ class CustomerDetail extends Component
         $this->selected_months = [];
         $this->months_count = 1;
         $this->notes = '';
+        $this->discount = 0;
         $this->payment_date = now()->format('Y-m-d\TH:i');
         $this->selected_year = now()->year;
+        $this->selected_payment_method = '';
+        $this->available_methods = [];
     }
 
     public function storePayment()
@@ -111,8 +124,12 @@ class CustomerDetail extends Component
         $this->validate([
             'months_count' => 'required|integer|min:1|max:24',
             'amount_per_month' => 'required|numeric|min:0',
+            'discount' => 'required|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date',
+            'notes' => $this->discount > 0 ? 'required' : 'nullable',
+        ], [
+            'notes.required' => 'Catatan wajib diisi jika ada diskon.'
         ]);
 
         $invoiceService = new \App\Services\InvoiceService();
@@ -130,9 +147,12 @@ class CustomerDetail extends Component
                     $invoice->update([
                         'amount' => $this->amount_per_month,
                         'unique_code' => 0,
-                        'total_amount' => $this->amount_per_month,
+                        'total_amount' => ($this->amount_per_month - ($this->discount / $this->months_count)),
+                        'discount' => ($this->discount / $this->months_count),
                         'status' => 'paid',
                         'paid_at' => $this->payment_date,
+                        'payment_method' => $this->selected_payment_method ?: null,
+                        'notes' => $this->notes ?: null,
                     ]);
                 } else {
                     // Generate baru dan langsung lunas tanpa kode unik
@@ -142,9 +162,12 @@ class CustomerDetail extends Component
                         $invoice->update([
                             'amount' => $this->amount_per_month,
                             'unique_code' => 0,
-                            'total_amount' => $this->amount_per_month,
+                            'total_amount' => ($this->amount_per_month - ($this->discount / $this->months_count)),
+                            'discount' => ($this->discount / $this->months_count),
                             'status' => 'paid',
                             'paid_at' => $this->payment_date,
+                            'payment_method' => $this->selected_payment_method ?: null,
+                            'notes' => $this->notes ?: null,
                         ]);
                     }
                 }

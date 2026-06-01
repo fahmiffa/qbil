@@ -165,6 +165,22 @@
                                 </svg>
                             </div>
                         </div>
+
+                        @if(count($user_payment_methods) > 0)
+                        <div class="relative">
+                            <select wire:model.live="filter_payment_method" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all">
+                                <option value="">Semua Metode Bayar</option>
+                                @foreach($user_payment_methods as $method)
+                                <option value="{{ $method->nama }}">{{ $method->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -436,6 +452,18 @@
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Tanggal Bayar</label>
                             <input type="datetime-local" wire:model="paid_at" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-200 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500 transition-all font-bold">
                         </div>
+
+                        @if(count($available_methods) > 0)
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Metode Pembayaran</label>
+                            <select wire:model="selected_payment_method" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-slate-200 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500 transition-all font-bold appearance-none">
+                                <option value="">Pilih Metode (Opsional)</option>
+                                @foreach($available_methods as $method)
+                                <option value="{{ $method->nama }}">{{ $method->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
 
                         <p class="text-sm text-slate-600 dark:text-slate-400 text-center mb-6">Pilih status penyelesaian untuk tagihan ini. Keduanya akan membuka akses internet pelanggan jika terisolir.</p>
                     </div>

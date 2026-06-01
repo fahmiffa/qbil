@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\ActivityLog;
 use App\Models\Piutang;
 use App\Models\Deposit;
+use App\Models\MethodPayment;
 use App\Models\AppSetting;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -24,9 +25,12 @@ class InvoiceManager extends Component
     public $filter_due_date = '';
     public $filter_service_type = '';
     public $filter_router = '';
+    public $filter_payment_method = '';
     public $billing_period = '';
     public $perPage = 10;
     public $paid_at;
+    public $selected_payment_method = '';
+    public $available_methods = [];
 
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
@@ -34,11 +38,11 @@ class InvoiceManager extends Component
     public $showIsolationModal = false;
     public $isAlertDismissed = false;
 
-    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'filter_router', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
+    protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'filter_router', 'filter_payment_method', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
 
     public function updated($property)
     {
-        if (in_array($property, ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'filter_router', 'billing_period', 'perPage'])) {
+        if (in_array($property, ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'filter_router', 'filter_payment_method', 'billing_period', 'perPage'])) {
             $this->resetPage();
         }
     }
@@ -134,6 +138,11 @@ class InvoiceManager extends Component
     {
         $this->selectedInvoice = Invoice::with('customer')->findOrFail($invoiceId);
         $this->paid_at = now()->format('Y-m-d\TH:i');
+
+        // Load available payment methods
+        $this->available_methods = MethodPayment::where('user_id', auth()->id())->get();
+        $this->selected_payment_method = '';
+
         $this->showVerifyModal = true;
     }
 
@@ -164,6 +173,7 @@ class InvoiceManager extends Component
             $invoice->update([
                 'status' => 'paid',
                 'paid_at' => $this->paid_at ?? now(),
+                'payment_method' => $this->selected_payment_method ?: null,
             ]);
 
             // If it was already in piutang table, mark it as paid there too
@@ -449,6 +459,10 @@ class InvoiceManager extends Component
             $query->where('billing_period', $this->billing_period);
         }
 
+        if ($this->filter_payment_method) {
+            $query->where('payment_method', $this->filter_payment_method);
+        }
+
         $totalCount = $query->count();
         $limit = $this->perPage === 'all' ? max(1, $totalCount) : (int) $this->perPage;
 
@@ -535,8 +549,9 @@ class InvoiceManager extends Component
             ->toArray();
 
         $routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
+        $user_payment_methods = \App\Models\MethodPayment::where('user_id', auth()->id())->get();
 
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'availableServiceTypes', 'routers'))
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'availableServiceTypes', 'routers', 'user_payment_methods'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }
