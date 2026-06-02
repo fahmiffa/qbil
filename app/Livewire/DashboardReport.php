@@ -14,11 +14,21 @@ class DashboardReport extends Component
 {
     public $month;
     public $year;
+    public $showNominal = true;
 
     public function mount()
     {
         $this->month = now()->format('m');
         $this->year = now()->format('Y');
+
+        // Load preference from session or default
+        $this->showNominal = session('dashboard_show_nominal', true);
+    }
+
+    public function toggleNominal()
+    {
+        $this->showNominal = !$this->showNominal;
+        session(['dashboard_show_nominal' => $this->showNominal]);
     }
 
     public function render()
@@ -41,8 +51,8 @@ class DashboardReport extends Component
 
         // Piutang Tagihan yang Belum Terbayar (Tetap Berbasis Periode Tagihan Aktif)
         $unpaidStats = Invoice::whereHas('customer', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            })
+            $q->where('user_id', $userId);
+        })
             ->where('billing_period', $period)
             ->where('status', 'unpaid')
             ->select(
@@ -53,8 +63,8 @@ class DashboardReport extends Component
 
         // Rincian Nominal Terbayar untuk Invoice Bulanan (Berdasarkan Tanggal Pembayaran di Bulan Ini)
         $invoicePaidStats = Invoice::whereHas('customer', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            })
+            $q->where('user_id', $userId);
+        })
             ->where('status', 'paid')
             ->whereYear('paid_at', $this->year)
             ->whereMonth('paid_at', $this->month)
@@ -79,14 +89,14 @@ class DashboardReport extends Component
         if (auth()->user()->hasFeature('pppoe')) $allowedTypes[] = 'PPPOE';
         if (auth()->user()->hasFeature('static')) $allowedTypes[] = 'STATIC';
         if (auth()->user()->hasFeature('hotspot')) $allowedTypes[] = 'HOTSPOT';
-        
+
         // Fallback for UI if no specific features yet but has general mikrotik (legacy support during migration)
         if (empty($allowedTypes) && auth()->user()->hasFeature('mikrotik')) {
             $allowedTypes = ['PPPOE', 'STATIC', 'HOTSPOT'];
         } elseif (empty($allowedTypes)) {
             $allowedTypes = ['STATIC'];
         }
-        
+
         $serviceBreakdown = collect($allowedTypes)->map(function ($tipe) use ($userId, $period) {
             $activeCount = 0;
             $suspendCount = 0;
@@ -97,7 +107,7 @@ class DashboardReport extends Component
                     ->where('service_type', strtolower($tipe))
                     ->where('status', 'active')
                     ->count();
-                
+
                 $suspendCount = Customer::where('user_id', $userId)
                     ->where('service_type', strtolower($tipe))
                     ->where('status', 'suspended')
@@ -119,11 +129,11 @@ class DashboardReport extends Component
 
             // Actual Invoice Stats for this period
             $invoiceStats = Invoice::whereHas('customer', function ($q) use ($userId, $tipe) {
-                    $q->where('user_id', $userId)
-                      ->whereHas('package', function($pq) use ($tipe) {
-                          $pq->where('tipe', $tipe);
-                      });
-                })
+                $q->where('user_id', $userId)
+                    ->whereHas('package', function ($pq) use ($tipe) {
+                        $pq->where('tipe', $tipe);
+                    });
+            })
                 ->where('billing_period', $period)
                 ->select(
                     DB::raw('SUM(total_amount) as total'),
@@ -133,7 +143,7 @@ class DashboardReport extends Component
 
             // Also check invoices directly linked via package_id (for hotspot users if any)
             $hotspotInvoiceStats = Invoice::where('package_id', '!=', null)
-                ->whereHas('package', function($q) use ($tipe, $userId) {
+                ->whereHas('package', function ($q) use ($tipe, $userId) {
                     $q->where('tipe', $tipe)->where('user_id', $userId);
                 })
                 ->where('billing_period', $period)
