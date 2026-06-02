@@ -72,7 +72,13 @@ class ReportManager extends Component
             ->where('type', 'income');
 
         if ($this->filterPaymentMethod) {
-            $baseQuery->where('payment_method', $this->filterPaymentMethod);
+            if ($this->filterPaymentMethod === 'none') {
+                $baseQuery->where(function ($q) {
+                    $q->whereNull('payment_method')->orWhere('payment_method', '');
+                });
+            } else {
+                $baseQuery->where('payment_method', $this->filterPaymentMethod);
+            }
         }
 
         if ($this->filterServiceType) {

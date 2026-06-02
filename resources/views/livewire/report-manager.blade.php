@@ -42,7 +42,7 @@
                     @foreach($paymentMethods as $method)
                     <option value="{{ $method->nama }}" class="text-gray-900 dark:text-white dark:bg-slate-800">{{ $method->nama }}</option>
                     @endforeach
-                    <option value="" class="text-gray-900 dark:text-white dark:bg-slate-800">— Tidak Ada Metode —</option>
+                    <option value="none" class="text-gray-900 dark:text-white dark:bg-slate-800">— Tidak Ada Metode —</option>
                 </select>
             </div>
 
