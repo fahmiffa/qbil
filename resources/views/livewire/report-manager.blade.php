@@ -23,26 +23,26 @@
             <div>
                 <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Dari Tanggal</label>
                 <input type="date" wire:model.live="startDate"
-                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
             </div>
 
             {{-- Tanggal Akhir --}}
             <div>
                 <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Sampai Tanggal</label>
                 <input type="date" wire:model.live="endDate"
-                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
             </div>
 
             {{-- Metode Pembayaran --}}
             <div>
                 <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Metode Pembayaran</label>
                 <select wire:model.live="filterPaymentMethod"
-                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                    <option value="">Semua Metode</option>
+                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <option value="" class="text-gray-900 dark:text-white dark:bg-slate-800">Semua Metode</option>
                     @foreach($paymentMethods as $method)
-                    <option value="{{ $method->name }}">{{ $method->name }}</option>
+                    <option value="{{ $method->nama }}" class="text-gray-900 dark:text-white dark:bg-slate-800">{{ $method->nama }}</option>
                     @endforeach
-                    <option value="">— Tidak Ada Metode —</option>
+                    <option value="" class="text-gray-900 dark:text-white dark:bg-slate-800">— Tidak Ada Metode —</option>
                 </select>
             </div>
 
@@ -50,11 +50,11 @@
             <div>
                 <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Layanan</label>
                 <select wire:model.live="filterServiceType"
-                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                    <option value="">Semua Layanan</option>
-                    <option value="pppoe">PPPoE</option>
-                    <option value="static">Static</option>
-                    <option value="hotspot">Hotspot</option>
+                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <option value="" class="text-gray-900 dark:text-white dark:bg-slate-800">Semua Layanan</option>
+                    <option value="pppoe" class="text-gray-900 dark:text-white dark:bg-slate-800">PPPoE</option>
+                    <option value="static" class="text-gray-900 dark:text-white dark:bg-slate-800">Static</option>
+                    <option value="hotspot" class="text-gray-900 dark:text-white dark:bg-slate-800">Hotspot</option>
                 </select>
             </div>
         </div>
