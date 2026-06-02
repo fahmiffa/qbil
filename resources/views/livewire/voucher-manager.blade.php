@@ -48,6 +48,8 @@
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Order Code</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">WhatsApp</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Paket / Jml</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Waktu Pesan</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Selesai / Dikirim</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Total Bayar</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Aksi</th>
@@ -78,7 +80,23 @@
                             </div>
                         </td>
                         <td class="px-6 py-5">
-                            <span class="text-sm font-black text-emerald-600 dark:text-emerald-400">Rp {{ number_format($order->total_price + $order->unique_amount, 0, ',', '.') }}</span>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-black text-slate-700 dark:text-slate-300">{{ $order->created_at->format('d/m/y') }}</span>
+                                <span class="text-[10px] font-bold text-slate-400">{{ $order->created_at->format('H:i') }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            @if($order->payment_status === 'paid')
+                            <div class="flex flex-col">
+                                <span class="text-sm font-black text-blue-600 dark:text-blue-400">{{ $order->updated_at->format('d/m/y') }}</span>
+                                <span class="text-[10px] font-bold text-slate-400">{{ $order->updated_at->format('H:i') }}</span>
+                            </div>
+                            @else
+                            <span class="text-xs text-slate-400 italic">Belum</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-5 text-sm font-black text-emerald-600 dark:text-emerald-400">
+                            Rp {{ number_format($order->total_price + $order->unique_amount, 0, ',', '.') }}
                         </td>
                         <td class="px-6 py-5">
                             @if($order->payment_status === 'paid')
