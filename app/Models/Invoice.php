@@ -70,6 +70,7 @@ class Invoice extends Model
                         'reference_id' => $invoice->id,
                         'transaction_date' => $invoice->paid_at ?? now(),
                         'payment_method' => $invoice->payment_method,
+                        'service_type' => $invoice->package->tipe ?? null,
                     ]);
                 }
             }

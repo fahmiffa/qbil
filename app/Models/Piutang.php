@@ -62,6 +62,7 @@ class Piutang extends Model
                         'reference_id' => $piutang->id,
                         'transaction_date' => $piutang->paid_at ?? now(),
                         'payment_method' => $piutang->payment_method,
+                        'service_type' => $piutang->customer->package->tipe ?? null,
                     ]);
                 }
             }

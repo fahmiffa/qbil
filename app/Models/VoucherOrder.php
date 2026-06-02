@@ -51,6 +51,7 @@ class VoucherOrder extends Model
                         'reference_type' => self::class,
                         'reference_id' => $order->id,
                         'transaction_date' => $order->paid_at ?? now(),
+                        'service_type' => 'hotspot',
                     ]);
                 }
             }
