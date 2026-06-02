@@ -52,6 +52,7 @@ class VoucherOrder extends Model
                         'reference_id' => $order->id,
                         'transaction_date' => $order->paid_at ?? now(),
                         'service_type' => 'hotspot',
+                        'payment_method' => 'DANA',
                     ]);
                 }
             }
