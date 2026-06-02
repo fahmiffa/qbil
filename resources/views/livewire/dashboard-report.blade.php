@@ -29,7 +29,7 @@
                 <svg class="w-12 h-12 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
             </div>
             <div>
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Pemasukan</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Sudah bayar</p>
                 <h3 class="text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none">Rp {{ number_format($stats->total_paid, 0, ',', '.') }}</h3>
             </div>
             <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-medium">{{ $stats->count_paid }} Terbayar</p>
@@ -41,7 +41,7 @@
                 <svg class="w-12 h-12 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
             </div>
             <div>
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Piutang</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Belum Bayar</p>
                 <h3 class="text-xl font-black text-amber-600 dark:text-amber-400 leading-none">Rp {{ number_format($stats->total_unpaid, 0, ',', '.') }}</h3>
             </div>
             <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-medium">{{ $stats->count_unpaid }} Unpaid</p>

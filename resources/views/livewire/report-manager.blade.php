@@ -161,7 +161,7 @@
             $percentage = $totalIncome > 0 ? ($row->total / $totalIncome) * 100 : 0;
             $barColors = ['bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-sky-500', 'bg-blue-400'];
             $barColor = $barColors[$i % count($barColors)];
-            $label = $row->payment_method ?? '—';
+            $label = $row->payment_method ?? 'Tidak Ada Metode Bayar';
             @endphp
             <div class="mb-3">
                 <div class="flex justify-between items-center mb-1">
