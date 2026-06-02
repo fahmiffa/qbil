@@ -24,7 +24,7 @@ class PaymentController extends Controller
         // Validasi API Key untuk Keamanan
         $expectedKey = env('PAYMENT_API_KEY', 'welcomeTo26@FFA');
         $authHeader = $request->header('Authorization');
-        
+
         if (!$authHeader || str_replace('Bearer ', '', $authHeader) !== $expectedKey) {
             Log::channel('payment')->warning('Unauthorized payment push attempt', [
                 'ip' => $request->ip(),
@@ -35,7 +35,7 @@ class PaymentController extends Controller
 
         // Sample Payload:
         // {"id":273397,"title":"Financial Diary","text":"You spent IDR 85,000.00 at Groceries.","package":"com.bca.mybca.omni.android","postTime":1775903218006}
-        
+
         $payload = $request->validate([
             'id' => 'required',
             'title' => 'nullable|string',
@@ -61,10 +61,10 @@ class PaymentController extends Controller
         Log::channel('payment')->info(json_encode($payload));
         // Extract number from text. Also include title just in case the amount is there
         $textToParse = $payload['title'] . ' ' . $payload['text'];
-        
+
         // Find all sequences that look like numbers/currency: e.g. 85,000.00 or 150.000 or 150000
         preg_match_all('/(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?)/', $textToParse, $matches);
-        
+
         $verified = false;
         $processedItem = null;
 
@@ -81,7 +81,7 @@ class PaymentController extends Controller
 
                 // Skip if there is no unique code (reads as 000) or nominal is too small
                 if ($nominal > 0 && $uniqueCode > 0) {
-                    
+
                     // 1. Check Standard Invoices
                     $invoice = Invoice::where('status', 'unpaid')
                         ->where('unique_code', $uniqueCode)
@@ -95,7 +95,7 @@ class PaymentController extends Controller
                         ]);
 
                         Log::info("Auto-Verified Invoice ID: {$invoice->invoice_number} detected payment: Rp {$nominal} with unique code: {$uniqueCode}");
-                        
+
                         RemoveIsolirJob::dispatch($invoice->customer);
                         SendManualInvoiceWhatsappJob::dispatch($invoice);
 
@@ -105,9 +105,9 @@ class PaymentController extends Controller
                     }
 
                     // 2. Check Voucher Orders
-                    // Note: VoucherOrder matches total_price + unique_amount
+                    // Note: VoucherOrder matches total_price + unique_amount directly
+                    // We don't filter by uniqueCode because discounts can make total_price non-multiple of 1000
                     $voucherOrder = VoucherOrder::where('payment_status', 'unpaid')
-                        ->where('unique_amount', $uniqueCode)
                         ->whereRaw('(total_price + unique_amount) = ?', [$nominal])
                         ->first();
 
