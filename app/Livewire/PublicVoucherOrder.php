@@ -68,6 +68,7 @@ class PublicVoucherOrder extends Component
     public $discount_amount = 0;
     public $applied_discount_name = null;
     public $is_member = false;
+    public $min_quota_for_discount = 0;
 
     public function updatedWhatsapp()
     {
@@ -97,15 +98,22 @@ class PublicVoucherOrder extends Component
                     ->first();
 
                 if ($discount) {
-                    $this->applied_discount_name = $discount->name;
+                    $this->min_quota_for_discount = $discount->quota;
+                    if ($this->quantity >= $discount->quota) {
+                        $this->applied_discount_name = $discount->name;
 
-                    if ($discount->type === 'percentage') {
-                        $this->discount_amount = $baseTotal * ($discount->amount / 100);
-                    } else {
-                        // nominal applied per quantity
-                        $this->discount_amount = $discount->amount * $this->quantity;
+                        if ($discount->type === 'percentage') {
+                            $this->discount_amount = $baseTotal * ($discount->amount / 100);
+                        } else {
+                            // nominal applied per quantity
+                            $this->discount_amount = $discount->amount * $this->quantity;
+                        }
                     }
+                } else {
+                    $this->min_quota_for_discount = 0;
                 }
+            } else {
+                $this->min_quota_for_discount = 0;
             }
 
             $this->total_amount = max(0, $baseTotal - $this->discount_amount);

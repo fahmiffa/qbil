@@ -97,130 +97,137 @@
                         </div>
                         <span class="text-sm font-black text-red-500">- Rp {{ number_format($discount_amount, 0, ',', '.') }}</span>
                     </div>
-                    @endif
-
-                    <div class="flex justify-between items-end mb-6">
-                        <div>
-                            <p class="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Total Bayar</p>
-                            <h4 class="text-3xl font-black text-blue-600 tracking-tighter leading-none">Rp {{ number_format($total_amount, 0, ',', '.') }}</h4>
-                        </div>
-                        <span class="text-[9px] bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-black uppercase italic shadow-sm">Verified</span>
-                    </div>
-                    <button wire:click="checkout" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4 text-xl group active:scale-[0.98]">
-                        Checkout
-                        <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    @elseif($is_member && $min_quota_for_discount > 0 && $quantity < $min_quota_for_discount)
+                        <div class="mb-3 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-2xl border border-orange-100 dark:border-orange-800/30 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                    </button>
+                        <span class="text-[9px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest">Beli minimal {{ $min_quota_for_discount }} voucher untuk dapat diskon!</span>
                 </div>
-            </div>
-        </div>
-        @else
-        <!-- Step 2: Mobile Focused Checkout -->
-        <div class="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl border border-white dark:border-slate-800 overflow-hidden text-center animate-fade-in">
-            <div class="p-8 sm:p-10">
-                <div class="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                    Secure Payment
-                </div>
-                <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase tracking-wider">Aktivasi QRIS</h2>
+                @endif
 
-                <!-- QR Wrapper -->
-                <div class="relative inline-block mb-10 p-6 bg-white rounded-[3rem] shadow-2xl border border-slate-100">
-                    @if($qris_payload)
-                    {!! QrCode::size(240)->generate($qris_payload) !!}
-                    @else
-                    <div class="w-[240px] h-[240px] flex items-center justify-center">
-                        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <p class="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Total Bayar</p>
+                        <h4 class="text-3xl font-black text-blue-600 tracking-tighter leading-none">Rp {{ number_format($total_amount, 0, ',', '.') }}</h4>
                     </div>
-                    @endif
+                    <span class="text-[9px] bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-black uppercase italic shadow-sm">Verified</span>
                 </div>
-
-                <!-- Compact Bill -->
-                <div class="bg-blue-600 rounded-[2.5rem] p-6 text-white text-left shadow-lg mb-8 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 -mt-6 -mr-6 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
-                    <div class="relative z-10 space-y-3">
-                        <div class="flex justify-between items-center opacity-70">
-                            <span class="text-[9px] font-black uppercase tracking-widest">Order ID</span>
-                            <span class="text-xs font-black">{{ $orderCode }}</span>
-                        </div>
-                        <div class="h-px bg-white/10"></div>
-                        <div class="flex justify-between items-end">
-                            <div class="flex flex-col">
-                                <span class="text-[9px] font-black uppercase tracking-widest opacity-60">Total</span>
-                                <span class="text-3xl font-black tracking-tighter leading-none">Rp {{ number_format($final_amount, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="text-[10px] font-black uppercase opacity-40">Verified</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Short Instructions -->
-                <div class="space-y-3 text-left mb-10">
-                    <div class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                        <span class="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-[10px] font-black">01</span>
-                        <p class="text-[10px] text-slate-500 font-bold">Screenshot & bayar dengan E-Wallet Anda.</p>
-                    </div>
-                    <div class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                        <span class="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-[10px] font-black">02</span>
-                        <p class="text-[10px] text-slate-500 font-bold">Voucher otomatis dikirim via WhatsApp.</p>
-                    </div>
-                </div>
-
-                <button wire:click="back" class="text-slate-400 hover:text-blue-600 font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 mx-auto transition-all active:scale-95 group">
-                    <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                <button wire:click="checkout" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4 text-xl group active:scale-[0.98]">
+                    Checkout
+                    <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
-                    Ganti Pesanan
                 </button>
             </div>
         </div>
-        @endif
+    </div>
+    @else
+    <!-- Step 2: Mobile Focused Checkout -->
+    <div class="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl border border-white dark:border-slate-800 overflow-hidden text-center animate-fade-in">
+        <div class="p-8 sm:p-10">
+            <div class="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                Secure Payment
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase tracking-wider">Aktivasi QRIS</h2>
 
-        <!-- Minimal Footer -->
-        <div class="mt-8 text-center opacity-30">
-            <p class="text-[8px] text-slate-400 font-black uppercase tracking-[0.5em]">&copy; {{ date('Y') }} Secured by {{ $user->name }}</p>
+            <!-- QR Wrapper -->
+            <div class="relative inline-block mb-10 p-6 bg-white rounded-[3rem] shadow-2xl border border-slate-100">
+                @if($qris_payload)
+                {!! QrCode::size(240)->generate($qris_payload) !!}
+                @else
+                <div class="w-[240px] h-[240px] flex items-center justify-center">
+                    <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                @endif
+            </div>
+
+            <!-- Compact Bill -->
+            <div class="bg-blue-600 rounded-[2.5rem] p-6 text-white text-left shadow-lg mb-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-6 -mr-6 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
+                <div class="relative z-10 space-y-3">
+                    <div class="flex justify-between items-center opacity-70">
+                        <span class="text-[9px] font-black uppercase tracking-widest">Order ID</span>
+                        <span class="text-xs font-black">{{ $orderCode }}</span>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex justify-between items-end">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black uppercase tracking-widest opacity-60">Total</span>
+                            <span class="text-3xl font-black tracking-tighter leading-none">Rp {{ number_format($final_amount, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="text-[10px] font-black uppercase opacity-40">Verified</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Short Instructions -->
+            <div class="space-y-3 text-left mb-10">
+                <div class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                    <span class="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-[10px] font-black">01</span>
+                    <p class="text-[10px] text-slate-500 font-bold">Screenshot & bayar dengan E-Wallet Anda.</p>
+                </div>
+                <div class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                    <span class="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-[10px] font-black">02</span>
+                    <p class="text-[10px] text-slate-500 font-bold">Voucher otomatis dikirim via WhatsApp.</p>
+                </div>
+            </div>
+
+            <button wire:click="back" class="text-slate-400 hover:text-blue-600 font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 mx-auto transition-all active:scale-95 group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Ganti Pesanan
+            </button>
         </div>
     </div>
+    @endif
 
-    <style>
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+    <!-- Minimal Footer -->
+    <div class="mt-8 text-center opacity-30">
+        <p class="text-[8px] text-slate-400 font-black uppercase tracking-[0.5em]">&copy; {{ date('Y') }} Secured by {{ $user->name }}</p>
+    </div>
+</div>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    @keyframes fade-in-down {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
         }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fade-in {
+        0% {
+            opacity: 0;
         }
 
-        @keyframes fade-in-down {
-            0% {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        100% {
+            opacity: 1;
         }
+    }
 
-        @keyframes fade-in {
-            0% {
-                opacity: 0;
-            }
+    .animate-fade-in-down {
+        animation: fade-in-down 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-            100% {
-                opacity: 1;
-            }
-        }
-
-        .animate-fade-in-down {
-            animation: fade-in-down 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .animate-fade-in {
-            animation: fade-in 1s ease-out;
-        }
-    </style>
+    .animate-fade-in {
+        animation: fade-in 1s ease-out;
+    }
+</style>
 </div>

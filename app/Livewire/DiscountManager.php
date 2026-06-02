@@ -11,6 +11,7 @@ class DiscountManager extends Component
     public $name;
     public $type = 'nominal';
     public $amount;
+    public $quota = 0;
     public $package_id;
 
     public $editingId = null;
@@ -24,6 +25,7 @@ class DiscountManager extends Component
         'name' => 'required|string|max:255',
         'type' => 'required|in:nominal,percentage',
         'amount' => 'required|numeric|min:0',
+        'quota' => 'required|integer|min:0',
         'package_id' => 'required|exists:packages,id',
     ];
 
@@ -72,6 +74,7 @@ class DiscountManager extends Component
         $this->name = '';
         $this->type = 'nominal';
         $this->amount = '';
+        $this->quota = 0;
         $this->package_id = '';
         $this->editingId = null;
         $this->selectedPackagePrice = 0;
@@ -87,6 +90,7 @@ class DiscountManager extends Component
             'name' => $this->name,
             'type' => $this->type,
             'amount' => $this->amount,
+            'quota' => $this->quota,
             'package_id' => $this->package_id,
         ]);
 
@@ -102,6 +106,7 @@ class DiscountManager extends Component
         $this->name = $discount->name;
         $this->type = $discount->type;
         $this->amount = $discount->amount + 0; // cast to remove trailing zeros
+        $this->quota = $discount->quota;
         $this->package_id = $discount->package_id;
 
         $this->updatedPackageId($this->package_id); // fetch price and calculate
@@ -118,6 +123,7 @@ class DiscountManager extends Component
             'name' => $this->name,
             'type' => $this->type,
             'amount' => $this->amount,
+            'quota' => $this->quota,
             'package_id' => $this->package_id,
         ]);
 

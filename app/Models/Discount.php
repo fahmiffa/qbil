@@ -12,6 +12,7 @@ class Discount extends Model
         'name',
         'type',
         'amount',
+        'quota',
     ];
 
     public function user()

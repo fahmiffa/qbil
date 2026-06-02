@@ -16,6 +16,7 @@ class Transaction extends Model
         'reference_id',
         'transaction_date',
         'payment_method',
+        'service_type',
     ];
 
     protected $casts = [

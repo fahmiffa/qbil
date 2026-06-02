@@ -31,6 +31,7 @@
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nama Diskon</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Paket / Harga</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Potongan</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kuota</th>
                         <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -52,6 +53,9 @@
                             @else
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">Rp {{ number_format($discount->amount, 0, ',', '.') }}</span>
                             @endif
+                        </td>
+                        <td class="px-6 py-5">
+                            <span class="text-sm font-black text-slate-900 dark:text-white tracking-tight">{{ $discount->quota }}</span>
                         </td>
                         <td class="px-6 py-5 text-right">
                             <div class="flex items-center justify-end gap-2">
@@ -149,6 +153,14 @@
                         <input type="number" step="0.01" wire:model.live.debounce.500ms="amount" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl block p-4 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-slate-300 dark:placeholder:text-slate-600" placeholder="{{ $type === 'percentage' ? '10' : '5000' }}" required>
                         @error('amount') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                     </div>
+                </div>
+
+                <!-- Quota -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kuota Diskon (Baris)</label>
+                    <input type="number" wire:model="quota" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl block p-4 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-slate-300 dark:placeholder:text-slate-600" placeholder="Contoh: 100" required>
+                    <p class="text-[10px] text-slate-400 font-bold italic">Berapa kali diskon ini dapat digunakan.</p>
+                    @error('quota') <span class="text-xs text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
                 <!-- Preview Box -->

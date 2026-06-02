@@ -32,6 +32,7 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('activities', \App\Livewire\Activities\ActivityLog::class)->name('activities');
     Route::get('vouchers', \App\Livewire\VoucherManager::class)->name('vouchers');
     Route::get('finance', \App\Livewire\FinanceManager::class)->name('finance');
+    Route::get('reports', \App\Livewire\ReportManager::class)->name('reports');
     Route::get('whatsapp-servers', \App\Livewire\WhatsappServerManager::class)->name('whatsapp-servers');
     Route::get('olts', \App\Livewire\OltManager::class)->name('olts');
 });

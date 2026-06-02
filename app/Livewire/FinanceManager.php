@@ -129,16 +129,25 @@ class FinanceManager extends Component
             $isPiutang = \App\Models\Piutang::where('invoice_id', $invoice->id)->exists();
 
             if (!$exists && !$isPiutang) {
+                // Determine service_type from customer or package
+                $serviceType = null;
+                if ($invoice->customer) {
+                    $serviceType = strtolower($invoice->customer->service_type ?? 'static');
+                } elseif ($invoice->package) {
+                    $serviceType = strtolower($invoice->package->tipe ?? '');
+                }
+
                 Transaction::create([
-                    'user_id' => $userId,
-                    'type' => 'income',
-                    'amount' => $invoice->total_amount,
-                    'category' => 'Tagihan Bulanan',
-                    'description' => 'Pembayaran tagihan ' . $invoice->billing_period . ' (' . $invoice->invoice_number . ')',
-                    'reference_type' => Invoice::class,
-                    'reference_id' => $invoice->id,
+                    'user_id'          => $userId,
+                    'type'             => 'income',
+                    'amount'           => $invoice->total_amount,
+                    'category'         => 'Tagihan Bulanan',
+                    'description'      => 'Pembayaran tagihan ' . $invoice->billing_period . ' (' . $invoice->invoice_number . ')',
+                    'reference_type'   => Invoice::class,
+                    'reference_id'     => $invoice->id,
                     'transaction_date' => $invoice->paid_at ?? $invoice->updated_at ?? now(),
-                    'payment_method' => $invoice->payment_method,
+                    'payment_method'   => $invoice->payment_method,
+                    'service_type'     => $serviceType,
                 ]);
                 $syncedCount++;
             }
@@ -156,14 +165,15 @@ class FinanceManager extends Component
 
             if (!$exists) {
                 Transaction::create([
-                    'user_id' => $userId,
-                    'type' => 'income',
-                    'amount' => $order->total_price + $order->unique_amount,
-                    'category' => 'Voucher Hotspot',
-                    'description' => 'Pembelian ' . $order->quantity . ' Voucher (' . $order->order_code . ')',
-                    'reference_type' => VoucherOrder::class,
-                    'reference_id' => $order->id,
+                    'user_id'          => $userId,
+                    'type'             => 'income',
+                    'amount'           => $order->total_price + $order->unique_amount,
+                    'category'         => 'Voucher Hotspot',
+                    'description'      => 'Pembelian ' . $order->quantity . ' Voucher (' . $order->order_code . ')',
+                    'reference_type'   => VoucherOrder::class,
+                    'reference_id'     => $order->id,
                     'transaction_date' => $order->paid_at ?? $order->updated_at ?? now(),
+                    'service_type'     => 'hotspot',
                 ]);
                 $syncedCount++;
             }
@@ -180,16 +190,23 @@ class FinanceManager extends Component
                 ->exists();
 
             if (!$exists) {
+                // Determine service_type from piutang customer
+                $serviceType = null;
+                if ($piutang->customer) {
+                    $serviceType = strtolower($piutang->customer->service_type ?? 'static');
+                }
+
                 Transaction::create([
-                    'user_id' => $userId,
-                    'type' => 'income',
-                    'amount' => $piutang->amount,
-                    'category' => 'Pelunasan Piutang',
-                    'description' => 'Pelunasan piutang dari invoice ' . ($piutang->invoice->invoice_number ?? $piutang->billing_period),
-                    'reference_type' => \App\Models\Piutang::class,
-                    'reference_id' => $piutang->id,
+                    'user_id'          => $userId,
+                    'type'             => 'income',
+                    'amount'           => $piutang->amount,
+                    'category'         => 'Pelunasan Piutang',
+                    'description'      => 'Pelunasan piutang dari invoice ' . ($piutang->invoice->invoice_number ?? $piutang->billing_period),
+                    'reference_type'   => \App\Models\Piutang::class,
+                    'reference_id'     => $piutang->id,
                     'transaction_date' => $piutang->paid_at ?? $piutang->updated_at ?? now(),
-                    'payment_method' => $piutang->payment_method,
+                    'payment_method'   => $piutang->payment_method,
+                    'service_type'     => $serviceType,
                 ]);
                 $syncedCount++;
             }
