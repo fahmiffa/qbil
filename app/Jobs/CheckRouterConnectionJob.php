@@ -50,12 +50,15 @@ class CheckRouterConnectionJob implements ShouldQueue
         $ping = null;
 
         try {
+            // Berikan waktu ekstra untuk job ini sebelum dibunuh PHP
+            @set_time_limit(20);
+
             $service = MikrotikService::getInstance($this->router);
             if ($service->checkConnection()) {
                 $status = 'online';
                 $ping = round((microtime(true) - $startTime) * 1000);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $error = $e->getMessage();
             Log::error("Router Connection Check Failed for {$user->name}: " . $error);
         }

@@ -31,7 +31,7 @@ class MikrotikService
             'user'    => $router->username,
             'pass'    => $router->password,
             'port'    => (int) $router->port,
-            'timeout' => 60,
+            'timeout' => 10,
         ]);
     }
 
@@ -48,13 +48,9 @@ class MikrotikService
     }
     public function checkConnection(): bool
     {
-        try {
-            $query = new Query('/system/identity/print');
-            $this->client->query($query)->read();
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
+        $query = new Query('/system/identity/print');
+        $this->client->query($query)->read();
+        return true;
     }
 
     public function getRouter(): Router

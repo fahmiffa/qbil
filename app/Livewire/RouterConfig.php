@@ -219,7 +219,7 @@ class RouterConfig extends Component
             } else {
                 $this->dispatch('toast', type: 'error', message: "❌ Router {$router->name}: Koneksi gagal. " . ($router->connection_error ?? ''));
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->dispatch('toast', type: 'error', message: 'Test gagal: ' . $e->getMessage());
         }
 
