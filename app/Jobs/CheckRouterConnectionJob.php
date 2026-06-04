@@ -59,8 +59,18 @@ class CheckRouterConnectionJob implements ShouldQueue
                 $ping = round((microtime(true) - $startTime) * 1000);
             }
         } catch (\Throwable $e) {
-            $error = $e->getMessage();
-            Log::error("Router Connection Check Failed for {$user->name}: " . $error);
+            $rawError = $e->getMessage();
+
+            // Sederhanakan pesan error untuk user
+            if (str_contains($rawError, 'socket session') || str_contains($rawError, 'connection attempt failed')) {
+                $error = 'Gagal menghubungi router, cek lagi konfigurasinya (IP/Port/Firewall).';
+            } elseif (str_contains($rawError, 'invalid user name or password')) {
+                $error = 'Username atau Password salah.';
+            } else {
+                $error = $rawError;
+            }
+
+            Log::error("Router Connection Check Failed for {$user->name}: " . $rawError);
         }
 
         $this->router->update([
