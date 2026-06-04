@@ -79,12 +79,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
             // Jika dipicu secara otomatis oleh scheduler (tanpa period manual),
             // kita sudah memfilter waktu di level Command. 
             // Namun jika period diisi manual (cli), kita tetap proses.
-            if (!$this->period && !$this->userId) {
-                $configTime = Carbon::parse($setting->invoice_gen_time)->format('H:i');
-                if ($now->format('H:i') !== $configTime) {
-                    continue;
-                }
-            }
+
 
             $offsetDays = (int) $setting->invoice_gen_days;
 
@@ -113,7 +108,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 $dueDay = $originalDueDate->format('d');
 
                 // Hitung kapan jatuh tempo seharusnya jika invoice digenerate hari ini
-                $calculatedDueDate = $now->copy()->subDays($offsetDays);
+                $calculatedDueDate = $now->copy()->addDays($offsetDays);
 
                 if ($calculatedDueDate->format('d') !== $dueDay) {
                     continue;

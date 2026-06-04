@@ -37,7 +37,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'send-reminders-' . now()->format('Y-m-d-H');
+        return 'send-reminders-' . ($this->userId ?? 'all') . '-' . now()->format('Y-m-d-H');
     }
 
     /**
