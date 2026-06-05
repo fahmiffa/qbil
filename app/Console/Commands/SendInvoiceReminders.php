@@ -28,6 +28,6 @@ class SendInvoiceReminders extends Command
     {
         SendInvoiceRemindersJob::dispatch();
 
-        $this->info('Job SendInvoiceReminders telah di-dispatch ke queue.');
+        // $this->info('Job SendInvoiceReminders telah di-dispatch ke queue.');
     }
 }

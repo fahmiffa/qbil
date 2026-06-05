@@ -27,7 +27,7 @@ class ExpireInvoices extends Command
      */
     public function handle()
     {
-        $this->info('Memulai pengecekan invoice kadaluarsa...');
+        // $this->info('Memulai pengecekan invoice kadaluarsa...');
 
         // Kita batalkan invoice yang unpaid dan tanggal due_date-nya sudah lewat lebih dari 2 hari
         // agar memberi waktu pelanggan membayar sedikit terlambat sebelum kode uniknya dilepas.

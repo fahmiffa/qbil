@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    protected string $baseUrl = 'https://broadcast.qlabcode.com/api/send';
+    protected string $baseUrl = 'https://waone.qlabcode.com/api/send';
 
     /**
      * Send WhatsApp message.

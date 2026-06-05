@@ -31,8 +31,8 @@ class CheckDueInvoices extends Command
     {
         $now = now();
         
-        Log::info("[CheckDueInvoices] Memulai pengecekan isolir otomatis...");
-        $this->info("Memulai pengecekan isolir otomatis...");
+        // Log::info("[CheckDueInvoices] Memulai pengecekan isolir otomatis...");
+        // $this->info("Memulai pengecekan isolir otomatis...");
 
         $users = \App\Models\User::with('appSetting')->get();
 
@@ -86,7 +86,7 @@ class CheckDueInvoices extends Command
             }
         }
 
-        Log::info("[CheckDueInvoices] Selesai.");
-        $this->info("Selesai.");
+        // Log::info("[CheckDueInvoices] Selesai.");
+        // $this->info("Selesai.");
     }
 }
