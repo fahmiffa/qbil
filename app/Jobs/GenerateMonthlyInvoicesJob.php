@@ -58,7 +58,7 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
 
     public function handle(WhatsappService $whatsappService): void
     {
-        // Log::info("[GenerateMonthlyInvoicesJob] Mulai pengecekan generate invoice otomatis...");
+        Log::info("[GenerateMonthlyInvoicesJob] Mulai. userId={$this->userId}, period={$this->period}");
 
         $totalGenerated = 0;
         $now = now();
@@ -108,9 +108,12 @@ class GenerateMonthlyInvoicesJob implements ShouldQueue, ShouldBeUnique
                 $dueDay = $originalDueDate->format('d');
 
                 // Hitung kapan jatuh tempo seharusnya jika invoice digenerate hari ini
-                $calculatedDueDate = $now->copy()->addDays($offsetDays);
+                $calculatedDueDate = $now->copy()->subDays($offsetDays);
+
+                Log::info("[GenerateMonthlyInvoicesJob] Cek customer: {$customer->name} | dueDay={$dueDay} | calculatedDay={$calculatedDueDate->format('d')} | offsetDays={$offsetDays}");
 
                 if ($calculatedDueDate->format('d') !== $dueDay) {
+                    Log::info("[GenerateMonthlyInvoicesJob] SKIP {$customer->name} — hari tidak cocok ({$calculatedDueDate->format('d')} ≠ {$dueDay})");
                     continue;
                 }
 
