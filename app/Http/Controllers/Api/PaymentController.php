@@ -55,7 +55,15 @@ class PaymentController extends Controller
 
         if (!in_array($payload['package'], $whitelist)) {
             // Log::channel('payment')->info('Notification ignored: package not in whitelist', ['package' => $payload['package']]);
-            return response()->json(['message' => 'Package not whitelisted. Notification ignored.'], 200);
+            return response()->json(['message' => 'Source Notification ignored.'], 200);
+        }
+
+        // Mapping package to payment method
+        $paymentMethod = null;
+        if ($payload['package'] === 'com.bca.msb') {
+            $paymentMethod = 'BCA';
+        } elseif ($payload['package'] === 'id.dana') {
+            $paymentMethod = 'DANA';
         }
 
         Log::channel('payment')->info(json_encode($payload));
@@ -92,6 +100,7 @@ class PaymentController extends Controller
                         $invoice->update([
                             'status' => 'paid',
                             'paid_at' => now(),
+                            'payment_method' => $paymentMethod,
                         ]);
 
                         Log::info("Auto-Verified Invoice ID: {$invoice->invoice_number} detected payment: Rp {$nominal} with unique code: {$uniqueCode}");
