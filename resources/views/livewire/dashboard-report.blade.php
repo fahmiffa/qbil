@@ -108,24 +108,19 @@
 
     <!-- Peta Lokasi Pelanggan -->
     @if(auth()->user()->hasFeature('map'))
+    @php
+    $provider = config('services.maps.provider', 'google');
+    @endphp
     <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 transition-colors"
         data-customers="{{ json_encode($mapData ?? []) }}"
         data-assets="{{ json_encode($assetsData ?? []) }}"
         x-data="{
+            provider: '{{ $provider }}',
             init() {
                 window.loadGoogleMaps(() => {
                     const mapElement = this.$refs.mapDiv;
                     if (!mapElement) return;
 
-                    const mapOptions = {
-                        center: { lat: -6.9400, lng: 108.9300 }, // Default center
-                        zoom: 10,
-                        mapTypeId: 'roadmap'
-                    };
-
-                    const map = new google.maps.Map(mapElement, mapOptions);
-                    const bounds = new google.maps.LatLngBounds();
-                    
                     let customers = [];
                     let assets = [];
                     try {
@@ -135,155 +130,225 @@
                         console.error('Failed to parse map data', e);
                     }
 
-                    let hasMarkers = false;
-                    const assetMap = {};
-                    const polylines = []; // Store polylines for animation
+                    if (this.provider === 'google') {
+                        const mapOptions = {
+                            center: { lat: -6.9400, lng: 108.9300 },
+                            zoom: 10,
+                            mapTypeId: 'roadmap'
+                        };
 
-                    // Render Asset Markers
-                    assets.forEach(asset => {
-                        if (asset.latitude && asset.longitude) {
-                            const position = { 
-                                lat: parseFloat(asset.latitude), 
-                                lng: parseFloat(asset.longitude) 
-                            };
-                            
-                            assetMap[asset.id] = position;
-                            
-                            const assetSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'>
-                                <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='rgba(0,0,0,0.2)' transform='translate(0, 2)'/>
-                                <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='white'/>
-                                <circle cx='16' cy='16' r='11' fill='#3b82f6'/>
-                                <svg x='7' y='7' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
-                                    <path d='M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z'/>
-                                    <path d='M10 21.9V14L2.1 9.1'/>
-                                    <path d='m10 14 11.9-6.9'/>
-                                    <path d='M14 19.8v-8.1'/>
-                                    <path d='M18 17.5V9.4'/>
-                                </svg>
-                            </svg>`;
+                        const map = new google.maps.Map(mapElement, mapOptions);
+                        const bounds = new google.maps.LatLngBounds();
+                        let hasMarkers = false;
+                        const assetMap = {};
+                        const polylines = [];
 
-                            const marker = new google.maps.Marker({
-                                position: position,
-                                map: map,
-                                title: asset.name,
-                                icon: {
-                                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(assetSvg),
-                                    scaledSize: new google.maps.Size(32, 40),
-                                    anchor: new google.maps.Point(16, 40),
-                                },
-                                zIndex: 100 // Ensure assets are visually on top
-                            });
+                        assets.forEach(asset => {
+                            if (asset.latitude && asset.longitude) {
+                                const position = { lat: parseFloat(asset.latitude), lng: parseFloat(asset.longitude) };
+                                assetMap[asset.id] = position;
+                                
+                                const assetSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='rgba(0,0,0,0.2)' transform='translate(0, 2)'/>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='white'/>
+                                    <circle cx='16' cy='16' r='11' fill='#3b82f6'/>
+                                    <svg x='7' y='7' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                                        <path d='M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z'/>
+                                        <path d='M10 21.9V14L2.1 9.1'/>
+                                        <path d='m10 14 11.9-6.9'/>
+                                        <path d='M14 19.8v-8.1'/>
+                                        <path d='M18 17.5V9.4'/>
+                                    </svg>
+                                </svg>`;
 
-                            bounds.extend(position);
-                            hasMarkers = true;
-
-                            const infoWindow = new google.maps.InfoWindow({
-                                content: `
-                                    <div style='padding: 5px;'>
-                                        <h4 style='font-weight: bold; margin-bottom: 5px; color: #1e293b;'>${asset.name}</h4>
-                                        <p style='margin: 0; font-size: 12px; font-weight: bold; color: #3b82f6; margin-top: 2px;'>ASSET - ${asset.category || 'N/A'}</p>
-                                    </div>
-                                `
-                            });
-
-                            marker.addListener('click', () => {
-                                infoWindow.open(map, marker);
-                            });
-                        }
-                    });
-
-                    customers.forEach(customer => {
-                        if (customer.latitude && customer.longitude) {
-                            const position = { 
-                                lat: parseFloat(customer.latitude), 
-                                lng: parseFloat(customer.longitude) 
-                            };
-                            
-                            // Marker color based on status (Dark Green for active to differentiate)
-                            let pinColor = customer.status === 'active' ? '#047857' : '#ef4444'; // emerald-700
-                            
-                            const customerSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'>
-                                <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='rgba(0,0,0,0.2)' transform='translate(0, 2)'/>
-                                <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='white'/>
-                                <circle cx='16' cy='16' r='11' fill='${pinColor}'/>
-                                <svg x='7' y='7' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
-                                    <path d='m15 20 3-3h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2l3 3z'/>
-                                    <path d='M6 8v1'/>
-                                    <path d='M10 8v1'/>
-                                    <path d='M14 8v1'/>
-                                    <path d='M18 8v1'/>
-                                </svg>
-                            </svg>`;
-
-                            const marker = new google.maps.Marker({
-                                position: position,
-                                map: map,
-                                title: customer.name,
-                                icon: {
-                                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customerSvg),
-                                    scaledSize: new google.maps.Size(32, 40),
-                                    anchor: new google.maps.Point(16, 40),
-                                }
-                            });
-
-                            bounds.extend(position);
-                            hasMarkers = true;
-
-                            // Draw Animated Dashed Polyline to linked Asset
-                            if (customer.asset_id && assetMap[customer.asset_id]) {
-                                const lineSymbol = {
-                                    path: 'M 0,-1 0,1',
-                                    strokeOpacity: 1,
-                                    strokeColor: '#f97316', // Orange-500 for high contrast
-                                    scale: 3
-                                };
-
-                                const polyline = new google.maps.Polyline({
-                                    path: [assetMap[customer.asset_id], position],
+                                const marker = new google.maps.Marker({
+                                    position: position,
                                     map: map,
-                                    strokeOpacity: 0, // hide base line
-                                    icons: [{
-                                        icon: lineSymbol,
-                                        offset: '0',
-                                        repeat: '15px'
-                                    }],
-                                    geodesic: true
+                                    title: asset.name,
+                                    icon: {
+                                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(assetSvg),
+                                        scaledSize: new google.maps.Size(32, 40),
+                                        anchor: new google.maps.Point(16, 40),
+                                    },
+                                    zIndex: 100
                                 });
-                                polylines.push(polyline);
+
+                                bounds.extend(position);
+                                hasMarkers = true;
+
+                                const infoWindow = new google.maps.InfoWindow({
+                                    content: `<div style='padding: 5px;'><h4 style='font-weight: bold; margin-bottom: 5px; color: #1e293b;'>${asset.name}</h4><p style='margin: 0; font-size: 12px; font-weight: bold; color: #3b82f6; margin-top: 2px;'>ASSET - ${asset.category || 'N/A'}</p></div>`
+                                });
+
+                                marker.addListener('click', () => infoWindow.open(map, marker));
                             }
+                        });
 
-                            const infoWindow = new google.maps.InfoWindow({
-                                content: `
-                                    <div style='padding: 5px;'>
-                                        <h4 style='font-weight: bold; margin-bottom: 5px; color: #1e293b;'>${customer.name}</h4>
-                                        <p style='margin: 0; font-size: 12px; font-weight: bold; color: ${pinColor}; margin-top: 2px;'>${customer.status.toUpperCase()}</p>
-                                    </div>
-                                `
-                            });
+                        customers.forEach(customer => {
+                            if (customer.latitude && customer.longitude) {
+                                const position = { lat: parseFloat(customer.latitude), lng: parseFloat(customer.longitude) };
+                                let pinColor = customer.status === 'active' ? '#047857' : '#ef4444';
+                                
+                                const customerSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='rgba(0,0,0,0.2)' transform='translate(0, 2)'/>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='white'/>
+                                    <circle cx='16' cy='16' r='11' fill='${pinColor}'/>
+                                    <svg x='7' y='7' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                                        <path d='m15 20 3-3h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2l3 3z'/>
+                                        <path d='M6 8v1'/>
+                                        <path d='M10 8v1'/>
+                                        <path d='M14 8v1'/>
+                                        <path d='M18 8v1'/>
+                                    </svg>
+                                </svg>`;
 
-                            marker.addListener('click', () => {
-                                infoWindow.open(map, marker);
-                            });
-                        }
-                    });
+                                const marker = new google.maps.Marker({
+                                    position: position,
+                                    map: map,
+                                    title: customer.name,
+                                    icon: {
+                                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customerSvg),
+                                        scaledSize: new google.maps.Size(32, 40),
+                                        anchor: new google.maps.Point(16, 40),
+                                    }
+                                });
 
-                    // Start Polyline Animation
-                    if (polylines.length > 0) {
-                        let count = 0;
-                        window.setInterval(() => {
-                            count = (count + 1) % 200;
-                            polylines.forEach(pl => {
-                                const icons = pl.get('icons');
-                                if(icons && icons.length > 0) {
-                                    icons[0].offset = (count / 2) + 'px';
-                                    pl.set('icons', icons);
+                                bounds.extend(position);
+                                hasMarkers = true;
+
+                                if (customer.asset_id && assetMap[customer.asset_id]) {
+                                    const lineSymbol = { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: '#f97316', scale: 3 };
+                                    const polyline = new google.maps.Polyline({
+                                        path: [assetMap[customer.asset_id], position],
+                                        map: map,
+                                        strokeOpacity: 0,
+                                        icons: [{ icon: lineSymbol, offset: '0', repeat: '15px' }],
+                                        geodesic: true
+                                    });
+                                    polylines.push(polyline);
                                 }
-                            });
-                        }, 50);
-                    }
 
-                    if (hasMarkers) {
-                        map.fitBounds(bounds);
+                                const infoWindow = new google.maps.InfoWindow({
+                                    content: `<div style='padding: 5px;'><h4 style='font-weight: bold; margin-bottom: 5px; color: #1e293b;'>${customer.name}</h4><p style='margin: 0; font-size: 12px; font-weight: bold; color: ${pinColor}; margin-top: 2px;'>${customer.status.toUpperCase()}</p></div>`
+                                });
+
+                                marker.addListener('click', () => infoWindow.open(map, marker));
+                            }
+                        });
+
+                        if (polylines.length > 0) {
+                            let count = 0;
+                            window.setInterval(() => {
+                                count = (count + 1) % 200;
+                                polylines.forEach(pl => {
+                                    const icons = pl.get('icons');
+                                    if(icons && icons.length > 0) {
+                                        icons[0].offset = (count / 2) + 'px';
+                                        pl.set('icons', icons);
+                                    }
+                                });
+                            }, 50);
+                        }
+
+                        if (hasMarkers) map.fitBounds(bounds);
+
+                    } else {
+                        // Leaflet Implementation
+                        const map = L.map(mapElement).setView([-6.9400, 108.9300], 10);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+
+                        const markers = [];
+                        const assetMap = {};
+                        const polylines = [];
+
+                        assets.forEach(asset => {
+                            if (asset.latitude && asset.longitude) {
+                                const position = [parseFloat(asset.latitude), parseFloat(asset.longitude)];
+                                assetMap[asset.id] = position;
+                                
+                                const assetSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='rgba(0,0,0,0.2)' transform='translate(0, 2)'/>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='white'/>
+                                    <circle cx='16' cy='16' r='11' fill='#3b82f6'/>
+                                    <svg x='7' y='7' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                                        <path d='M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z'/>
+                                        <path d='M10 21.9V14L2.1 9.1'/>
+                                        <path d='m10 14 11.9-6.9'/>
+                                        <path d='M14 19.8v-8.1'/>
+                                        <path d='M18 17.5V9.4'/>
+                                    </svg>
+                                </svg>`;
+
+                                const icon = L.divIcon({
+                                    html: assetSvg,
+                                    className: '',
+                                    iconSize: [32, 40],
+                                    iconAnchor: [16, 40]
+                                });
+
+                                const marker = L.marker(position, { icon: icon }).addTo(map)
+                                    .bindPopup(`<div style='padding: 5px;'><h4 style='font-weight: bold; margin-bottom: 5px; color: #1e293b;'>${asset.name}</h4><p style='margin: 0; font-size: 12px; font-weight: bold; color: #3b82f6; margin-top: 2px;'>ASSET - ${asset.category || 'N/A'}</p></div>`);
+                                
+                                markers.push(position);
+                            }
+                        });
+
+                        customers.forEach(customer => {
+                            if (customer.latitude && customer.longitude) {
+                                const position = [parseFloat(customer.latitude), parseFloat(customer.longitude)];
+                                let pinColor = customer.status === 'active' ? '#047857' : '#ef4444';
+                                
+                                const customerSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='rgba(0,0,0,0.2)' transform='translate(0, 2)'/>
+                                    <path d='M16 2C8.268 2 2 8.268 2 16c0 9.333 14 22 14 22s14-12.667 14-22C30 8.268 23.732 2 16 2z' fill='white'/>
+                                    <circle cx='16' cy='16' r='11' fill='${pinColor}'/>
+                                    <svg x='7' y='7' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                                        <path d='m15 20 3-3h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2l3 3z'/>
+                                        <path d='M6 8v1'/>
+                                        <path d='M10 8v1'/>
+                                        <path d='M14 8v1'/>
+                                        <path d='M18 8v1'/>
+                                    </svg>
+                                </svg>`;
+
+                                const icon = L.divIcon({
+                                    html: customerSvg,
+                                    className: '',
+                                    iconSize: [32, 40],
+                                    iconAnchor: [16, 40]
+                                });
+
+                                L.marker(position, { icon: icon }).addTo(map)
+                                    .bindPopup(`<div style='padding: 5px;'><h4 style='font-weight: bold; margin-bottom: 5px; color: #1e293b;'>${customer.name}</h4><p style='margin: 0; font-size: 12px; font-weight: bold; color: ${pinColor}; margin-top: 2px;'>${customer.status.toUpperCase()}</p></div>`);
+                                
+                                markers.push(position);
+
+                                if (customer.asset_id && assetMap[customer.asset_id]) {
+                                    const polyline = L.polyline([assetMap[customer.asset_id], position], {
+                                        color: '#f97316',
+                                        weight: 3,
+                                        dashArray: '10, 10',
+                                        dashOffset: '0'
+                                    }).addTo(map);
+                                    polylines.push(polyline);
+                                }
+                            }
+                        });
+
+                        // Animate Leaflet polylines
+                        if (polylines.length > 0) {
+                            let offset = 0;
+                            window.setInterval(() => {
+                                offset = (offset + 1) % 20;
+                                polylines.forEach(pl => {
+                                    pl.setStyle({ dashOffset: (-offset).toString() });
+                                });
+                            }, 50);
+                        }
+
+                        if (markers.length > 0) map.fitBounds(L.latLngBounds(markers));
                     }
                 });
             }

@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'maps' => [
+        'provider' => env('MAP_PROVIDER', 'google'),
+    ],
+
 ];
