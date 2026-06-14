@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,7 +37,7 @@
             height: var(--print-height);
             padding: var(--padding);
             background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin: 10mm auto;
             box-sizing: border-box;
             display: grid;
@@ -48,12 +49,18 @@
         }
 
         @media print {
-            body { background-color: white; }
-            .page { 
-                margin: 0; 
+            body {
+                background-color: white;
+            }
+
+            .page {
+                margin: 0;
                 box-shadow: none;
             }
-            .no-print { display: none !important; }
+
+            .no-print {
+                display: none !important;
+            }
         }
 
         .voucher {
@@ -193,69 +200,50 @@
             border: 1px solid #d1d5db;
         }
 
-        /* Printed Indicator */
-        .voucher.is-printed {
-            opacity: 0.8;
-        }
-
-        .voucher.is-printed::after {
-            content: 'DUPLIKAT';
+        .voucher-seq {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 14px;
-            font-weight: 900;
-            color: rgba(220, 38, 38, 0.15);
-            pointer-events: none;
-            border: 2px solid rgba(220, 38, 38, 0.15);
+            top: 4px;
+            right: 6px;
+            font-size: 8px;
+            font-weight: bold;
+            color: #6b7280;
+            background: #ffffff;
             padding: 2px 4px;
-            z-index: 10;
-            white-space: nowrap;
-        }
-
-        @media print {
-            .voucher.is-printed::after {
-                color: rgba(0, 0, 0, 0.1) !important;
-                border-color: rgba(0, 0, 0, 0.1) !important;
-            }
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            z-index: 5;
         }
     </style>
 </head>
+
 <body>
-    @php 
-        $chunks = $vouchers->chunk(40); 
-        $allPrinted = $vouchers->every('is_printed');
+    @php
+    $chunks = $vouchers->chunk(40);
     @endphp
 
     <div class="no-print">
         <a href="javascript:window.history.back()" class="btn btn-secondary">Kembali</a>
-        @if(!$allPrinted)
-            <button onclick="window.print()" class="btn btn-primary">Cetak Sekarang</button>
-        @else
-            <span style="color: #ef4444; font-size: 12px; font-weight: bold; background: #fee2e2; padding: 8px 16px; border-radius: 99px; border: 1px solid #fecaca;">
-                ⚠️ Semua voucher sudah pernah dicetak sebelumnya
-            </span>
-        @endif
+        <button onclick="window.print()" class="btn btn-primary">Cetak Sekarang</button>
     </div>
 
     @forelse($chunks as $pageVouchers)
     <div class="page">
         @foreach($pageVouchers as $v)
-        <div class="voucher {{ $v->is_printed ? 'is-printed' : '' }}">
+        <div class="voucher">
+            <div class="voucher-seq">#{{ $loop->parent->index * 40 + $loop->iteration }}</div>
             <div class="voucher-header">
                 @if($v->user->photo ?? false)
-                    <img src="{{ Storage::url($v->user->photo) }}" class="voucher-logo">
+                <img src="{{ Storage::url($v->user->photo) }}" class="voucher-logo">
                 @endif
                 <span>{{ $v->user->name ?? 'Voucher Wi-Fi' }}</span>
             </div>
-            
+
             <div class="voucher-body">
                 <div class="voucher-code-label">KODE AKSES</div>
                 <div class="voucher-code">{{ $v->username }}</div>
                 @if($v->username !== $v->password && $v->password)
-                    <div class="voucher-code-label" style="margin-top: 4px;">PASSWORD</div>
-                    <div class="voucher-code" style="font-size: 12px;">{{ $v->password }}</div>
+                <div class="voucher-code-label" style="margin-top: 4px;">PASSWORD</div>
+                <div class="voucher-code" style="font-size: 12px;">{{ $v->password }}</div>
                 @endif
             </div>
 
@@ -277,4 +265,5 @@
     </div>
     @endforelse
 </body>
+
 </html>

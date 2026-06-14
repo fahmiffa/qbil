@@ -19,6 +19,7 @@ class HotspotManager extends Component
     public $quantity = 1;
     public $filterPackage = '';
     public $filterPrinted = '';
+    public $filterDate = '';
     public $perPage = 10;
     public $packages_list = [];
     public $isOpen = false;
@@ -69,6 +70,11 @@ class HotspotManager extends Component
         $this->resetPage();
     }
 
+    public function updatedFilterDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
@@ -82,6 +88,10 @@ class HotspotManager extends Component
 
         if ($this->filterPrinted !== '') {
             $query->where('is_printed', $this->filterPrinted);
+        }
+
+        if ($this->filterDate) {
+            $query->whereDate('created_at', $this->filterDate);
         }
 
         $hotspotUsers = $query->orderBy('id', 'desc')
@@ -99,6 +109,12 @@ class HotspotManager extends Component
             if ($this->filterPackage) {
                 $query->where('package_id', $this->filterPackage);
             }
+            if ($this->filterPrinted !== '') {
+                $query->where('is_printed', $this->filterPrinted);
+            }
+            if ($this->filterDate) {
+                $query->whereDate('created_at', $this->filterDate);
+            }
             $this->selectedIds = $query->orderBy('id', 'desc')
                 ->limit($limit)
                 ->pluck('id')
@@ -112,7 +128,17 @@ class HotspotManager extends Component
     public function updatedSelectedIds()
     {
         $limit = $this->perPage === 'all' ? 999999 : (int) $this->perPage;
-        $count = auth()->user()->hotspotUsers()->limit($limit)->count();
+        $query = auth()->user()->hotspotUsers();
+        if ($this->filterPackage) {
+            $query->where('package_id', $this->filterPackage);
+        }
+        if ($this->filterPrinted !== '') {
+            $query->where('is_printed', $this->filterPrinted);
+        }
+        if ($this->filterDate) {
+            $query->whereDate('created_at', $this->filterDate);
+        }
+        $count = $query->limit($limit)->count();
         $this->selectAll = count($this->selectedIds) === $count && $count > 0;
     }
 
