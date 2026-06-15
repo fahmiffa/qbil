@@ -17,6 +17,7 @@ class ReportManager extends Component
     public $endDate;
     public $filterPaymentMethod = '';
     public $filterServiceType = '';
+    public $filterType = 'income';
     public $perPage = 25;
 
     public function mount()
@@ -27,7 +28,7 @@ class ReportManager extends Component
 
     public function updated($property)
     {
-        if (in_array($property, ['startDate', 'endDate', 'filterPaymentMethod', 'filterServiceType', 'perPage'])) {
+        if (in_array($property, ['startDate', 'endDate', 'filterPaymentMethod', 'filterServiceType', 'filterType', 'perPage'])) {
             $this->resetPage();
         }
     }
@@ -38,6 +39,7 @@ class ReportManager extends Component
         $this->endDate              = Carbon::now()->endOfMonth()->format('Y-m-d');
         $this->filterPaymentMethod  = '';
         $this->filterServiceType    = '';
+        $this->filterType           = 'income';
         $this->resetPage();
     }
 
@@ -69,7 +71,7 @@ class ReportManager extends Component
         $baseQuery = Transaction::where('user_id', $userId)
             ->whereDate('transaction_date', '>=', $this->startDate)
             ->whereDate('transaction_date', '<=', $this->endDate)
-            ->where('type', 'income');
+            ->where('type', $this->filterType);
 
         if ($this->filterPaymentMethod) {
             if ($this->filterPaymentMethod === 'none') {
@@ -117,6 +119,13 @@ class ReportManager extends Component
             ->where('type', 'expense');
         $totalExpense = (clone $expenseQuery)->sum('amount');
 
+        // And total income
+        $incomeQuery = Transaction::where('user_id', $userId)
+            ->whereDate('transaction_date', '>=', $this->startDate)
+            ->whereDate('transaction_date', '<=', $this->endDate)
+            ->where('type', 'income');
+        $absoluteTotalIncome = (clone $incomeQuery)->sum('amount');
+
         // Paginated transaction table
         $transactions = (clone $baseQuery)
             ->orderByDesc('transaction_date')
@@ -126,9 +135,9 @@ class ReportManager extends Component
 
         return view('livewire.report-manager', [
             'transactions'      => $transactions,
-            'totalIncome'       => $totalIncome,
-            'totalExpense'      => $totalExpense,
-            'netProfit'         => $totalIncome - $totalExpense,
+            'totalIncome'       => $absoluteTotalIncome, // total income absolute
+            'totalExpense'      => $totalExpense, // total expense absolute
+            'netProfit'         => $absoluteTotalIncome - $totalExpense,
             'countIncome'       => $countIncome,
             'categoryBreakdown' => $categoryBreakdown,
             'methodBreakdown'   => $methodBreakdown,

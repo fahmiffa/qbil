@@ -46,6 +46,16 @@
                 </select>
             </div>
 
+            {{-- Jenis Transaksi --}}
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Jenis Transaksi</label>
+                <select wire:model.live="filterType"
+                    class="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <option value="income" class="text-gray-900 dark:text-white dark:bg-slate-800">Pemasukan</option>
+                    <option value="expense" class="text-gray-900 dark:text-white dark:bg-slate-800">Pengeluaran</option>
+                </select>
+            </div>
+
             {{-- Layanan --}}
             <div>
                 <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Layanan</label>
@@ -57,6 +67,15 @@
                     <option value="hotspot" class="text-gray-900 dark:text-white dark:bg-slate-800">Hotspot</option>
                 </select>
             </div>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+            <a href="{{ route('print.reports', ['start_date' => $startDate, 'end_date' => $endDate, 'type' => $filterType, 'payment_method' => $filterPaymentMethod, 'service_type' => $filterServiceType]) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print Laporan
+            </a>
         </div>
     </div>
 
@@ -213,7 +232,7 @@
     ════════════════════════════════════════════════════ --}}
     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-slate-200">Detail Transaksi Pemasukan</h3>
+            <h3 class="text-sm font-bold text-gray-700 dark:text-slate-200">Detail Transaksi {{ $filterType == 'income' ? 'Pemasukan' : 'Pengeluaran' }}</h3>
             <div class="flex items-center gap-2">
                 <label class="text-xs text-gray-500 dark:text-slate-400">Tampilkan</label>
                 <select wire:model.live="perPage" class="rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-white text-xs px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">

@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('print/invoice/{invoice}', [App\Http\Controllers\PrintController::class, 'invoice'])->name('print.invoice');
     Route::get('print/piutang/{piutang}', [App\Http\Controllers\PrintController::class, 'piutang'])->name('print.piutang');
     Route::get('print/hotspot-vouchers', [App\Http\Controllers\PrintController::class, 'hotspotVouchers'])->name('hotspot.print-vouchers');
+    Route::get('print/reports', [App\Http\Controllers\PrintController::class, 'reports'])->name('print.reports');
 });
 
 
