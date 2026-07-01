@@ -169,6 +169,13 @@ class InvoiceManager extends Component
         $id = $invoiceId ?? $this->selectedInvoice->id;
         $invoice = Invoice::findOrFail($id);
 
+        // Guard: hanya izinkan verifikasi pada tagihan yang masih unpaid
+        if ($invoice->status !== 'unpaid') {
+            $this->dispatch('toast', type: 'warning', message: "Tagihan {$invoice->invoice_number} sudah berstatus {$invoice->status}, tidak perlu diverifikasi.");
+            $this->closeVerifyModal();
+            return;
+        }
+
         DB::transaction(function () use ($invoice) {
             $invoice->update([
                 'status' => 'paid',
@@ -237,6 +244,13 @@ class InvoiceManager extends Component
         if ($this->checkDemoMode()) return;
 
         $invoice = $this->selectedInvoice;
+
+        // Guard: hanya izinkan verifikasi pada tagihan yang masih unpaid
+        if ($invoice->status !== 'unpaid') {
+            $this->dispatch('toast', type: 'warning', message: "Tagihan {$invoice->invoice_number} sudah berstatus {$invoice->status}, tidak perlu diverifikasi.");
+            $this->closeVerifyModal();
+            return;
+        }
 
         DB::transaction(function () use ($invoice) {
             // Create Piutang Record

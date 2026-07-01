@@ -90,10 +90,11 @@ class PaymentController extends Controller
                 // Skip if there is no unique code (reads as 000) or nominal is too small
                 if ($nominal > 0 && $uniqueCode > 0) {
 
-                    // 1. Check Standard Invoices
+                    // 1. Check Standard Invoices (filter by current billing period to avoid false match with old static unique codes)
                     $invoice = Invoice::where('status', 'unpaid')
                         ->where('unique_code', $uniqueCode)
                         ->where('total_amount', $nominal)
+                        ->where('billing_period', now()->format('Y-m'))
                         ->first();
 
                     if ($invoice) {

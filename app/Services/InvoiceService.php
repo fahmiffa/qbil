@@ -33,22 +33,13 @@ class InvoiceService
         return DB::transaction(function () use ($customer, $period) {
             $amount = $customer->package->price ?? 0;
 
-            // 2. UNIQUE CODE GENERATION
-            $usedCodes = Invoice::whereHas('customer', function ($q) use ($customer) {
-                    $q->where('user_id', $customer->user_id);
-                })
-                ->where('status', 'unpaid')
-                ->lockForUpdate() // Tambahkan lock agar tidak bentrok saat proses concurrent
-                ->pluck('unique_code')
-                ->toArray();
+            // 2. UNIQUE CODE GENERATION (STATIC per pelanggan)
+            $uniqueCode = (int) $customer->unique_code;
 
-            $availableCodes = array_diff(range(1, 999), $usedCodes);
-
-            if (empty($availableCodes)) {
-                throw new \Exception("Semua kode unik (1-999) untuk User ID {$customer->user_id} sudah terpakai.");
+            if (!$uniqueCode) {
+                throw new \Exception("Pelanggan {$customer->name} belum memiliki kode unik. Harap set unique_code di data pelanggan.");
             }
 
-            $uniqueCode = $availableCodes[array_rand($availableCodes)];
             $totalAmount = $amount + $uniqueCode;
 
             // 3. INVOICE NUMBER SEQUENCE
@@ -112,7 +103,7 @@ class InvoiceService
         // Calculate when the generation should have happened
         $offsetDays = (int) $setting->invoice_gen_days;
         $originalDueDate = Carbon::parse($customer->due_date);
-        
+
         // Target generation date for current month
         $scheduledGenDate = Carbon::parse($currentPeriod . '-' . $originalDueDate->format('d'))
             ->addDays($offsetDays);

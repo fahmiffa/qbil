@@ -10,9 +10,32 @@ class Customer extends Model
     use HasFactory;
 
     protected $fillable = [
-        'id_pelanggan', 'name', 'phone', 'phone2', 'address', 'keterangan', 'status', 'due_date', 'user_id',
-        'router_id', 'package_id', 'ppp_profile', 'username', 'password', 'service_type', 'ip_address', 'mac_address', 'dhcp_server', 'creation_method', 
-        'activated_at', 'latitude', 'longitude', 'isolated_at', 'asset_id', 'wa_notify'
+        'id_pelanggan',
+        'name',
+        'phone',
+        'phone2',
+        'address',
+        'keterangan',
+        'status',
+        'due_date',
+        'user_id',
+        'router_id',
+        'package_id',
+        'ppp_profile',
+        'username',
+        'password',
+        'service_type',
+        'ip_address',
+        'mac_address',
+        'dhcp_server',
+        'creation_method',
+        'activated_at',
+        'latitude',
+        'longitude',
+        'isolated_at',
+        'asset_id',
+        'wa_notify',
+        'unique_code'
     ];
 
     protected $casts = [
@@ -46,12 +69,12 @@ class Customer extends Model
     {
         return $this->hasMany(Invoice::class);
     }
- 
+
     public function deposits()
     {
         return $this->hasMany(Deposit::class);
     }
- 
+
     public function piutangs()
     {
         return $this->hasMany(Piutang::class);
