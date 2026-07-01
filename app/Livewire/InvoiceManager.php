@@ -173,9 +173,9 @@ class InvoiceManager extends Component
 
             if ($oldStatus === 'suspended') {
                 // Sinkronkan ke router (Buka Isolir)
-                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
-                    'status' => $oldStatus
-                ]);
+                // \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
+                //     'status' => $oldStatus
+                // ]);
 
                 // GENERATE INVOICE SUSULAN (Jika jadwal reguler sudah terlewat)
                 $invoiceService = new \App\Services\InvoiceService();
@@ -241,9 +241,9 @@ class InvoiceManager extends Component
 
             if ($oldStatus === 'suspended') {
                 // Sinkronkan ke router (Buka Isolir)
-                \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
-                    'status' => $oldStatus
-                ]);
+                // \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
+                //     'status' => $oldStatus
+                // ]);
             }
         });
 

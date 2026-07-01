@@ -32,7 +32,7 @@
             if (this.socket) this.socket.close();
 
             try {
-                this.socket = io('https://waone.qlabcode.com', {
+                this.socket = io('https://broadcast.qlabcode.com', {
                     query: { id: this.deviceId, deviceId: this.deviceId, session: this.deviceId },
                     transports: ['websocket', 'polling'] 
                 });
