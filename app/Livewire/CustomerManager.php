@@ -444,6 +444,17 @@ class CustomerManager extends Component
                 $oldUsername = $customer->username;
                 $oldMac = $customer->mac_address;
 
+                // Auto generate unique_code jika belum ada saat di-update
+                if (!$customer->unique_code) {
+                    $lastUniqueCode = Customer::where('user_id', auth()->id())->max('unique_code') ?? 0;
+                    $uniqueCode = $lastUniqueCode + 1;
+
+                    if ($uniqueCode > 999) {
+                        throw new \Exception("Alokasi unik kode penuh (> 999).");
+                    }
+                    $data['unique_code'] = $uniqueCode;
+                }
+
                 $customer->update($data);
                 $customer->refresh();
 
@@ -469,6 +480,15 @@ class CustomerManager extends Component
                     'data' => ['customer_id' => $customer->id]
                 ]);
             } else {
+                // Auto generate unique_code untuk pelanggan baru
+                $lastUniqueCode = Customer::where('user_id', auth()->id())->max('unique_code') ?? 0;
+                $uniqueCode = $lastUniqueCode + 1;
+
+                if ($uniqueCode > 999) {
+                    throw new \Exception("Alokasi unik kode penuh (> 999).");
+                }
+                $data['unique_code'] = $uniqueCode;
+
                 $customer = Customer::create($data);
 
                 $isPascaBayar = auth()->user()->hasFeature('pasca');

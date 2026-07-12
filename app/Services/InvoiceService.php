@@ -37,7 +37,17 @@ class InvoiceService
             $uniqueCode = (int) $customer->unique_code;
 
             if (!$uniqueCode) {
-                throw new \Exception("Pelanggan {$customer->name} belum memiliki kode unik. Harap set unique_code di data pelanggan.");
+                // Auto generate kode unik mengikuti jumlah maksimum terakhir (per user)
+                $lastUniqueCode = Customer::where('user_id', $customer->user_id)->max('unique_code') ?? 0;
+                $uniqueCode = $lastUniqueCode + 1;
+
+                // Jika ingin membatasi misal maksimal 999
+                if ($uniqueCode > 999) {
+                    throw new \Exception("Alokasi unik kode penuh (> 999) untuk pelanggan {$customer->name}.");
+                }
+
+                // Update data pelanggan agar angka ini jadi statis seterusnya
+                $customer->update(['unique_code' => $uniqueCode]);
             }
 
             $totalAmount = $amount + $uniqueCode;

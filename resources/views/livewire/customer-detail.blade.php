@@ -79,6 +79,10 @@
                             <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Aktif</p>
                             <p class="text-sm font-bold text-slate-800 dark:text-white">{{ $customer->activated_at ? $customer->activated_at->translatedFormat('d F Y') : '-' }}</p>
                         </div>
+                        <div>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kode Unik</p>
+                            <p class="text-sm font-bold text-slate-800 dark:text-white">{{ $customer->unique_code ?: '-' }}</p>
+                        </div>
                         @if($customer->latitude && $customer->longitude)
                         <div class="sm:col-span-2">
                             <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Koordinat</p>
