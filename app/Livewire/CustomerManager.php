@@ -22,7 +22,7 @@ class CustomerManager extends Component
 {
     use WithPagination, ChecksDemoMode;
 
-    public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date;
+    public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date, $unique_code;
     public $router_id;
     public $package_id, $username, $password, $ppp_profile, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
@@ -43,6 +43,18 @@ class CustomerManager extends Component
     public $filterDueDate = '';
     public $filterRouter = '';
     public $perPage = 10;
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
     public $isOpen = false;
     public $isSyncModalOpen = false;
     public $unmatchedStatic = [];
@@ -51,7 +63,7 @@ class CustomerManager extends Component
     public $syncError = '';
     public function render()
     {
-        $query = auth()->user()->customers()->with('package')->latest();
+        $query = auth()->user()->customers()->with('package')->orderBy($this->sortField, $this->sortDirection);
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -213,6 +225,7 @@ class CustomerManager extends Component
         $this->ppp_profile  = '';
         $this->username     = '';
         $this->password     = '';
+        $this->unique_code  = '';
 
         // Default service type based on features
         if (auth()->user()->hasFeature('static')) {
@@ -683,6 +696,7 @@ class CustomerManager extends Component
         $this->username     = $customer->username;
         $this->password     = $customer->password;
         $this->service_type = $customer->service_type;
+        $this->unique_code  = $customer->unique_code;
         $this->ip_address   = $customer->ip_address;
         $this->mac_address  = $customer->mac_address;
         $this->dhcp_server  = $customer->dhcp_server;
