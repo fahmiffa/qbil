@@ -47,7 +47,7 @@ class PaymentController extends Controller
         // Whitelist Package Validation
         $whitelist = [
             'com.bca.mybca.omni.android',
-            'com.bankmandiri.mandirionline',
+            'id.bmri.livin',
             'com.bca.msb',
             'id.dana',
             'com.shopeepay.id',
