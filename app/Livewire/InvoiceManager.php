@@ -196,9 +196,17 @@ class InvoiceManager extends Component
             $oldStatus = $customer->status;
 
             // Logika Reset/Advance Due Date (Dynamic Subscription)
+            $paymentDate = now()->startOfDay();
+            $lastDueDate = $customer->due_date ? Carbon::parse($customer->due_date)->startOfDay() : null;
+
             if ($oldStatus === 'suspended') {
-                // Jika dari suspend (baru/vaku), reset siklus dari hari ini
-                $newDueDate = now()->addMonth();
+                // Jika bayar <= jatuh tempo + 1 hari, pertahankan tanggal jatuh tempo
+                if ($lastDueDate && $paymentDate->lessThanOrEqualTo($lastDueDate->copy()->addDay())) {
+                    $newDueDate = $lastDueDate->copy()->addMonth();
+                } else {
+                    // Jika lebih dari H+1, reset siklus dari hari bayar (hari ini)
+                    $newDueDate = now()->addMonth();
+                }
             } else {
                 // Jika pembayaran rutin, majukan 1 bulan dari tgl jatuh tempo sebelumnya
                 $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
@@ -275,8 +283,16 @@ class InvoiceManager extends Component
             $oldStatus = $customer->status;
 
             // Reset/Advance Due Date even for Piutang
+            $paymentDate = now()->startOfDay();
+            $lastDueDate = $customer->due_date ? Carbon::parse($customer->due_date)->startOfDay() : null;
+
             if ($oldStatus === 'suspended') {
-                $newDueDate = now()->addMonth();
+                // Jika bayar <= jatuh tempo + 1 hari, pertahankan tanggal jatuh tempo
+                if ($lastDueDate && $paymentDate->lessThanOrEqualTo($lastDueDate->copy()->addDay())) {
+                    $newDueDate = $lastDueDate->copy()->addMonth();
+                } else {
+                    $newDueDate = now()->addMonth();
+                }
             } else {
                 $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
             }
