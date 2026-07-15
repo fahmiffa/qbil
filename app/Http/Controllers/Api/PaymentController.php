@@ -97,7 +97,7 @@ class PaymentController extends Controller
                     $invoice = Invoice::where('status', 'unpaid')
                         ->where('unique_code', $uniqueCode)
                         ->where('total_amount', $nominal)
-                        ->where('billing_period', now()->format('Y-m'))
+                        // ->where('billing_period', now()->format('Y-m'))
                         ->first();
 
                     if ($invoice) {
