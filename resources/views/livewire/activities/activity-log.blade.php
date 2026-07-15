@@ -11,6 +11,42 @@
                     </h2>
                 </div>
 
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <div class="flex-1 min-w-[150px] max-w-[250px]">
+                        <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5">Kategori</label>
+                        <div class="relative">
+                            <select wire:model.live="filterCategory" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-lg pl-3 pr-10 py-2 text-sm focus:ring-2 focus:ring-blue-500 appearance-none outline-none transition-colors text-slate-700 dark:text-slate-300 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                                <option value="">Semua Kategori</option>
+                                <option value="invoice">Tagihan / Invoice</option>
+                                <option value="customer">Pelanggan</option>
+                                <option value="user">Pengguna / Staff</option>
+                                <option value="package">Paket</option>
+                                <option value="asset">Aset / Jaringan</option>
+                                <option value="router">Router Mikrotik</option>
+                                <option value="app">Pengaturan</option>
+                                <option value="hotspot">Hotspot / Voucher</option>
+                                <option value="piutang">Piutang</option>
+                                <option value="system">Sistem</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500 dark:text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 min-w-[150px] max-w-[200px]">
+                        <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5">Tanggal Mulai</label>
+                        <input type="date" wire:model.live="filterStartDate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors text-slate-700 dark:text-slate-300 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                    </div>
+
+                    <div class="flex-1 min-w-[150px] max-w-[200px]">
+                        <label class="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5">Tanggal Selesai</label>
+                        <input type="date" wire:model.live="filterEndDate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors text-slate-700 dark:text-slate-300 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                    </div>
+                </div>
+
                 <div class="space-y-4">
                     @forelse($activities as $activity)
                     <div class="p-4 rounded-xl border border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors flex gap-4">

@@ -6,11 +6,32 @@ use Livewire\Component;
 
 class ActivityLog extends Component
 {
+    public $filterCategory = '';
+    public $filterStartDate = '';
+    public $filterEndDate = '';
 
     public function render()
     {
+        $nQuery = auth()->user()->notifications();
+        $lQuery = auth()->user()->activityLogs();
+
+        if ($this->filterCategory) {
+            $nQuery->where('data', 'like', '%' . $this->filterCategory . '%');
+            $lQuery->where('type', 'like', '%' . $this->filterCategory . '%');
+        }
+
+        if ($this->filterStartDate) {
+            $nQuery->whereDate('created_at', '>=', $this->filterStartDate);
+            $lQuery->whereDate('created_at', '>=', $this->filterStartDate);
+        }
+
+        if ($this->filterEndDate) {
+            $nQuery->whereDate('created_at', '<=', $this->filterEndDate);
+            $lQuery->whereDate('created_at', '<=', $this->filterEndDate);
+        }
+
         // Ambil notifikasi
-        $notifications = auth()->user()->notifications()
+        $notifications = $nQuery
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($n) {
@@ -26,7 +47,7 @@ class ActivityLog extends Component
             });
 
         // Ambil log aktivitas
-        $logs = auth()->user()->activityLogs()
+        $logs = $lQuery
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($l) {
