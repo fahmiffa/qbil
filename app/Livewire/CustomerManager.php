@@ -503,6 +503,8 @@ class CustomerManager extends Component
                 $data['unique_code'] = $uniqueCode;
 
                 $customer = Customer::create($data);
+                // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
+                \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
 
                 $isPascaBayar = auth()->user()->hasFeature('pasca');
                 $isSinkron = ($this->creation_method === 'sinkron');
@@ -518,15 +520,14 @@ class CustomerManager extends Component
                         Log::error("Gagal generate invoice pertama untuk {$customer->name}: " . $e->getMessage());
                     }
 
-                    // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
-                    \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
-
+                    
+                    
                     // Dispatch Job untuk Notifikasi WhatsApp Tagihan (Invoice) Pertama
                     if ($firstInvoice) {
                         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($firstInvoice);
                     }
                 }
-
+                        
                 // Dispatch Job untuk provisioning create
                 if (auth()->user()->hasFeature('mikrotik')) {
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
