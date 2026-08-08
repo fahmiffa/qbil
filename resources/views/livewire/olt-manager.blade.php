@@ -384,18 +384,20 @@
         }
 
         // ---- SSE connection ----
-        function connectSSE() {
+        function connectSSE(resetTable = false) {
             if (eventSrc) {
                 eventSrc.close();
             }
 
             setIndicator('connecting');
 
-            // Reset table state when switching OLT
-            allRows  = [];
-            tbody.innerHTML = '';
-            statsEl.classList.add('hidden');
-            showEmpty();
+            if (resetTable) {
+                // Reset table state only when switching OLT manually
+                allRows  = [];
+                tbody.innerHTML = '';
+                statsEl.classList.add('hidden');
+                showEmpty();
+            }
 
             const baseUrl  = '{{ route("olts.onu-stream") }}';
             const oltId    = oltSelector ? oltSelector.value : '';
@@ -410,13 +412,13 @@
             eventSrc.addEventListener('close', function() {
                 setIndicator('closed');
                 eventSrc.close();
-                setTimeout(connectSSE, 10000);
+                setTimeout(() => connectSSE(false), 10000);
             });
 
             eventSrc.onerror = function() {
                 setIndicator('error');
                 eventSrc.close();
-                setTimeout(connectSSE, 5000);
+                setTimeout(() => connectSSE(false), 5000);
             };
         }
 
@@ -677,7 +679,7 @@
         if (oltSelector) {
             oltSelector.addEventListener('change', function() {
                 syncOltLabel();
-                connectSSE();
+                connectSSE(true);
             });
         }
 
@@ -686,13 +688,13 @@
             if (document.hidden) {
                 if (eventSrc) eventSrc.close();
             } else {
-                connectSSE();
+                connectSSE(false);
             }
         });
 
         // ---- Start ----
         syncOltLabel();
-        connectSSE();
+        connectSSE(true);
     })();
     </script>
     @endpush
