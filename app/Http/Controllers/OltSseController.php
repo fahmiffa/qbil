@@ -26,7 +26,7 @@ class OltSseController extends Controller
     /**
      * SSE refresh interval in seconds.
      */
-    private const REFRESH_INTERVAL = 5;
+    private const REFRESH_INTERVAL = 30;
 
     /**
      * Stream ONU data from OLT via Server-Sent Events.
