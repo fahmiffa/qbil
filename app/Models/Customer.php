@@ -70,6 +70,12 @@ class Customer extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function viewOnu()
+    {
+        return $this->hasOne(ViewOnu::class, 'name', 'name')
+            ->orWhere('mac_address', $this->mac_address);
+    }
+
     public function deposits()
     {
         return $this->hasMany(Deposit::class);

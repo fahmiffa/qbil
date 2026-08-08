@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Customer;
 use App\Models\MethodPayment;
+use App\Models\ViewOnu;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -27,6 +28,7 @@ class CustomerDetail extends Component
     // For printing multiple invoices
     public $selected_invoices = [];
     public $select_all = false;
+    public $onus = [];
 
     public $month_names = [
         '01' => 'Januari',
@@ -54,6 +56,29 @@ class CustomerDetail extends Component
         $this->payment_date = now()->format('Y-m-d\TH:i');
         $this->selected_year = now()->year;
         $this->amount_per_month = $customer->package->price ?? 0;
+
+        // Fetch related ONU data by trimmed MAC address (remove last octet)
+        $this->loadOnuData();
+    }
+
+    public function loadOnuData()
+    {
+        $viewOnu = $this->customer->viewOnu()->with(['onu.statusHistory' => function($q) {
+            $q->latest('id')->limit(10);
+        }])->first();
+
+        if ($viewOnu && $viewOnu->onu) {
+            $onuArr = $viewOnu->toArray();
+            $onuArr['status_history'] = $viewOnu->onu->statusHistory->toArray();
+            $this->onus = [$onuArr];
+        } else {
+            $this->onus = [];
+        }
+    }
+
+    public function refreshOnuStatus()
+    {
+        $this->loadOnuData();
     }
 
     public function toggleMonth($month)
