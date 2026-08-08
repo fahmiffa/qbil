@@ -36,15 +36,10 @@ class RebootOnuJob implements ShouldQueue
             return;
         }
 
-        $olt = DB::table('olts')->where('id', $onu->olt_id)->first();
-        if (!$olt) {
-            Log::error("RebootOnuJob: OLT not found for ONU ID: {$this->onuId}");
-            return;
-        }
 
-        $ip = $olt->ip;
-        $username = env('OLT_USERNAME', $olt->username);
-        $password = env('OLT_PASSWORD', $olt->password);
+        $ip = $onu->olt_id;
+        $username = env('OLT_USERNAME');
+        $password = env('OLT_PASSWORD');
         $pon = $onu->pon; // e.g. epon 0/4
         $onu_id_val = $onu->onu_id; // e.g. 10
 

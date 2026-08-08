@@ -94,7 +94,7 @@
 
                 {{-- Info Teknis --}}
                 <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 space-y-4">
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Info Teknis</h3>
+                    <h3 class="text-sm font-black text-slate-800 dark:text-white">Info Teknis</h3>
                     <div class="space-y-3">
                         @if($customer->router)
                         <div>
@@ -144,17 +144,7 @@
                 @if(count($onus) > 0)
                 <div wire:poll.5s="refreshOnuStatus" class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
                     <div class="px-6 py-5 border-b border-slate-50 dark:border-slate-700">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-                                <svg class="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-black text-slate-800 dark:text-white">Informasi ONU</h3>
-                                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">{{ count($onus) }} perangkat ditemukan</p>
-                            </div>
-                        </div>
+                         <h3 class="text-sm font-black text-slate-800 dark:text-white">Informasi ONU</h3>
                     </div>
 
                     @foreach($onus as $onu)
@@ -182,6 +172,10 @@
                         </div>
                         {{-- ONU Summary --}}
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">OLT</p>
+                                <p class="text-sm font-bold text-slate-800 dark:text-white font-mono">{{ $customer->viewOnu->onu->olt_id ?? '-' }}</p>
+                            </div>
                             <div>
                                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama ONU</p>
                                 <p class="text-sm font-bold text-slate-800 dark:text-white font-mono">{{ $onu['name'] ?? '-' }}</p>
