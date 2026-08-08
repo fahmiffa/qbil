@@ -2,103 +2,68 @@
 
 namespace App\Jobs;
 
-use App\Models\Onu;
+use App\Models\Olt;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 
 class RebootOnuJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $onuId;
+    public int $tries   = 3;
+    public int $timeout = 30;
+    public int $backoff = 5;
+
+    public function __construct(
+        public readonly int    $oltId,
+        public readonly string $onuId,
+        public readonly string $onuName,
+    ) {}
 
     /**
-     * Create a new job instance.
-     */
-    public function __construct($onuId)
-    {
-        $this->onuId = $onuId;
-    }
-
-    /**
-     * Execute the job.
+     * POST rebootOp to OLT via HTTP Basic Auth + form-data.
      */
     public function handle(): void
     {
-        $onu = Onu::find($this->onuId);
-        if (!$onu) {
-            Log::error("RebootOnuJob: ONU not found ID: {$this->onuId}");
+        $olt = Olt::find($this->oltId);
+
+        if (!$olt) {
+            Log::warning("RebootOnuJob: OLT #{$this->oltId} tidak ditemukan.");
             return;
         }
 
-
-        $ip = $onu->olt_id;
-        $username = env('OLT_USERNAME');
-        $password = env('OLT_PASSWORD');
-        $pon = $onu->pon; // e.g. epon 0/4
-        $onu_id_val = $onu->onu_id; // e.g. 10
+        $endpoint = rtrim($olt->ip, '/') . '/goform/setOnu';
 
         try {
-            $fp = @fsockopen($ip, 23, $errno, $errstr, 10);
-            if (!$fp) {
-                throw new \Exception("Could not connect to $ip: $errstr ($errno)");
-            }
-            stream_set_timeout($fp, 5);
+            $response = Http::withBasicAuth($olt->username, $olt->password)
+                ->timeout($this->timeout)
+                ->asForm()
+                ->post($endpoint, [
+                    'onuId'        => $this->onuId,
+                    'onuName'      => $this->onuName,
+                    'onuOperation' => 'rebootOp',
+                ]);
 
-            $readStream = function($socket, $sleep = 1) {
-                sleep($sleep);
-                $out = '';
-                $info = stream_get_meta_data($socket);
-                while (!feof($socket) && !$info['timed_out']) {
-                    $char = fgetc($socket);
-                    if ($char !== false) {
-                        $out .= $char;
-                    } else {
-                        break;
-                    }
-                    $info = stream_get_meta_data($socket);
-                }
-                return $out;
-            };
-
-            // Login
-            sleep(1);
-            fputs($fp, "$username\r\n");
-            sleep(1);
-            fputs($fp, "$password\r\n");
-            sleep(1);
-
-            // Execute sequence
-            fputs($fp, "enable\r\n");
-            sleep(1);
-
-            fputs($fp, "show onu info $pon all\r\n");
-            sleep(2);
-
-            fputs($fp, "configure terminal\r\n");
-            sleep(1);
-
-            fputs($fp, "interface $pon\r\n");
-            sleep(1);
-
-            fputs($fp, "onu $onu_id_val reboot\r\n");
-            sleep(1);
-            
-            // Just in case it asks (Y/N)
-            fputs($fp, "y\r\n");
-            sleep(1);
-
-            fputs($fp, "exit\r\n");
-            fclose($fp);
-
-            Log::info("RebootOnuJob: Reboot executed for ONU {$this->onuId} on OLT {$ip} ($pon onu $onu_id_val)");
+            Log::info(
+                "RebootOnuJob: ONU {$this->onuId} ({$this->onuName}) " .
+                "di OLT [{$olt->name}] — HTTP {$response->status()}"
+            );
         } catch (\Exception $e) {
-            Log::error("RebootOnuJob: Telnet failed - " . $e->getMessage());
+            Log::error("RebootOnuJob: Gagal reboot ONU {$this->onuId} — {$e->getMessage()}");
+            throw $e; // trigger retry
         }
+    }
+
+    public function failed(\Throwable $e): void
+    {
+        Log::error(
+            "RebootOnuJob: Job gagal setelah {$this->tries} percobaan " .
+            "— ONU {$this->onuId}: {$e->getMessage()}"
+        );
     }
 }

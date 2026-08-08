@@ -7,6 +7,8 @@ use App\Models\ActivityLog;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+
+
 class OltManager extends Component
 {
     use WithPagination;
@@ -25,8 +27,15 @@ class OltManager extends Component
             ->orderBy('id', 'desc')
             ->paginate(10);
 
-        return view('livewire.olt-manager', ['olts' => $olts])
-            ->layout('layouts.app');
+        // Full list for the OLT selector dropdown (no pagination)
+        $allOlts = Olt::where('user_id', auth()->id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'ip']);
+
+        return view('livewire.olt-manager', [
+            'olts'    => $olts,
+            'allOlts' => $allOlts,
+        ])->layout('layouts.app');
     }
 
     public function create()
