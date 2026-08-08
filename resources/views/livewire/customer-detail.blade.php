@@ -159,6 +159,27 @@
 
                     @foreach($onus as $onu)
                     <div class="px-6 py-5 {{ !$loop->last ? 'border-b border-slate-50 dark:border-slate-700' : '' }}">
+                        <div class="flex justify-end mb-4">
+                            @if(isset($onu['onu']['id']))
+                            <button type="button" @click="Swal.fire({
+                                title: 'Reboot ONU?',
+                                text: 'Apakah Anda yakin ingin me-reboot ONU ini?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#ef4444',
+                                cancelButtonColor: '#64748b',
+                                confirmButtonText: 'Ya, Reboot!',
+                                cancelButtonText: 'Batal'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $wire.rebootOnu({{ $onu['onu']['id'] }})
+                                }
+                            })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-colors flex items-center gap-1 shadow-sm">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Reboot ONU
+                            </button>
+                            @endif
+                        </div>
                         {{-- ONU Summary --}}
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                             <div>
@@ -196,14 +217,10 @@
 
                         {{-- Rx Power highlight --}}
                         @if($latestStatus)
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                        <div class="grid grid-cols-2 gap-3 mb-4">
                             <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
                                 <p class="text-lg font-black text-blue-600 dark:text-blue-400">{{ $latestStatus['rx_power'] ?? '-' }}</p>
                                 <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Rx Power (dBm)</p>
-                            </div>
-                            <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
-                                <p class="text-lg font-black text-purple-600 dark:text-purple-400">{{ $latestStatus['tx_power'] ?? '-' }}</p>
-                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Tx Power (dBm)</p>
                             </div>
                             @if(isset($latestStatus['status']))
                             <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
@@ -224,10 +241,6 @@
                                         <div class="w-2 h-2 rounded-full bg-blue-500"></div>
                                         <span class="text-[9px] font-bold text-slate-500">Rx Power</span>
                                     </div>
-                                    <div class="flex items-center gap-1">
-                                        <div class="w-2 h-2 rounded-full bg-purple-500"></div>
-                                        <span class="text-[9px] font-bold text-slate-500">Tx Power</span>
-                                    </div>
                                 </div>
                             </div>
                             <div class="h-56 w-full relative bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 pb-8">
@@ -235,7 +248,6 @@
                                     $historyData = array_reverse($onu['status_history']);
                                     $count = count($historyData);
                                     $rxPoints = [];
-                                    $txPoints = [];
                                     $step = $count > 1 ? (1000 / ($count - 1)) : 1000;
                                     
                                     foreach($historyData as $idx => $hist) {
@@ -243,13 +255,8 @@
                                         $rx = floatval($hist['rx_power'] ?? -40);
                                         $rxY = 100 - max(0, min(100, (($rx + 40) / 35) * 100));
                                         $rxPoints[] = "{$x},{$rxY}";
-                                        
-                                        $tx = floatval($hist['tx_power'] ?? 0);
-                                        $txY = 100 - max(0, min(100, (($tx) / 10) * 100));
-                                        $txPoints[] = "{$x},{$txY}";
                                     }
                                     $rxPointsStr = implode(' ', $rxPoints);
-                                    $txPointsStr = implode(' ', $txPoints);
                                 @endphp
 
                                 <!-- Style for walking animation -->
@@ -273,7 +280,6 @@
 
                                         <!-- Lines with walking animation -->
                                         <polyline points="{{ $rxPointsStr }}" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-1000 ease-out drop-shadow-md animate-flow"/>
-                                        <polyline points="{{ $txPointsStr }}" fill="none" stroke="#a855f7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-1000 ease-out drop-shadow-md animate-flow"/>
                                         
                                         <!-- Data Points (Circles) -->
                                         @foreach($historyData as $idx => $hist)
@@ -282,22 +288,16 @@
                                             $rx = floatval($hist['rx_power'] ?? -40);
                                             $rxY = 100 - max(0, min(100, (($rx + 40) / 35) * 100));
                                             
-                                            $tx = floatval($hist['tx_power'] ?? 0);
-                                            $txY = 100 - max(0, min(100, (($tx) / 10) * 100));
-                                            
                                             $isOnline = strtolower($hist['status'] ?? '') === 'online';
                                             $strokeColorRx = $isOnline ? '#2563eb' : '#94a3b8';
-                                            $strokeColorTx = $isOnline ? '#9333ea' : '#94a3b8';
                                         @endphp
                                         
                                         <!-- Pulse Effect for latest point -->
                                         @if($loop->last && $isOnline)
                                         <circle cx="{{ $x }}" cy="{{ $rxY }}" r="8" fill="#3b82f6" opacity="0.4" class="animate-ping origin-center" style="transform-origin: {{ $x }}px {{ $rxY }}px;"/>
-                                        <circle cx="{{ $x }}" cy="{{ $txY }}" r="8" fill="#a855f7" opacity="0.4" class="animate-ping origin-center" style="transform-origin: {{ $x }}px {{ $txY }}px;"/>
                                         @endif
                                         
                                         <circle cx="{{ $x }}" cy="{{ $rxY }}" r="5" fill="#ffffff" stroke="{{ $strokeColorRx }}" stroke-width="3" class="transition-all duration-1000 ease-out dark:fill-slate-800"/>
-                                        <circle cx="{{ $x }}" cy="{{ $txY }}" r="5" fill="#ffffff" stroke="{{ $strokeColorTx }}" stroke-width="3" class="transition-all duration-1000 ease-out dark:fill-slate-800"/>
                                         @endforeach
                                     </svg>
                                 </div>
@@ -321,14 +321,10 @@
                                                 <span class="font-bold">{{ ucfirst($history['status'] ?? 'Unknown') }}</span>
                                                 <span class="text-slate-400 text-[8px] ml-1">{{ isset($history['created_at']) ? \Carbon\Carbon::parse($history['created_at'])->format('H:i:s') : '-' }}</span>
                                             </div>
-                                            <div class="grid grid-cols-2 gap-3 mt-1">
+                                            <div class="mt-1">
                                                 <div>
                                                     <span class="text-[8px] text-slate-400 block uppercase">Rx Power</span>
                                                     <span class="font-mono text-blue-300 font-bold">{{ floatval($history['rx_power'] ?? 0) }} <span class="text-[8px]">dBm</span></span>
-                                                </div>
-                                                <div>
-                                                    <span class="text-[8px] text-slate-400 block uppercase">Tx Power</span>
-                                                    <span class="font-mono text-purple-300 font-bold">{{ floatval($history['tx_power'] ?? 0) }} <span class="text-[8px]">dBm</span></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -638,3 +634,28 @@
         </div>
     </div>
 </div>
+
+@script
+<script>
+    $wire.on('notify', (data) => {
+        const payload = Array.isArray(data) ? data[0] : data;
+        
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        Toast.fire({
+            icon: payload.type || 'success',
+            title: payload.message
+        });
+    });
+</script>
+@endscript

@@ -76,6 +76,12 @@ class CustomerDetail extends Component
         }
     }
 
+    public function rebootOnu($onuId)
+    {
+        \App\Jobs\RebootOnuJob::dispatch($onuId);
+        $this->dispatch('notify', ['message' => 'Perintah Reboot ONU telah dikirim dan sedang diproses di belakang layar.', 'type' => 'success']);
+    }
+
     public function refreshOnuStatus()
     {
         $this->loadOnuData();
