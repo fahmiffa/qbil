@@ -16,7 +16,7 @@
                         <span id="sse-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span id="sse-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    <span id="sse-label">Live · Refresh setiap 5 detik</span>
+                    <span id="sse-label">Live · Refresh setiap 30 detik</span>
                 </div>
                 {{-- Last Updated --}}
                 <span id="last-updated" class="text-[10px] text-slate-400 dark:text-slate-500 hidden"></span>
@@ -559,7 +559,7 @@
             if (state === 'live') {
                 sseDot.className  = 'relative inline-flex rounded-full h-2 w-2 bg-emerald-500';
                 ssePing.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
-                sseLabel.textContent = 'Live · Refresh setiap 5 detik';
+                sseLabel.textContent = 'Live · Refresh setiap 30 detik';
             } else if (state === 'connecting') {
                 sseDot.className  = 'relative inline-flex rounded-full h-2 w-2 bg-yellow-400';
                 ssePing.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-75';
