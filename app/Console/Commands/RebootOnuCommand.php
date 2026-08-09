@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\AppSetting;
 use App\Models\Olt;
-use App\Services\OltSseService;
+use App\Jobs\ProcessOltRebootJob;
 use Carbon\Carbon;
 
 class RebootOnuCommand extends Command
@@ -27,7 +27,7 @@ class RebootOnuCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(OltSseService $oltSseService)
+    public function handle()
     {
         $now = Carbon::now();
         $daysIndo = [
@@ -62,25 +62,8 @@ class RebootOnuCommand extends Command
             $olts = Olt::where('user_id', $setting->user_id)->get();
             
             foreach ($olts as $olt) {
-                $this->info("Memproses OLT: {$olt->name} (User ID: {$setting->user_id})");
-                try {
-                    $data = $oltSseService->fetchOnuData($olt->id);
-                    if ($data['success'] && !empty($data['onuList'])) {
-                        foreach ($data['onuList'] as $onu) {
-                            $onuId = $onu[0] ?? '';
-                            $onuName = $onu[1] ?? '';
-                            
-                            if ($onuId) {
-                                $oltSseService->rebootOnu($olt->id, $onuId, $onuName);
-                                $this->info("Dispatched reboot job for ONU: {$onuId} ({$onuName})");
-                            }
-                        }
-                    } else {
-                        $this->warn("Gagal mendapatkan data ONU atau kosong untuk OLT {$olt->name}.");
-                    }
-                } catch (\Exception $e) {
-                    $this->error("Gagal memproses OLT {$olt->id}: " . $e->getMessage());
-                }
+                $this->info("Dispatching reboot job untuk OLT: {$olt->name}");
+                ProcessOltRebootJob::dispatch($olt);
             }
         }
     }
