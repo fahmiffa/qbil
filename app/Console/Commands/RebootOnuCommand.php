@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\AppSetting;
+use App\Models\RebootSchedule;
 use App\Models\Olt;
 use App\Jobs\ProcessOltRebootJob;
 use Carbon\Carbon;
@@ -22,7 +22,7 @@ class RebootOnuCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Jalankan job reboot ONU sesuai jadwal di AppSetting';
+    protected $description = 'Jalankan job reboot ONU sesuai jadwal di RebootSchedule';
 
     /**
      * Execute the console command.
@@ -30,41 +30,32 @@ class RebootOnuCommand extends Command
     public function handle()
     {
         $now = Carbon::now();
-        $daysIndo = [
-            1 => 'Senin',
-            2 => 'Selasa',
-            3 => 'Rabu',
-            4 => 'Kamis',
-            5 => 'Jumat',
-            6 => 'Sabtu',
-            7 => 'Minggu'
-        ];
-        $currentDayIndo = $daysIndo[$now->dayOfWeekIso];
+        $currentDate = $now->toDateString();
         $currentTime = $now->format('H:i');
 
-        $settings = AppSetting::whereNotNull('reboot_day')
-            ->whereNotNull('reboot_time')
+        $schedules = RebootSchedule::where('next_run_date', $currentDate)
             ->get()
-            ->filter(function ($setting) use ($currentDayIndo, $currentTime) {
-                if (strtolower($setting->reboot_day) !== strtolower($currentDayIndo)) {
-                    return false;
-                }
-                $time = Carbon::parse($setting->reboot_time)->format('H:i');
+            ->filter(function ($schedule) use ($currentTime) {
+                $time = Carbon::parse($schedule->time)->format('H:i');
                 return $time === $currentTime;
             });
 
-        if ($settings->isEmpty()) {
-            $this->info("Tidak ada jadwal reboot ONU untuk hari {$currentDayIndo} jam {$currentTime}.");
+        if ($schedules->isEmpty()) {
+            $this->info("Tidak ada jadwal reboot ONU untuk hari {$currentDate} jam {$currentTime}.");
             return;
         }
 
-        foreach ($settings as $setting) {
-            $olts = Olt::where('user_id', $setting->user_id)->get();
+        foreach ($schedules as $schedule) {
+            $olts = Olt::where('user_id', $schedule->user_id)->get();
             
             foreach ($olts as $olt) {
                 $this->info("Dispatching reboot job untuk OLT: {$olt->name}");
                 ProcessOltRebootJob::dispatch($olt);
             }
+
+            // Update next_run_date
+            $schedule->next_run_date = Carbon::parse($schedule->next_run_date)->addDays((int)$schedule->interval_days)->toDateString();
+            $schedule->save();
         }
     }
 }

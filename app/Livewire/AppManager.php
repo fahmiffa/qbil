@@ -25,8 +25,6 @@ class AppManager extends Component
     public $invoice_gen_time = '00:00';
     public $isolate_days = 0;
     public $isolate_time = '00:05';
-    public $reboot_day;
-    public $reboot_time;
 
     public $new_method_name = "";
     public $methods = [];
@@ -75,8 +73,6 @@ class AppManager extends Component
             'invoice_gen_time' => 'required',
             'isolate_days' => 'required|integer|min:-1|max:1',
             'isolate_time' => 'required',
-            'reboot_day' => 'nullable|string',
-            'reboot_time' => 'nullable',
         ];
     }
 
@@ -122,8 +118,6 @@ class AppManager extends Component
             $this->invoice_gen_time = $setting->invoice_gen_time;
             $this->isolate_days = $setting->isolate_days;
             $this->isolate_time = $setting->isolate_time;
-            $this->reboot_day = $setting->reboot_day;
-            $this->reboot_time = $setting->reboot_time;
         }
 
         $this->methods = MethodPayment::where('user_id', auth()->id())->get();
@@ -170,8 +164,6 @@ class AppManager extends Component
                     'invoice_gen_time' => $this->invoice_gen_time,
                     'isolate_days' => $this->isolate_days,
                     'isolate_time' => $this->isolate_time,
-                    'reboot_day' => $this->reboot_day,
-                    'reboot_time' => $this->reboot_time,
                 ]
             );
 

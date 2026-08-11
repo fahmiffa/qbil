@@ -25,8 +25,6 @@ class AppSetting extends Model
         'invoice_gen_time',
         'isolate_days',
         'isolate_time',
-        'reboot_day',
-        'reboot_time',
     ];
 
     public function user()

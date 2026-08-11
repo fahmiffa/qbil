@@ -74,43 +74,6 @@
                             </div>
                         </div>
 
-                        <!-- Reboot ONU Otomatis -->
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-3 mb-2">
-                                <div class="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-yellow-600 dark:text-yellow-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                </div>
-                                <label class="font-black text-xs text-yellow-600 dark:text-yellow-400 uppercase tracking-[0.2em]">Otomasi: Reboot ONU</label>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Hari Reboot</span>
-                                    <div class="flex items-center gap-3">
-                                        <select wire:model="reboot_day" class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-yellow-500 rounded-xl text-sm px-4 py-2.5 transition-all font-bold">
-                                            <option value="">Pilih Hari</option>
-                                            <option value="Senin">Senin</option>
-                                            <option value="Selasa">Selasa</option>
-                                            <option value="Rabu">Rabu</option>
-                                            <option value="Kamis">Kamis</option>
-                                            <option value="Jumat">Jumat</option>
-                                            <option value="Sabtu">Sabtu</option>
-                                            <option value="Minggu">Minggu</option>
-                                        </select>
-                                    </div>
-                                    @error('reboot_day') <span class="text-[10px] text-red-500 mt-1 font-bold">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">Waktu (Jam)</span>
-                                    <div class="flex items-center gap-3">
-                                        <input wire:model="reboot_time" type="time" class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-yellow-500 rounded-xl text-sm px-4 py-2.5 transition-all font-bold">
-                                    </div>
-                                    @error('reboot_time') <span class="text-[10px] text-red-500 mt-1 font-bold">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     @endif
 
@@ -277,6 +240,10 @@
                         </div>
                     </div>
                 </div>
+
+                @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
+                    <livewire:reboot-schedule-manager />
+                @endif
             </div>
         </div>
 
