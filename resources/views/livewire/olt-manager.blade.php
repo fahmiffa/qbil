@@ -135,6 +135,7 @@
                             <th class="px-3 py-3 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Nama</th>
                             <th class="px-3 py-3 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">MAC Address</th>
                             <th class="px-3 py-3 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">CTC status</th>
                             <th class="px-3 py-3 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Rx Power</th>
                             <th class="px-3 py-3 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Tx Power</th>
                         </tr>
@@ -406,6 +407,7 @@
 
             eventSrc.addEventListener('onu-update', function(e) {
                 const payload = JSON.parse(e.data);
+                console.log(payload);
                 handleUpdate(payload);
             });
 
@@ -517,6 +519,18 @@
                     : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
                 const dotCls  = isUp ? 'bg-emerald-500' : 'bg-red-500';
                 const rowOp   = isUp ? '' : 'opacity-60';
+
+                // Label CTC status, sumber: array ctc_status pada halaman OLT (onuAllPonOnuList.asp)
+                const ctcLabels = ['--', 'MpcpDiscovery', 'MpcpSla', 'CtcInfo', 'RequestCfg', 'CtcNegDone'];
+                const ctcCodeRaw = (row[7] || '').trim(); // index 7 = kode ctc status mentah dari OLT
+                const ctcCodeNum = parseInt(ctcCodeRaw, 10);
+                const ctcStatus  = (ctcCodeRaw !== '' && !isNaN(ctcCodeNum) && ctcCodeNum < ctcLabels.length)
+                    ? ctcLabels[ctcCodeNum]
+                    : (ctcCodeRaw || '--');
+
+                const ctcStatusCls = (ctcStatus !== '--')
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400';
                 
                 // For onclick attributes, escape single quotes
                 const idPonSafe = esc(row[0]).replace(/'/g, "\\'");
@@ -532,6 +546,11 @@
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCls}">
                             <span class="w-1.5 h-1.5 rounded-full ${dotCls}"></span>
                             ${esc(row[3]) || '--'}
+                        </span>
+                    </td>
+                    <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${ctcStatusCls}">
+                            ${esc(ctcStatus)}
                         </span>
                     </td>
                     <td class="px-3 py-2.5 text-center font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">${rxPow}</td>
