@@ -34,10 +34,9 @@ class RebootOnuJob implements ShouldQueue
 
         if (!$olt) {
             Log::warning("RebootOnuJob: OLT #{$this->oltId} tidak ditemukan.");
-            $ip = $olt->ip;
         }
 
-        $endpoint = $ip . '/goform/setOnu';
+        $endpoint = $olt->ip . '/goform/setOnu';
 
         try {
             $response = Http::withBasicAuth($olt->username, $olt->password)

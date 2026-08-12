@@ -81,7 +81,7 @@ class CustomerDetail extends Component
     public function rebootOnu($onuId)
     {
         $onu = Onu::find($onuId);
-        $olt = Olt::where('ip', $onu->olt_ip)->first();
+        $olt = Olt::where('ip', $onu->olt_id)->first();
         if ($onu && $olt) {
             \App\Jobs\RebootOnuJob::dispatch($olt->id, $onu->onu_id, $onu->name);
             $this->dispatch('notify', ['message' => 'Perintah Reboot ONU telah dikirim dan sedang diproses di belakang layar.', 'type' => 'success']);
