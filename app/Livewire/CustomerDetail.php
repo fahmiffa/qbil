@@ -7,6 +7,7 @@ use App\Models\MethodPayment;
 use App\Models\ViewOnu;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\Onu;
 
 class CustomerDetail extends Component
 {
@@ -78,8 +79,11 @@ class CustomerDetail extends Component
 
     public function rebootOnu($onuId)
     {
-        \App\Jobs\RebootOnuJob::dispatch($onuId);
-        $this->dispatch('notify', ['message' => 'Perintah Reboot ONU telah dikirim dan sedang diproses di belakang layar.', 'type' => 'success']);
+        $onu = Onu::find($onuId);
+        if ($onu) {
+            \App\Jobs\RebootOnuJob::dispatch($onu->id, $onu->onu_id, $onu->name);
+            $this->dispatch('notify', ['message' => 'Perintah Reboot ONU telah dikirim dan sedang diproses di belakang layar.', 'type' => 'success']);
+        }
     }
 
     public function refreshOnuStatus()

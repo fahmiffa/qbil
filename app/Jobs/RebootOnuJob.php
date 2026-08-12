@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Olt;
+use App\Models\Onu;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,13 +32,21 @@ class RebootOnuJob implements ShouldQueue
     public function handle(): void
     {
         $olt = Olt::find($this->oltId);
-
+        $onu = Onu::find($this->oltId);
+        
         if (!$olt) {
-            Log::warning("RebootOnuJob: OLT #{$this->oltId} tidak ditemukan.");
+            $ip = $olt->ip;
+        }
+        elseif ($onu) {
+            $ip = 'http://'.$onu->olt_id; 
+                    
+        }
+        else
+        {
             return;
         }
 
-        $endpoint = rtrim($olt->ip, '/') . '/goform/setOnu';
+        $endpoint = $ip . '/goform/setOnu';
 
         try {
             $response = Http::withBasicAuth($olt->username, $olt->password)
