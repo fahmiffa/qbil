@@ -33,8 +33,8 @@ class RebootOnuJob implements ShouldQueue
     {
         $olt = Olt::find($this->oltId);
         $onu = Onu::find($this->oltId);
-        
-        if (!$olt) {
+
+        if ($olt) {
             $ip = $olt->ip;
         }
         elseif ($onu) {
