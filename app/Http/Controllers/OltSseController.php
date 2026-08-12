@@ -43,7 +43,9 @@ class OltSseController extends Controller
                 echo "event: onu-update\n";
                 echo "data: " . json_encode($data) . "\n\n";
 
-                ob_flush();
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
                 flush();
 
                 $iteration++;
@@ -61,7 +63,9 @@ class OltSseController extends Controller
             // Closing heartbeat
             echo "event: close\n";
             echo "data: {}\n\n";
-            ob_flush();
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
             flush();
 
         }, 200, [
