@@ -317,6 +317,44 @@
                                         </div>
                                         @endif
 
+                                        <!-- Pilihan ONU -->
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih ONU (Opsi)</label>
+                                            <div class="relative" x-data="{ open: false, search: '' }" @click.away="open = false">
+                                                <div @click="open = !open" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors cursor-pointer flex justify-between items-center">
+                                                    <span x-text="$wire.onu_id ? ($wire.availableOnuData.find(d => d.onu_id === $wire.onu_id)?.onu_name + ' - ' + ($wire.availableOnuData.find(d => d.onu_id === $wire.onu_id)?.mac_address || $wire.availableOnuData.find(d => d.onu_id === $wire.onu_id)?.onu_mac || '') || '-- Pilih ONU --') : '-- Pilih ONU --'" class="truncate text-slate-700 dark:text-slate-300"></span>
+                                                    <svg class="w-4 h-4 text-slate-400 transform transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </div>
+
+                                                <div x-show="open" x-transition.opacity x-cloak class="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-60 flex flex-col overflow-hidden" style="display: none;">
+                                                    <div class="p-2 border-b border-slate-100 dark:border-slate-700">
+                                                        <div class="relative">
+                                                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                                </svg>
+                                                            </span>
+                                                            <input type="text" x-model="search" placeholder="Cari ONU / MAC..." class="w-full pl-9 bg-slate-50 dark:bg-slate-900 border-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors" @click.stop>
+                                                        </div>
+                                                    </div>
+                                                    <ul class="overflow-y-auto flex-1 p-1">
+                                                        <template x-for="item in $wire.availableOnuData.filter(i => (i.onu_name || '').toLowerCase().includes(search.toLowerCase()) || (i.mac_address || i.onu_mac || '').toLowerCase().includes(search.toLowerCase()))" :key="item.onu_id">
+                                                            <li @click="$wire.set('onu_id', item.onu_id); open = false; search = ''"
+                                                                class="px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer rounded-lg font-mono truncate transition-colors flex items-center justify-between group">
+                                                                <span x-text="(item.onu_name || '-') + ' (' + (item.mac_address || item.onu_mac || '-') + ')'" class="truncate"></span>
+                                                                <svg x-show="$wire.onu_id === item.onu_id" class="w-4 h-4 text-blue-500 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+                                                            </li>
+                                                        </template>
+                                                        <li x-show="$wire.availableOnuData.filter(i => (i.onu_name || '').toLowerCase().includes(search.toLowerCase()) || (i.mac_address || i.onu_mac || '').toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-4 text-sm text-slate-400 text-center italic font-medium">Data tidak ditemukan</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
 
                                         <!-- Asset / Perangkat Terpasang -->
                                         <div class="sm:col-span-2">

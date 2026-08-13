@@ -49,4 +49,63 @@ class OltApiService
 
         return null;
     }
+
+    public function fetchOnuAll(): array
+    {
+        if (empty($this->baseUrl)) {
+            Log::warning('OltApiService: OLT_URL is not configured.');
+            return [];
+        }
+
+        try {
+            $response = Http::timeout(self::HTTP_TIMEOUT)
+                ->get("{$this->baseUrl}/api/onu");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (is_array($data)) {
+                    return $data;
+                }
+            } else {
+                Log::warning("OltApiService: API returned HTTP {$response->status()} for fetchOnuAll");
+            }
+        } catch (\Exception $e) {
+            Log::error("OltApiService: Failed to fetchOnuAll — {$e->getMessage()}");
+        }
+
+        return [];
+    }
+
+    public function renameOnu(string $onuId, string $onuName, string $host = null): bool
+    {
+        if (empty($this->baseUrl)) {
+            Log::warning('OltApiService: OLT_URL is not configured.');
+            return false;
+        }
+
+        try {
+            $payload = [
+                'onu_id' => $onuId,
+                'onu_name' => substr($onuName, 0, 32),
+                'onu_operation' => 'nonOp'
+            ];
+
+            if ($host) {
+                $payload['host'] = $host;
+            }
+
+            $response = Http::timeout(self::HTTP_TIMEOUT)
+                ->post("{$this->baseUrl}/api/onu/rename", $payload);
+
+            if ($response->successful()) {
+                return true;
+            } else {
+                Log::warning("OltApiService: API returned HTTP {$response->status()} for renameOnu [{$onuId}]");
+            }
+        } catch (\Exception $e) {
+            Log::error("OltApiService: Failed to renameOnu [{$onuId}] — {$e->getMessage()}");
+        }
+
+        return false;
+    }
 }

@@ -28,6 +28,8 @@ class CustomerManager extends Component
     public $creation_method = 'buat_baru';
     public $sync_mikrotik_id = '';
     public $availableMikrotikData = [];
+    public $onu_id = '';
+    public $availableOnuData = [];
     public $latitude, $longitude;
     public $asset_id;
     public $selectedPool;
@@ -176,6 +178,13 @@ class CustomerManager extends Component
         $this->isOpen = true;
         $this->resetValidation();
 
+        try {
+            $oltService = new \App\Services\OltApiService();
+            $this->availableOnuData = $oltService->fetchOnuAll() ?? [];
+        } catch (\Exception $e) {
+            $this->availableOnuData = [];
+        }
+
         // Logic ppp_profiles sudah dipindah ke render agar reaktif
         return;
     }
@@ -239,6 +248,7 @@ class CustomerManager extends Component
         $this->creation_method = 'buat_baru';
         $this->sync_mikrotik_id = '';
         $this->availableMikrotikData = [];
+        $this->onu_id       = '';
         $this->ip_address   = '';
         $this->mac_address  = '';
         $this->dhcp_server  = '';
@@ -471,6 +481,10 @@ class CustomerManager extends Component
                 $customer->update($data);
                 $customer->refresh();
 
+                if ($this->onu_id) {
+                    \App\Jobs\RenameOnuJob::dispatch($this->onu_id, $customer->name);
+                }
+
                 // Dispatch Job untuk provisioning update
                 if (auth()->user()->hasFeature('mikrotik')) {
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
@@ -526,6 +540,10 @@ class CustomerManager extends Component
                     if ($firstInvoice) {
                         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($firstInvoice);
                     }
+                }
+                
+                if ($this->onu_id) {
+                    \App\Jobs\RenameOnuJob::dispatch($this->onu_id, $customer->name);
                 }
                         
                 // Dispatch Job untuk provisioning create
@@ -704,6 +722,19 @@ class CustomerManager extends Component
         $this->latitude     = $customer->latitude;
         $this->longitude    = $customer->longitude;
         $this->asset_id     = $customer->asset_id;
+
+        try {
+            $oltService = new \App\Services\OltApiService();
+            $onuMatch = $oltService->fetchOnuByName($customer->name);
+            if ($onuMatch && isset($onuMatch['onu_id'])) {
+                $this->onu_id = $onuMatch['onu_id'];
+            } else {
+                $this->onu_id = '';
+            }
+        } catch (\Exception $e) {
+            $this->onu_id = '';
+        }
+
         $this->openModal();
         $this->dispatch('map-updated', ['lat' => $customer->latitude, 'lng' => $customer->longitude]);
     }
