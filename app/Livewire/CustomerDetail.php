@@ -9,6 +9,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Onu;
 use App\Models\Olt;
+use App\Services\OltApiService;
 
 class CustomerDetail extends Component
 {
@@ -31,6 +32,9 @@ class CustomerDetail extends Component
     public $selected_invoices = [];
     public $select_all = false;
     public $onus = [];
+
+    // Real-time ONU data from OLT HTTP API
+    public $onuApiData = null;
 
     public $month_names = [
         '01' => 'Januari',
@@ -76,14 +80,32 @@ class CustomerDetail extends Component
         } else {
             $this->onus = [];
         }
+
+        // Fetch real-time ONU detail from OLT HTTP API
+        $this->loadOnuApiData();
     }
 
-    public function rebootOnu($onuId)
+    public function loadOnuApiData()
     {
-        $onu = Onu::find($onuId);
-        $olt = Olt::where('ip', $onu->olt_id)->first();
-        if ($onu && $olt) {
-            \App\Jobs\RebootOnuJob::dispatch($olt->id, $onu->onu_id, $onu->name);
+        $onuName = $this->customer->name;
+
+        if (empty($onuName)) {
+            $this->onuApiData = null;
+            return;
+        }
+
+        try {
+            $service = app(OltApiService::class);
+            $this->onuApiData = $service->fetchOnuByName($onuName);
+        } catch (\Exception $e) {
+            $this->onuApiData = null;
+        }
+    }
+
+    public function rebootOnu($oltUrl, $onuId, $onuName)
+    {
+        if ($oltUrl && $onuId) {
+            \App\Jobs\RebootOnuJob::dispatch($oltUrl, $onuId, $onuName);
             $this->dispatch('notify', ['message' => 'Perintah Reboot ONU telah dikirim dan sedang diproses di belakang layar.', 'type' => 'success']);
         }
     }

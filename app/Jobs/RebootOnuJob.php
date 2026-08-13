@@ -20,37 +20,54 @@ class RebootOnuJob implements ShouldQueue
     public int $backoff = 5;
 
     public function __construct(
-        public readonly int    $oltId,
+        public readonly int|string $oltIdentifier,
         public readonly string $onuId,
         public readonly string $onuName,
     ) {}
 
     /**
-     * POST rebootOp to OLT via HTTP Basic Auth + form-data.
+     * POST rebootOp to OLT via HTTP.
      */
     public function handle(): void
     {
-        $olt = Olt::find($this->oltId);
+        $endpoint = '';
+        $username = null;
+        $password = null;
 
-        if (!$olt) {
-            Log::warning("RebootOnuJob: OLT #{$this->oltId} tidak ditemukan.");
+        // Mendukung argumen dari DB (ID) maupun langsung IP (String)
+        if (is_numeric($this->oltIdentifier)) {
+            $olt = Olt::find($this->oltIdentifier);
+        } else {
+            // Coba cari di DB berdasarkan IP jika ada, agar Basic Auth tetap bisa dipakai
+            $olt = Olt::where('ip', 'like', '%' . $this->oltIdentifier . '%')->first();
         }
 
-        $endpoint = $olt->ip . '/goform/setOnu';
+        if ($olt) {
+            $endpoint = $olt->ip . '/goform/setOnu';
+            $username = $olt->username;
+            $password = $olt->password;
+        } else {
+            // Fallback: Gunakan identifier langsung sebagai URL tanpa DB
+            $baseUrl = str_starts_with($this->oltIdentifier, 'http') ? $this->oltIdentifier : 'http://' . $this->oltIdentifier;
+            $endpoint = rtrim($baseUrl, '/') . '/goform/setOnu';
+        }
 
         try {
-            $response = Http::withBasicAuth($olt->username, $olt->password)
-                ->timeout($this->timeout)
-                ->asForm()
-                ->post($endpoint, [
-                    'onuId'        => $this->onuId,
-                    'onuName'      => $this->onuName,
-                    'onuOperation' => 'rebootOp',
-                ]);
+            $request = Http::timeout($this->timeout)->asForm();
+            
+            if ($username && $password) {
+                $request = $request->withBasicAuth($username, $password);
+            }
+
+            $response = $request->post($endpoint, [
+                'onuId'        => $this->onuId,
+                'onuName'      => $this->onuName,
+                'onuOperation' => 'rebootOp',
+            ]);
 
             Log::info(
                 "RebootOnuJob: ONU {$this->onuId} ({$this->onuName}) " .
-                "di OLT [{$olt->name}] — HTTP {$response->status()}"
+                "di OLT [{$this->oltIdentifier}] — HTTP {$response->status()}"
             );
         } catch (\Exception $e) {
             Log::error("RebootOnuJob: Gagal reboot ONU {$this->onuId} — {$e->getMessage()}");

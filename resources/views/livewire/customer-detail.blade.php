@@ -141,204 +141,148 @@
                 </div>
 
                 {{-- Info ONU --}}
-                @if(count($onus) > 0)
-                <div wire:poll.5s="refreshOnuStatus" class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-slate-50 dark:border-slate-700">
-                         <h3 class="text-sm font-black text-slate-800 dark:text-white">Informasi ONU</h3>
-                    </div>
-
-                    @foreach($onus as $onu)
-                    <div class="px-6 py-5 {{ !$loop->last ? 'border-b border-slate-50 dark:border-slate-700' : '' }}">
-                        <div class="flex justify-end mb-4">
-                            @if(isset($onu['onu']['id']))
-                            <button type="button" @click="Swal.fire({
-                                title: 'Reboot ONU?',
-                                text: 'Apakah Anda yakin ingin me-reboot ONU ini?',
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonColor: '#ef4444',
-                                cancelButtonColor: '#64748b',
-                                confirmButtonText: 'Ya, Reboot!',
-                                cancelButtonText: 'Batal'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $wire.rebootOnu({{ $onu['onu']['id'] }})
-                                }
-                            })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-colors flex items-center gap-1 shadow-sm">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                Reboot ONU
-                            </button>
-                            @endif
+                <div class="space-y-4">
+                    {{-- Info ONU Real-time dari OLT HTTP API --}}
+                    @if($onuApiData)
+                    @php
+                        $apiStatus   = strtolower($onuApiData['status'] ?? '');
+                        $isApiOnline = $apiStatus === 'up';
+                        $rxPower     = floatval($onuApiData['rx_power'] ?? 0);
+                        $txPower     = floatval($onuApiData['tx_power'] ?? 0);
+                        $temperature = floatval($onuApiData['temperature'] ?? 0);
+                        $uptimeSec   = intval($onuApiData['uptime_sec'] ?? 0);
+                        $uptimeHours = floor($uptimeSec / 3600);
+                        $uptimeMins  = floor(($uptimeSec % 3600) / 60);
+                        $rxColor = $rxPower >= -20 ? 'text-emerald-600 dark:text-emerald-400'
+                                 : ($rxPower >= -27 ? 'text-blue-600 dark:text-blue-400'
+                                 : ($rxPower >= -30 ? 'text-amber-500 dark:text-amber-400'
+                                 : 'text-red-500 dark:text-red-400'));
+                        $tempColor = $temperature < 50 ? 'text-emerald-600 dark:text-emerald-400'
+                                   : ($temperature < 65 ? 'text-amber-500 dark:text-amber-400'
+                                   : 'text-red-500 dark:text-red-400');
+                    @endphp
+                    <div wire:poll.5s="refreshOnuStatus" class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                                 <div class="flex justify-end mb-4">
+                                    <button type="button" @click="Swal.fire({
+                                        title: 'Reboot ONU?',
+                                        text: 'Apakah Anda yakin ingin me-reboot ONU ini?',
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#ef4444',
+                                        cancelButtonColor: '#64748b',
+                                        confirmButtonText: 'Ya, Reboot!',
+                                        cancelButtonText: 'Batal'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            $wire.rebootOnu('{{ $onuApiData['olt'] ?? '' }}', '{{ $onuApiData['id'] ?? '' }}', '{{ $onuApiData['name'] ?? '' }}')
+                                        }
+                                    })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-colors flex items-center gap-1 shadow-sm">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                        Reboot ONU
+                                    </button>
+                            </div>
+                        <div class="px-6 py-5 border-b border-slate-50 dark:border-slate-700 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-4 rounded-full {{ $isApiOnline ? 'bg-emerald-500' : 'bg-red-500' }}"></div>
+                                <h3 class="text-sm font-black text-slate-800 dark:text-white">Informasi ONU</h3>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $isApiOnline ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' }}">
+                                ● {{ $onuApiData['status'] ?? '-' }}
+                            </span>
                         </div>
-                        {{-- ONU Summary --}}
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                            <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">OLT</p>
-                                <p class="text-sm font-bold text-slate-800 dark:text-white font-mono">{{ $customer->viewOnu->onu->olt_id ?? '-' }}</p>
+                        <div class="px-6 py-5 space-y-5">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
+                                    <p class="text-xl font-black {{ $rxColor }}">{{ number_format($rxPower, 2) }}</p>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Rx Power (dBm)</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
+                                    <p class="text-xl font-black text-indigo-600 dark:text-indigo-400">{{ number_format($txPower, 2) }}</p>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Tx Power (dBm)</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
+                                    <p class="text-xl font-black {{ $tempColor }}">{{ number_format($temperature, 1) }}°C</p>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Suhu</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama ONU</p>
-                                <p class="text-sm font-bold text-slate-800 dark:text-white font-mono">{{ $onu['name'] ?? '-' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">MAC Address</p>
-                                <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onu['mac_address'] ?? '-' }}</p>
-                            </div>
-                            <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status Terkini</p>
-                                @php
-                                    $latestStatus = !empty($onu['status_history']) ? $onu['status_history'][0] : null;
-                                @endphp
-                                @if($latestStatus)
-                                    @if(strtolower($latestStatus['status'] ?? '') === 'online')
-                                        <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">● Online</span>
-                                    @elseif(strtolower($latestStatus['status'] ?? '') === 'offline')
-                                        <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">● Offline</span>
-                                    @else
-                                        <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">{{ $latestStatus['status'] ?? '-' }}</span>
-                                    @endif
-                                @else
-                                    <span class="text-xs text-slate-400">-</span>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nama ONU</p>
+                                    <p class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['name'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">OLT IP</p>
+                                    <p class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['olt'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">ONU ID</p>
+                                    <p class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['id'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">MAC Address</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['mac_address'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Firmware</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['fw_version'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Chip ID</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['chip_id'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Ports</p>
+                                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['ports'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">RTT</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['rtt'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">CTC Status</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['ctc_status'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Aktivasi</p>
+                                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['activate'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Uptime</p>
+                                    <p class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">{{ $uptimeHours }}j {{ $uptimeMins }}m</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Deregister</p>
+                                    <p class="text-xs font-bold {{ intval($onuApiData['deregister_cnt'] ?? 0) > 10 ? 'text-red-500 dark:text-red-400' : 'text-slate-700 dark:text-slate-300' }}">
+                                        {{ $onuApiData['deregister_cnt'] ?? '0' }}x
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Online Sejak</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">
+                                        {{ !empty($onuApiData['online_time']) && $onuApiData['online_time'] !== '0000-00-00 00:00:00'
+                                            ? \Carbon\Carbon::parse($onuApiData['online_time'])->translatedFormat('d M Y H:i')
+                                            : '-' }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Offline Terakhir</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">
+                                        {{ !empty($onuApiData['offline_time']) && $onuApiData['offline_time'] !== '0000-00-00 00:00:00'
+                                            ? \Carbon\Carbon::parse($onuApiData['offline_time'])->translatedFormat('d M Y H:i')
+                                            : '-' }}
+                                    </p>
+                                </div>
+                                @if(!empty($onuApiData['offline_reason']))
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Alasan Offline</p>
+                                    <p class="text-xs font-mono text-red-500 dark:text-red-400">{{ $onuApiData['offline_reason'] }}</p>
+                                </div>
                                 @endif
                             </div>
-                            <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Update Terakhir</p>
-                                <p class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
-                                    {{ !empty($onu['onu']['last_update']) ? \Carbon\Carbon::parse($onu['onu']['last_update'])->translatedFormat('d M Y H:i:s') : '-' }}
-                                </p>
-                            </div>
                         </div>
-
-                        {{-- Rx Power highlight --}}
-                        @if($latestStatus)
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
-                                <p class="text-lg font-black text-blue-600 dark:text-blue-400">{{ $latestStatus['rx_power'] ?? '-' }}</p>
-                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Rx Power (dBm)</p>
-                            </div>
-                            @if(isset($latestStatus['status']))
-                            <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
-                                <p class="text-lg font-black {{ strtolower($latestStatus['status']) === 'online' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400' }}">{{ ucfirst($latestStatus['status']) }}</p>
-                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Status</p>
-                            </div>
-                            @endif
-                        </div>
-                        @endif
-
-                        {{-- Graphic History Chart --}}
-                        @if(!empty($onu['status_history']))
-                        <div class="mt-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Grafik Riwayat Sinyal</p>
-                                <div class="flex items-center gap-3">
-                                    <div class="flex items-center gap-1">
-                                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                                        <span class="text-[9px] font-bold text-slate-500">Rx Power</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="h-56 w-full relative bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 pb-8">
-                                @php
-                                    $historyData = array_reverse($onu['status_history']);
-                                    $count = count($historyData);
-                                    $rxPoints = [];
-                                    $step = $count > 1 ? (1000 / ($count - 1)) : 1000;
-                                    
-                                    foreach($historyData as $idx => $hist) {
-                                        $x = $idx * $step;
-                                        $rx = floatval($hist['rx_power'] ?? -40);
-                                        $rxY = 100 - max(0, min(100, (($rx + 40) / 35) * 100));
-                                        $rxPoints[] = "{$x},{$rxY}";
-                                    }
-                                    $rxPointsStr = implode(' ', $rxPoints);
-                                @endphp
-
-                                <!-- Style for walking animation -->
-                                <style>
-                                    @keyframes flow-line {
-                                        to { stroke-dashoffset: -20; }
-                                    }
-                                    .animate-flow {
-                                        stroke-dasharray: 8 4;
-                                        animation: flow-line 1s linear infinite;
-                                    }
-                                </style>
-
-                                <!-- SVG Line Chart -->
-                                <div class="absolute inset-0 px-6 py-6 pb-12 pointer-events-none">
-                                    <svg viewBox="0 -5 1000 110" class="w-full h-full overflow-visible" preserveAspectRatio="none">
-                                        <!-- Grid Lines -->
-                                        <line x1="0" y1="0" x2="1000" y2="0" stroke="currentColor" stroke-width="1" stroke-dasharray="10,10" class="text-slate-200 dark:text-slate-700/50" />
-                                        <line x1="0" y1="50" x2="1000" y2="50" stroke="currentColor" stroke-width="1" stroke-dasharray="10,10" class="text-slate-200 dark:text-slate-700/50" />
-                                        <line x1="0" y1="100" x2="1000" y2="100" stroke="currentColor" stroke-width="1" stroke-dasharray="10,10" class="text-slate-200 dark:text-slate-700/50" />
-
-                                        <!-- Lines with walking animation -->
-                                        <polyline points="{{ $rxPointsStr }}" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-1000 ease-out drop-shadow-md animate-flow"/>
-                                        
-                                        <!-- Data Points (Circles) -->
-                                        @foreach($historyData as $idx => $hist)
-                                        @php
-                                            $x = $idx * $step;
-                                            $rx = floatval($hist['rx_power'] ?? -40);
-                                            $rxY = 100 - max(0, min(100, (($rx + 40) / 35) * 100));
-                                            
-                                            $isOnline = strtolower($hist['status'] ?? '') === 'online';
-                                            $strokeColorRx = $isOnline ? '#2563eb' : '#94a3b8';
-                                        @endphp
-                                        
-                                        <!-- Pulse Effect for latest point -->
-                                        @if($loop->last && $isOnline)
-                                        <circle cx="{{ $x }}" cy="{{ $rxY }}" r="8" fill="#3b82f6" opacity="0.4" class="animate-ping origin-center" style="transform-origin: {{ $x }}px {{ $rxY }}px;"/>
-                                        @endif
-                                        
-                                        <circle cx="{{ $x }}" cy="{{ $rxY }}" r="5" fill="#ffffff" stroke="{{ $strokeColorRx }}" stroke-width="3" class="transition-all duration-1000 ease-out dark:fill-slate-800"/>
-                                        @endforeach
-                                    </svg>
-                                </div>
-
-                                <!-- Interaction Overlay (Hover tooltips) -->
-                                <div class="absolute inset-0 px-6 py-6 pb-12 pointer-events-none">
-                                    @foreach($historyData as $idx => $history)
-                                    @php
-                                        $xPercent = $count > 1 ? ($idx * (100 / ($count - 1))) : 50;
-                                    @endphp
-                                    <div class="absolute h-full group pointer-events-auto" style="left: {{ $xPercent }}%; width: 30px; transform: translateX(-50%);">
-                                        
-                                        <!-- Hover Guideline -->
-                                        <div class="absolute inset-y-0 left-1/2 w-px bg-slate-400 dark:bg-slate-500 opacity-0 group-hover:opacity-50 transition-opacity transform -translate-x-1/2"></div>
-                                        
-                                        <!-- Tooltip -->
-                                        <div class="absolute bottom-[calc(100%+5px)] hidden group-hover:block z-50 bg-slate-800 text-white text-[10px] px-3 py-2 rounded-xl shadow-xl whitespace-nowrap border border-slate-700 pointer-events-none transform -translate-x-1/2 left-1/2">
-                                            <div class="flex items-center gap-1.5 mb-1 border-b border-slate-700 pb-1">
-                                                @php $isOnline = strtolower($history['status'] ?? '') === 'online'; @endphp
-                                                <div class="w-1.5 h-1.5 rounded-full {{ $isOnline ? 'bg-emerald-400' : 'bg-red-400' }}"></div>
-                                                <span class="font-bold">{{ ucfirst($history['status'] ?? 'Unknown') }}</span>
-                                                <span class="text-slate-400 text-[8px] ml-1">{{ isset($history['created_at']) ? \Carbon\Carbon::parse($history['created_at'])->format('H:i:s') : '-' }}</span>
-                                            </div>
-                                            <div class="mt-1">
-                                                <div>
-                                                    <span class="text-[8px] text-slate-400 block uppercase">Rx Power</span>
-                                                    <span class="font-mono text-blue-300 font-bold">{{ floatval($history['rx_power'] ?? 0) }} <span class="text-[8px]">dBm</span></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Time Label -->
-                                        <div class="absolute -bottom-8 w-full text-center transform -translate-x-1/2 left-1/2">
-                                            <span class="text-[8px] text-slate-400 font-bold whitespace-nowrap {{ $loop->last ? 'text-blue-500 dark:text-blue-400' : '' }}">
-                                                {{ isset($history['created_at']) ? \Carbon\Carbon::parse($history['created_at'])->format('H:i') : '-' }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                        @endif
                     </div>
-                    @endforeach
+                    @endif
                 </div>
-                @endif
             </div>
 
             {{-- Statistik Invoice --}}
