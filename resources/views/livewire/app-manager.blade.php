@@ -73,6 +73,7 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
                     @endif
 
@@ -239,6 +240,10 @@
                         </div>
                     </div>
                 </div>
+
+                @if(auth()->user()->features()->whereIn('parameter', ['pppoe', 'static'])->exists())
+                    <livewire:reboot-schedule-manager />
+                @endif
             </div>
         </div>
 

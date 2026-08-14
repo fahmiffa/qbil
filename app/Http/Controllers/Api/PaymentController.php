@@ -10,6 +10,7 @@ use App\Models\VoucherOrder;
 use App\Jobs\BulkGenerateHotspotVouchersJob;
 use App\Jobs\RemoveIsolirJob;
 use App\Jobs\SendManualInvoiceWhatsappJob;
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
@@ -47,7 +48,7 @@ class PaymentController extends Controller
         // Whitelist Package Validation
         $whitelist = [
             'com.bca.mybca.omni.android',
-            'com.bankmandiri.mandirionline',
+            'id.bmri.livin',
             'com.bca.msb',
             'id.dana',
             'com.shopeepay.id',
@@ -61,9 +62,11 @@ class PaymentController extends Controller
         // Mapping package to payment method
         $paymentMethod = null;
         if ($payload['package'] === 'com.bca.msb') {
-            $paymentMethod = 'BCA';
+            $paymentMethod = 2;
         } elseif ($payload['package'] === 'id.dana') {
-            $paymentMethod = 'DANA';
+            $paymentMethod = 3;
+        } elseif ($payload['package'] === 'id.bmri.livin') {
+            $paymentMethod = 4;
         }
 
         Log::channel('payment')->info(json_encode($payload));
@@ -90,10 +93,11 @@ class PaymentController extends Controller
                 // Skip if there is no unique code (reads as 000) or nominal is too small
                 if ($nominal > 0 && $uniqueCode > 0) {
 
-                    // 1. Check Standard Invoices
+                    // 1. Check Standard Invoices (filter by current billing period to avoid false match with old static unique codes)
                     $invoice = Invoice::where('status', 'unpaid')
                         ->where('unique_code', $uniqueCode)
                         ->where('total_amount', $nominal)
+                        // ->where('billing_period', now()->format('Y-m'))
                         ->first();
 
                     if ($invoice) {
@@ -104,6 +108,34 @@ class PaymentController extends Controller
                         ]);
 
                         Log::info("Auto-Verified Invoice ID: {$invoice->invoice_number} detected payment: Rp {$nominal} with unique code: {$uniqueCode}");
+
+                        $customer = $invoice->customer;
+                        $oldStatus = $customer->status;
+
+                        $paymentDate = now()->startOfDay();
+                        $lastDueDate = $customer->due_date ? Carbon::parse($customer->due_date)->startOfDay() : null;
+
+                        if ($oldStatus === 'suspended') {
+                            if ($lastDueDate && $paymentDate->lessThanOrEqualTo($lastDueDate->copy()->addDay())) {
+                                $newDueDate = $lastDueDate->copy()->addMonth();
+                            } else {
+                                $newDueDate = now()->addMonth();
+                            }
+                        } else {
+                            $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
+                        }
+
+                        $customer->update([
+                            'status' => 'active',
+                            'isolated_at' => null,
+                            'due_date' => $newDueDate,
+                            'activated_at' => $customer->activated_at ?? now(),
+                        ]);
+
+                        if ($oldStatus === 'suspended') {
+                            $invoiceService = new \App\Services\InvoiceService();
+                            $invoiceService->generateFollowUpIfOverdue($customer);
+                        }
 
                         RemoveIsolirJob::dispatch($invoice->customer);
                         SendManualInvoiceWhatsappJob::dispatch($invoice);

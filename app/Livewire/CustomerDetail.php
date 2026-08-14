@@ -4,8 +4,12 @@ namespace App\Livewire;
 
 use App\Models\Customer;
 use App\Models\MethodPayment;
+use App\Models\ViewOnu;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\Onu;
+use App\Models\Olt;
+use App\Services\OltApiService;
 
 class CustomerDetail extends Component
 {
@@ -27,6 +31,10 @@ class CustomerDetail extends Component
     // For printing multiple invoices
     public $selected_invoices = [];
     public $select_all = false;
+    public $onus = [];
+
+    // Real-time ONU data from OLT HTTP API
+    public $onuApiData = null;
 
     public $month_names = [
         '01' => 'Januari',
@@ -54,6 +62,57 @@ class CustomerDetail extends Component
         $this->payment_date = now()->format('Y-m-d\TH:i');
         $this->selected_year = now()->year;
         $this->amount_per_month = $customer->package->price ?? 0;
+
+        // Fetch related ONU data by trimmed MAC address (remove last octet)
+        $this->loadOnuData();
+    }
+
+    public function loadOnuData()
+    {
+        $viewOnu = $this->customer->viewOnu()->with(['onu.statusHistory' => function($q) {
+            $q->latest('id')->limit(10);
+        }])->first();
+
+        if ($viewOnu && $viewOnu->onu) {
+            $onuArr = $viewOnu->toArray();
+            $onuArr['status_history'] = $viewOnu->onu->statusHistory->toArray();
+            $this->onus = [$onuArr];
+        } else {
+            $this->onus = [];
+        }
+
+        // Fetch real-time ONU detail from OLT HTTP API
+        $this->loadOnuApiData();
+    }
+
+    public function loadOnuApiData()
+    {
+        $onuName = $this->customer->name;
+
+        if (empty($onuName)) {
+            $this->onuApiData = null;
+            return;
+        }
+
+        try {
+            $service = app(OltApiService::class);
+            $this->onuApiData = $service->fetchOnuByName($onuName);
+        } catch (\Exception $e) {
+            $this->onuApiData = null;
+        }
+    }
+
+    public function rebootOnu($oltUrl, $onuId, $onuName)
+    {
+        if ($oltUrl && $onuId) {
+            \App\Jobs\RebootOnuJob::dispatch($oltUrl, $onuId, $onuName);
+            $this->dispatch('notify', ['message' => 'Perintah Reboot ONU telah dikirim dan sedang diproses di belakang layar.', 'type' => 'success']);
+        }
+    }
+
+    public function refreshOnuStatus()
+    {
+        $this->loadOnuData();
     }
 
     public function toggleMonth($month)

@@ -22,12 +22,14 @@ class CustomerManager extends Component
 {
     use WithPagination, ChecksDemoMode;
 
-    public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date;
+    public $id_pelanggan, $name, $phone, $phone2, $address, $keterangan, $status = 'active', $customer_id, $due_date, $unique_code;
     public $router_id;
     public $package_id, $username, $password, $ppp_profile, $service_type = 'static', $ip_address, $mac_address, $dhcp_server;
     public $creation_method = 'buat_baru';
     public $sync_mikrotik_id = '';
     public $availableMikrotikData = [];
+    public $onu_id = '';
+    public $availableOnuData = [];
     public $latitude, $longitude;
     public $asset_id;
     public $selectedPool;
@@ -43,6 +45,18 @@ class CustomerManager extends Component
     public $filterDueDate = '';
     public $filterRouter = '';
     public $perPage = 10;
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
     public $isOpen = false;
     public $isSyncModalOpen = false;
     public $unmatchedStatic = [];
@@ -51,7 +65,7 @@ class CustomerManager extends Component
     public $syncError = '';
     public function render()
     {
-        $query = auth()->user()->customers()->with('package')->latest();
+        $query = auth()->user()->customers()->with('package')->orderBy($this->sortField, $this->sortDirection);
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -164,6 +178,23 @@ class CustomerManager extends Component
         $this->isOpen = true;
         $this->resetValidation();
 
+        try {
+            $oltService = new \App\Services\OltApiService();
+            $raw = $oltService->fetchOnuAll() ?? [];
+            // Normalize field names: API returns 'id' & 'name', template expects 'onu_id' & 'onu_name'
+            $this->availableOnuData = array_map(function ($item) {
+                return [
+                    'onu_id'      => $item['id']      ?? $item['onu_id']      ?? '',
+                    'onu_name'    => $item['name']    ?? $item['onu_name']    ?? '',
+                    'mac_address' => $item['mac_address'] ?? $item['onu_mac'] ?? '',
+                    'olt'         => $item['olt']     ?? '',
+                    'status'      => $item['status']  ?? '',
+                ];
+            }, $raw);
+        } catch (\Exception $e) {
+            $this->availableOnuData = [];
+        }
+
         // Logic ppp_profiles sudah dipindah ke render agar reaktif
         return;
     }
@@ -213,6 +244,7 @@ class CustomerManager extends Component
         $this->ppp_profile  = '';
         $this->username     = '';
         $this->password     = '';
+        $this->unique_code  = '';
 
         // Default service type based on features
         if (auth()->user()->hasFeature('static')) {
@@ -226,6 +258,7 @@ class CustomerManager extends Component
         $this->creation_method = 'buat_baru';
         $this->sync_mikrotik_id = '';
         $this->availableMikrotikData = [];
+        $this->onu_id       = '';
         $this->ip_address   = '';
         $this->mac_address  = '';
         $this->dhcp_server  = '';
@@ -444,8 +477,23 @@ class CustomerManager extends Component
                 $oldUsername = $customer->username;
                 $oldMac = $customer->mac_address;
 
+                // Auto generate unique_code jika belum ada saat di-update
+                if (!$customer->unique_code) {
+                    $lastUniqueCode = Customer::where('user_id', auth()->id())->max('unique_code') ?? 0;
+                    $uniqueCode = $lastUniqueCode + 1;
+
+                    if ($uniqueCode > 999) {
+                        throw new \Exception("Alokasi unik kode penuh (> 999).");
+                    }
+                    $data['unique_code'] = $uniqueCode;
+                }
+
                 $customer->update($data);
                 $customer->refresh();
+
+                if ($this->onu_id) {
+                    \App\Jobs\RenameOnuJob::dispatch($this->onu_id, $customer->name);
+                }
 
                 // Dispatch Job untuk provisioning update
                 if (auth()->user()->hasFeature('mikrotik')) {
@@ -469,7 +517,18 @@ class CustomerManager extends Component
                     'data' => ['customer_id' => $customer->id]
                 ]);
             } else {
+                // Auto generate unique_code untuk pelanggan baru
+                $lastUniqueCode = Customer::where('user_id', auth()->id())->max('unique_code') ?? 0;
+                $uniqueCode = $lastUniqueCode + 1;
+
+                if ($uniqueCode > 999) {
+                    throw new \Exception("Alokasi unik kode penuh (> 999).");
+                }
+                $data['unique_code'] = $uniqueCode;
+
                 $customer = Customer::create($data);
+                // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
+                \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
 
                 $isPascaBayar = auth()->user()->hasFeature('pasca');
                 $isSinkron = ($this->creation_method === 'sinkron');
@@ -485,15 +544,18 @@ class CustomerManager extends Component
                         Log::error("Gagal generate invoice pertama untuk {$customer->name}: " . $e->getMessage());
                     }
 
-                    // Dispatch Job untuk Notifikasi WhatsApp Pendaftaran
-                    \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
-
+                    
+                    
                     // Dispatch Job untuk Notifikasi WhatsApp Tagihan (Invoice) Pertama
                     if ($firstInvoice) {
                         \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($firstInvoice);
                     }
                 }
-
+                
+                if ($this->onu_id) {
+                    \App\Jobs\RenameOnuJob::dispatch($this->onu_id, $customer->name);
+                }
+                        
                 // Dispatch Job untuk provisioning create
                 if (auth()->user()->hasFeature('mikrotik')) {
                     \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'create');
@@ -663,12 +725,27 @@ class CustomerManager extends Component
         $this->username     = $customer->username;
         $this->password     = $customer->password;
         $this->service_type = $customer->service_type;
+        $this->unique_code  = $customer->unique_code;
         $this->ip_address   = $customer->ip_address;
         $this->mac_address  = $customer->mac_address;
         $this->dhcp_server  = $customer->dhcp_server;
         $this->latitude     = $customer->latitude;
         $this->longitude    = $customer->longitude;
         $this->asset_id     = $customer->asset_id;
+
+        try {
+            $oltService = new \App\Services\OltApiService();
+            $onuMatch = $oltService->fetchOnuByName($customer->name);
+            // API returns 'id' field; fallback to 'onu_id' if already normalized
+            if ($onuMatch && (isset($onuMatch['id']) || isset($onuMatch['onu_id']))) {
+                $this->onu_id = $onuMatch['id'] ?? $onuMatch['onu_id'];
+            } else {
+                $this->onu_id = '';
+            }
+        } catch (\Exception $e) {
+            $this->onu_id = '';
+        }
+
         $this->openModal();
         $this->dispatch('map-updated', ['lat' => $customer->latitude, 'lng' => $customer->longitude]);
     }

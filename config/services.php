@@ -39,4 +39,8 @@ return [
         'provider' => env('MAP_PROVIDER', 'google'),
     ],
 
+    'olt' => [
+        'url' => env('OLT_URL', ''),
+    ],
+
 ];

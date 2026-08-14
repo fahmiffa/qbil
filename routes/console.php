@@ -13,3 +13,4 @@ Schedule::command('invoice:remind')->everyMinute()->withoutOverlapping();
 Schedule::command('billing:check-due')->everyMinute();
 Schedule::command('hotspot:cleanup-expired')->hourly();
 Schedule::command('voucher:cleanup')->hourly();
+Schedule::command('olt:reboot-scheduled')->everyMinute();

@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', \App\Livewire\LandingPage::class)->name('home');
+// Route::get('/', \App\Livewire\LandingPage::class)->name('home');
 
 Route::get('dashboard', \App\Livewire\DashboardReport::class)
     ->middleware(['auth', 'verified'])
@@ -35,6 +35,8 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('reports', \App\Livewire\ReportManager::class)->name('reports');
     Route::get('whatsapp-servers', \App\Livewire\WhatsappServerManager::class)->name('whatsapp-servers');
     Route::get('olts', \App\Livewire\OltManager::class)->name('olts');
+    Route::get('olts/onu-stream', [App\Http\Controllers\OltSseController::class, 'stream'])->name('olts.onu-stream');
+    Route::post('olts/reboot-onu', [App\Http\Controllers\OltSseController::class, 'rebootOnu'])->name('olts.reboot-onu');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)

@@ -56,41 +56,45 @@
                 </div>
             </div>
 
-            {{-- Info Grid --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                {{-- Info Umum --}}
-                <div class="md:col-span-2 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 space-y-4">
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Informasi Pelanggan</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Alamat</p>
-                            <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">{{ $customer->address ?: '-' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Keterangan</p>
-                            <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">{{ $customer->keterangan ?: '-' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Jatuh Tempo</p>
-                            <p class="text-sm font-bold text-slate-800 dark:text-white">{{ $customer->due_date ? $customer->due_date->translatedFormat('d F') : '-' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Aktif</p>
-                            <p class="text-sm font-bold text-slate-800 dark:text-white">{{ $customer->activated_at ? $customer->activated_at->translatedFormat('d F Y') : '-' }}</p>
-                        </div>
-                        @if($customer->latitude && $customer->longitude)
-                        <div class="sm:col-span-2">
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Koordinat</p>
-                            <p class="text-xs font-mono text-slate-600 dark:text-slate-400">{{ $customer->latitude }}, {{ $customer->longitude }}</p>
-                        </div>
-                        @endif
+            {{-- Info Pelanggan (Full Width) --}}
+            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 space-y-4">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Informasi Pelanggan</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Alamat</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">{{ $customer->address ?: '-' }}</p>
                     </div>
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Keterangan</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">{{ $customer->keterangan ?: '-' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Jatuh Tempo</p>
+                        <p class="text-sm font-bold text-slate-800 dark:text-white">{{ $customer->due_date ? $customer->due_date->translatedFormat('d F') : '-' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Aktif</p>
+                        <p class="text-sm font-bold text-slate-800 dark:text-white">{{ $customer->activated_at ? $customer->activated_at->translatedFormat('d F Y') : '-' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kode Unik</p>
+                        <p class="text-sm font-bold text-slate-800 dark:text-white">{{ $customer->unique_code ?: '-' }}</p>
+                    </div>
+                    @if($customer->latitude && $customer->longitude)
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Koordinat</p>
+                        <p class="text-xs font-mono text-slate-600 dark:text-slate-400">{{ $customer->latitude }}, {{ $customer->longitude }}</p>
+                    </div>
+                    @endif
                 </div>
+            </div>
+
+            {{-- Info Teknis + Info ONU Side by Side --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {{-- Info Teknis --}}
                 <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 space-y-4">
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Info Teknis</h3>
+                    <h3 class="text-sm font-black text-slate-800 dark:text-white">Info Teknis</h3>
                     <div class="space-y-3">
                         @if($customer->router)
                         <div>
@@ -134,6 +138,150 @@
                         </div>
                         @endif
                     </div>
+                </div>
+
+                {{-- Info ONU --}}
+                <div class="space-y-4">
+                    {{-- Info ONU Real-time dari OLT HTTP API --}}
+                    @if($onuApiData)
+                    @php
+                        $apiStatus   = strtolower($onuApiData['status'] ?? '');
+                        $isApiOnline = $apiStatus === 'up';
+                        $rxPower     = floatval($onuApiData['rx_power'] ?? 0);
+                        $txPower     = floatval($onuApiData['tx_power'] ?? 0);
+                        $temperature = floatval($onuApiData['temperature'] ?? 0);
+                        $uptimeSec   = intval($onuApiData['uptime_sec'] ?? 0);
+                        $uptimeHours = floor($uptimeSec / 3600);
+                        $uptimeMins  = floor(($uptimeSec % 3600) / 60);
+                        $rxColor = $rxPower >= -20 ? 'text-emerald-600 dark:text-emerald-400'
+                                 : ($rxPower >= -27 ? 'text-blue-600 dark:text-blue-400'
+                                 : ($rxPower >= -30 ? 'text-amber-500 dark:text-amber-400'
+                                 : 'text-red-500 dark:text-red-400'));
+                        $tempColor = $temperature < 50 ? 'text-emerald-600 dark:text-emerald-400'
+                                   : ($temperature < 65 ? 'text-amber-500 dark:text-amber-400'
+                                   : 'text-red-500 dark:text-red-400');
+                    @endphp
+                    <div wire:poll.5s="refreshOnuStatus" class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                                 <div class="flex justify-end mb-4">
+                                    <button type="button" @click="Swal.fire({
+                                        title: 'Reboot ONU?',
+                                        text: 'Apakah Anda yakin ingin me-reboot ONU ini?',
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#ef4444',
+                                        cancelButtonColor: '#64748b',
+                                        confirmButtonText: 'Ya, Reboot!',
+                                        cancelButtonText: 'Batal'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            $wire.rebootOnu('{{ $onuApiData['olt'] ?? '' }}', '{{ $onuApiData['id'] ?? '' }}', '{{ $onuApiData['name'] ?? '' }}')
+                                        }
+                                    })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-colors flex items-center gap-1 shadow-sm">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                        Reboot ONU
+                                    </button>
+                            </div>
+                        <div class="px-6 py-5 border-b border-slate-50 dark:border-slate-700 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-4 rounded-full {{ $isApiOnline ? 'bg-emerald-500' : 'bg-red-500' }}"></div>
+                                <h3 class="text-sm font-black text-slate-800 dark:text-white">Informasi ONU</h3>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $isApiOnline ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' }}">
+                                ● {{ $onuApiData['status'] ?? '-' }}
+                            </span>
+                        </div>
+                        <div class="px-6 py-5 space-y-5">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
+                                    <p class="text-xl font-black {{ $rxColor }}">{{ number_format($rxPower, 2) }}</p>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Rx Power (dBm)</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
+                                    <p class="text-xl font-black text-indigo-600 dark:text-indigo-400">{{ number_format($txPower, 2) }}</p>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Tx Power (dBm)</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 text-center">
+                                    <p class="text-xl font-black {{ $tempColor }}">{{ number_format($temperature, 1) }}°C</p>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Suhu</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nama ONU</p>
+                                    <p class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['name'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">OLT IP</p>
+                                    <p class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['olt'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">ONU ID</p>
+                                    <p class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['id'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">MAC Address</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['mac_address'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Firmware</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['fw_version'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Chip ID</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['chip_id'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Ports</p>
+                                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['ports'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">RTT</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['rtt'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">CTC Status</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">{{ $onuApiData['ctc_status'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Aktivasi</p>
+                                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ $onuApiData['activate'] ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Uptime</p>
+                                    <p class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">{{ $uptimeHours }}j {{ $uptimeMins }}m</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Deregister</p>
+                                    <p class="text-xs font-bold {{ intval($onuApiData['deregister_cnt'] ?? 0) > 10 ? 'text-red-500 dark:text-red-400' : 'text-slate-700 dark:text-slate-300' }}">
+                                        {{ $onuApiData['deregister_cnt'] ?? '0' }}x
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Online Sejak</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">
+                                        {{ !empty($onuApiData['online_time']) && $onuApiData['online_time'] !== '0000-00-00 00:00:00'
+                                            ? \Carbon\Carbon::parse($onuApiData['online_time'])->translatedFormat('d M Y H:i')
+                                            : '-' }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Offline Terakhir</p>
+                                    <p class="text-xs font-mono text-slate-700 dark:text-slate-300">
+                                        {{ !empty($onuApiData['offline_time']) && $onuApiData['offline_time'] !== '0000-00-00 00:00:00'
+                                            ? \Carbon\Carbon::parse($onuApiData['offline_time'])->translatedFormat('d M Y H:i')
+                                            : '-' }}
+                                    </p>
+                                </div>
+                                @if(!empty($onuApiData['offline_reason']))
+                                <div>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Alasan Offline</p>
+                                    <p class="text-xs font-mono text-red-500 dark:text-red-400">{{ $onuApiData['offline_reason'] }}</p>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -424,3 +572,28 @@
         </div>
     </div>
 </div>
+
+@script
+<script>
+    $wire.on('notify', (data) => {
+        const payload = Array.isArray(data) ? data[0] : data;
+        
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        Toast.fire({
+            icon: payload.type || 'success',
+            title: payload.message
+        });
+    });
+</script>
+@endscript

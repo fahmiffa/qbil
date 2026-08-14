@@ -206,7 +206,12 @@
                                 <div class="px-8 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">ID Pelanggan</label>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">ID Pelanggan</label>
+                                                @if($unique_code)
+                                                <span class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800" title="Kode Unik Billing">Code: {{ str_pad($unique_code, 3, '0', STR_PAD_LEFT) }}</span>
+                                                @endif
+                                            </div>
                                             <div class="relative flex gap-2">
                                                 <input type="text" wire:model="id_pelanggan" placeholder="EB-XXXX"
                                                     class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors border-l-4 border-l-blue-500">
@@ -311,6 +316,44 @@
                                             </div>
                                         </div>
                                         @endif
+
+                                        <!-- Pilihan ONU -->
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Pilih ONU (Opsi)</label>
+                                            <div class="relative" x-data="{ open: false, search: '' }" @click.away="open = false">
+                                                <div @click="open = !open" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors cursor-pointer flex justify-between items-center">
+                                                    <span x-text="$wire.onu_id ? ($wire.availableOnuData.find(d => d.onu_id === $wire.onu_id)?.onu_name + ' - ' + ($wire.availableOnuData.find(d => d.onu_id === $wire.onu_id)?.mac_address || $wire.availableOnuData.find(d => d.onu_id === $wire.onu_id)?.onu_mac || '') || '-- Pilih ONU --') : '-- Pilih ONU --'" class="truncate text-slate-700 dark:text-slate-300"></span>
+                                                    <svg class="w-4 h-4 text-slate-400 transform transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </div>
+
+                                                <div x-show="open" x-transition.opacity x-cloak class="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-60 flex flex-col overflow-hidden" style="display: none;">
+                                                    <div class="p-2 border-b border-slate-100 dark:border-slate-700">
+                                                        <div class="relative">
+                                                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                                </svg>
+                                                            </span>
+                                                            <input type="text" x-model="search" placeholder="Cari ONU / MAC..." class="w-full pl-9 bg-slate-50 dark:bg-slate-900 border-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors" @click.stop>
+                                                        </div>
+                                                    </div>
+                                                    <ul class="overflow-y-auto flex-1 p-1">
+                                                        <template x-for="item in $wire.availableOnuData.filter(i => (i.onu_name || '').toLowerCase().includes(search.toLowerCase()) || (i.mac_address || i.onu_mac || '').toLowerCase().includes(search.toLowerCase()))" :key="item.onu_id">
+                                                            <li @click="$wire.set('onu_id', item.onu_id); open = false; search = ''"
+                                                                class="px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer rounded-lg font-mono truncate transition-colors flex items-center justify-between group">
+                                                                <span x-text="(item.onu_name || '-') + ' (' + (item.mac_address || item.onu_mac || '-') + ')'" class="truncate"></span>
+                                                                <svg x-show="$wire.onu_id === item.onu_id" class="w-4 h-4 text-blue-500 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+                                                            </li>
+                                                        </template>
+                                                        <li x-show="$wire.availableOnuData.filter(i => (i.onu_name || '').toLowerCase().includes(search.toLowerCase()) || (i.mac_address || i.onu_mac || '').toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-4 text-sm text-slate-400 text-center italic font-medium">Data tidak ditemukan</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
 
 
                                         <!-- Asset / Perangkat Terpasang -->
@@ -743,7 +786,19 @@
                             <tr>
                                 <th class="px-4 py-3 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">NO</th>
                                 <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">ID PELANGGAN</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">NAMA</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest cursor-pointer hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors group select-none" wire:click="sortBy('name')">
+                                    <div class="flex items-center gap-2">
+                                        <span>NAMA</span>
+                                        <div class="flex flex-col">
+                                            <svg class="w-2.5 h-2.5 {{ $sortField === 'name' && $sortDirection === 'asc' ? 'text-blue-500' : 'text-slate-300 dark:text-slate-600 group-hover:text-slate-400' }}" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            <svg class="w-2.5 h-2.5 -mt-0.5 {{ $sortField === 'name' && $sortDirection === 'desc' ? 'text-blue-500' : 'text-slate-300 dark:text-slate-600 group-hover:text-slate-400' }}" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">PAKET</th>
                                 <th class="px-4 py-3 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">IP & MAC</th>
                                 <th class="px-4 py-3 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">TEMPO</th>
@@ -758,7 +813,18 @@
                             @forelse($customers as $idx => $customer)
                             <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400 text-center">{{ $customers->firstItem() + $idx }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-slate-400">{{ $customer->id_pelanggan ?? '-' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-mono text-gray-600 dark:text-slate-400 font-semibold">{{ $customer->id_pelanggan ?? '-' }}</span>
+                                        @if($customer->unique_code)
+                                        <div class="flex items-center gap-1 mt-0.5">
+                                            <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800" title="Kode Unik Billing">
+                                                Code: {{ str_pad($customer->unique_code, 3, '0', STR_PAD_LEFT) }}
+                                            </span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td class="whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white p-0">
                                     <a href="{{ route('customers.detail', $customer->id) }}" class="block px-4 py-3 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group" wire:navigate>
                                         <span class="group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{{ $customer->name }}</span>

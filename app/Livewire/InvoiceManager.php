@@ -169,6 +169,13 @@ class InvoiceManager extends Component
         $id = $invoiceId ?? $this->selectedInvoice->id;
         $invoice = Invoice::findOrFail($id);
 
+        // Guard: hanya izinkan verifikasi pada tagihan yang masih unpaid
+        if ($invoice->status !== 'unpaid') {
+            $this->dispatch('toast', type: 'warning', message: "Tagihan {$invoice->invoice_number} sudah berstatus {$invoice->status}, tidak perlu diverifikasi.");
+            $this->closeVerifyModal();
+            return;
+        }
+
         DB::transaction(function () use ($invoice) {
             $invoice->update([
                 'status' => 'paid',
@@ -189,9 +196,17 @@ class InvoiceManager extends Component
             $oldStatus = $customer->status;
 
             // Logika Reset/Advance Due Date (Dynamic Subscription)
+            $paymentDate = now()->startOfDay();
+            $lastDueDate = $customer->due_date ? Carbon::parse($customer->due_date)->startOfDay() : null;
+
             if ($oldStatus === 'suspended') {
-                // Jika dari suspend (baru/vaku), reset siklus dari hari ini
-                $newDueDate = now()->addMonth();
+                // Jika bayar <= jatuh tempo + 1 hari, pertahankan tanggal jatuh tempo
+                if ($lastDueDate && $paymentDate->lessThanOrEqualTo($lastDueDate->copy()->addDay())) {
+                    $newDueDate = $lastDueDate->copy()->addMonth();
+                } else {
+                    // Jika lebih dari H+1, reset siklus dari hari bayar (hari ini)
+                    $newDueDate = now()->addMonth();
+                }
             } else {
                 // Jika pembayaran rutin, majukan 1 bulan dari tgl jatuh tempo sebelumnya
                 $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
@@ -238,6 +253,13 @@ class InvoiceManager extends Component
 
         $invoice = $this->selectedInvoice;
 
+        // Guard: hanya izinkan verifikasi pada tagihan yang masih unpaid
+        if ($invoice->status !== 'unpaid') {
+            $this->dispatch('toast', type: 'warning', message: "Tagihan {$invoice->invoice_number} sudah berstatus {$invoice->status}, tidak perlu diverifikasi.");
+            $this->closeVerifyModal();
+            return;
+        }
+
         DB::transaction(function () use ($invoice) {
             // Create Piutang Record
             Piutang::updateOrCreate([
@@ -261,8 +283,16 @@ class InvoiceManager extends Component
             $oldStatus = $customer->status;
 
             // Reset/Advance Due Date even for Piutang
+            $paymentDate = now()->startOfDay();
+            $lastDueDate = $customer->due_date ? Carbon::parse($customer->due_date)->startOfDay() : null;
+
             if ($oldStatus === 'suspended') {
-                $newDueDate = now()->addMonth();
+                // Jika bayar <= jatuh tempo + 1 hari, pertahankan tanggal jatuh tempo
+                if ($lastDueDate && $paymentDate->lessThanOrEqualTo($lastDueDate->copy()->addDay())) {
+                    $newDueDate = $lastDueDate->copy()->addMonth();
+                } else {
+                    $newDueDate = now()->addMonth();
+                }
             } else {
                 $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
             }

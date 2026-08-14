@@ -33,22 +33,23 @@ class InvoiceService
         return DB::transaction(function () use ($customer, $period) {
             $amount = $customer->package->price ?? 0;
 
-            // 2. UNIQUE CODE GENERATION
-            $usedCodes = Invoice::whereHas('customer', function ($q) use ($customer) {
-                    $q->where('user_id', $customer->user_id);
-                })
-                ->where('status', 'unpaid')
-                ->lockForUpdate() // Tambahkan lock agar tidak bentrok saat proses concurrent
-                ->pluck('unique_code')
-                ->toArray();
+            // 2. UNIQUE CODE GENERATION (STATIC per pelanggan)
+            $uniqueCode = (int) $customer->unique_code;
 
-            $availableCodes = array_diff(range(1, 999), $usedCodes);
+            if (!$uniqueCode) {
+                // Auto generate kode unik mengikuti jumlah maksimum terakhir (per user)
+                $lastUniqueCode = Customer::where('user_id', $customer->user_id)->max('unique_code') ?? 0;
+                $uniqueCode = $lastUniqueCode + 1;
 
-            if (empty($availableCodes)) {
-                throw new \Exception("Semua kode unik (1-999) untuk User ID {$customer->user_id} sudah terpakai.");
+                // Jika ingin membatasi misal maksimal 999
+                if ($uniqueCode > 999) {
+                    throw new \Exception("Alokasi unik kode penuh (> 999) untuk pelanggan {$customer->name}.");
+                }
+
+                // Update data pelanggan agar angka ini jadi statis seterusnya
+                $customer->update(['unique_code' => $uniqueCode]);
             }
 
-            $uniqueCode = $availableCodes[array_rand($availableCodes)];
             $totalAmount = $amount + $uniqueCode;
 
             // 3. INVOICE NUMBER SEQUENCE
@@ -112,7 +113,7 @@ class InvoiceService
         // Calculate when the generation should have happened
         $offsetDays = (int) $setting->invoice_gen_days;
         $originalDueDate = Carbon::parse($customer->due_date);
-        
+
         // Target generation date for current month
         $scheduledGenDate = Carbon::parse($currentPeriod . '-' . $originalDueDate->format('d'))
             ->addDays($offsetDays);
