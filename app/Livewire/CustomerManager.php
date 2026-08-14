@@ -180,7 +180,17 @@ class CustomerManager extends Component
 
         try {
             $oltService = new \App\Services\OltApiService();
-            $this->availableOnuData = $oltService->fetchOnuAll() ?? [];
+            $raw = $oltService->fetchOnuAll() ?? [];
+            // Normalize field names: API returns 'id' & 'name', template expects 'onu_id' & 'onu_name'
+            $this->availableOnuData = array_map(function ($item) {
+                return [
+                    'onu_id'      => $item['id']      ?? $item['onu_id']      ?? '',
+                    'onu_name'    => $item['name']    ?? $item['onu_name']    ?? '',
+                    'mac_address' => $item['mac_address'] ?? $item['onu_mac'] ?? '',
+                    'olt'         => $item['olt']     ?? '',
+                    'status'      => $item['status']  ?? '',
+                ];
+            }, $raw);
         } catch (\Exception $e) {
             $this->availableOnuData = [];
         }
@@ -726,8 +736,9 @@ class CustomerManager extends Component
         try {
             $oltService = new \App\Services\OltApiService();
             $onuMatch = $oltService->fetchOnuByName($customer->name);
-            if ($onuMatch && isset($onuMatch['onu_id'])) {
-                $this->onu_id = $onuMatch['onu_id'];
+            // API returns 'id' field; fallback to 'onu_id' if already normalized
+            if ($onuMatch && (isset($onuMatch['id']) || isset($onuMatch['onu_id']))) {
+                $this->onu_id = $onuMatch['id'] ?? $onuMatch['onu_id'];
             } else {
                 $this->onu_id = '';
             }
