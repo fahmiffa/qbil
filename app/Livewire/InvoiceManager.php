@@ -9,6 +9,7 @@ use App\Models\Piutang;
 use App\Models\Deposit;
 use App\Models\MethodPayment;
 use App\Models\AppSetting;
+use App\Jobs\BulkIsolateCustomersJob;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,8 @@ class InvoiceManager extends Component
 
     public $showIsolationModal = false;
     public $isAlertDismissed = false;
+    public $showSyncIsolationModal = false;
+    public $isSyncAlertDismissed = false;
 
     protected $queryString = ['search', 'filter_status', 'filter_due_date', 'filter_service_type', 'filter_router', 'filter_payment_method', 'billing_period', 'perPage', 'sortField', 'sortDirection'];
 
@@ -444,6 +447,24 @@ class InvoiceManager extends Component
         }
     }
 
+    public function bulkIsolateCustomers()
+    {
+        if ($this->checkDemoMode()) return;
+
+        BulkIsolateCustomersJob::dispatch(auth()->user());
+
+        $this->dispatch('toast', type: 'success', message: 'Job isolir massal ke MikroTik berhasil dikirim dan sedang diproses di latar belakang.');
+    }
+
+    public function isolateCustomer($customerId)
+    {
+        if ($this->checkDemoMode()) return;
+
+        BulkIsolateCustomersJob::dispatch(auth()->user(), [(int) $customerId]);
+
+        $this->dispatch('toast', type: 'success', message: 'Job isolir pelanggan berhasil dikirim ke MikroTik.');
+    }
+
     public function render()
     {
         $query = Invoice::whereHas('customer', function ($q) {
@@ -571,6 +592,32 @@ class InvoiceManager extends Component
             }
         }
 
+        // Sinkronisasi Isolir: Ambil pelanggan aktif yang memiliki tagihan unpaid dengan due_date <= hari ini
+        $syncIsolationCustomers = Customer::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->whereHas('invoices', function ($q) {
+                $q->where('status', 'unpaid')
+                    ->where(function ($sub) {
+                        $sub->whereDate('due_date', '<=', now()->toDateString())
+                            ->orWhere(function ($s) {
+                                $s->whereNull('due_date')
+                                    ->where('billing_period', '<=', now()->format('Y-m'));
+                            });
+                    });
+            })
+            ->with(['invoices' => function ($q) {
+                $q->where('status', 'unpaid')
+                    ->where(function ($sub) {
+                        $sub->whereDate('due_date', '<=', now()->toDateString())
+                            ->orWhere(function ($s) {
+                                $s->whereNull('due_date')
+                                    ->where('billing_period', '<=', now()->format('Y-m'));
+                            });
+                    })
+                    ->orderBy('billing_period', 'asc');
+            }, 'package'])
+            ->get();
+
         $availableServiceTypes = Customer::where('user_id', auth()->id())
             ->whereNotNull('service_type')
             ->where('service_type', '!=', '')
@@ -581,7 +628,7 @@ class InvoiceManager extends Component
         $routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
         $user_payment_methods = \App\Models\MethodPayment::where('user_id', auth()->id())->get();
 
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'availableServiceTypes', 'routers', 'user_payment_methods'))
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'syncIsolationCustomers', 'availableServiceTypes', 'routers', 'user_payment_methods'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }
