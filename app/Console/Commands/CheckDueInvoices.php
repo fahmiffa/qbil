@@ -32,9 +32,9 @@ class CheckDueInvoices extends Command
         $now = now();
         $currentTime = $now->format('H:i');
 
-        // Cari user yang memiliki setting isolate_time cocok dengan waktu sekarang
-        $users = \App\Models\User::whereHas('appSetting', function ($query) use ($currentTime) {
-            $query->where('isolate_time', $currentTime);
+        // Cari user yang memiliki setting isolate_time (tidak harus sama persis, yang penting ada)
+        $users = \App\Models\User::whereHas('appSetting', function ($query) {
+            $query->whereNotNull('isolate_time');
         })->with('appSetting')->get();
 
         if ($users->isEmpty()) {
@@ -47,10 +47,16 @@ class CheckDueInvoices extends Command
             if (!$user->hasFeature('static') && !$user->hasFeature('pppoe')) continue;
 
             $setting = $user->appSetting;
-            if (!$setting) continue;
+            if (!$setting || empty($setting->isolate_time)) continue;
 
-            // Karena kita filter berdasarkan H:i tepat, kita tidak perlu lagi mengecek manual lessThan.
-            // Tetap gunakan cache harian sebagai pengaman double execution jika scheduler terpanggil ulang.
+            // 1. Cek apakah jam saat ini sudah mencapai atau melewati jam isolir yang ditentukan
+            $isolateTime = Carbon::parse($setting->isolate_time)->format('H:i');
+            if ($currentTime < $isolateTime) {
+                // Belum masuk jam isolir untuk user ini
+                continue;
+            }
+
+            // 2. Cek apakah isolir harian untuk user ini sudah pernah dijalankan hari ini
             $cacheKey = "isolate_run_" . $user->id . "_" . $now->format('Y-m-d');
             if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
                 continue;
@@ -59,17 +65,22 @@ class CheckDueInvoices extends Command
             // Tandai sudah berjalan hari ini untuk user ini
             \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->endOfDay());
 
-            $offsetDays = (int) $setting->isolate_days;
-            $targetDate = $now->copy()->subDays($offsetDays);
+            $offsetDays = (int) ($setting->isolate_days ?? 0);
+            $targetDate = $now->copy()->subDays($offsetDays)->toDateString();
 
-            // Cari pelanggan yang due_date-nya sudah mencapai ambang batas isolir
+            // 3. Cari pelanggan aktif yang due_date-nya sudah <= targetDate dan memiliki tagihan unpaid
+            // Menggunakan <= memastikan pelanggan yang terlewat (akibat server mati kemarin/tadi) tetap terisolir
             $customers = Customer::where('user_id', $user->id)
                 ->where('status', 'active')
-                ->whereNotNull('due_date')
-                ->whereDate('due_date', '=', $targetDate)
-                ->whereHas('invoices', function ($query) use ($currentPeriod) {
+                ->whereHas('invoices', function ($query) use ($targetDate, $currentPeriod) {
                     $query->where('status', 'unpaid')
-                        ->where('billing_period', $currentPeriod);
+                        ->where(function ($sub) use ($targetDate, $currentPeriod) {
+                            $sub->whereDate('due_date', '<=', $targetDate)
+                                ->orWhere(function ($s) use ($currentPeriod) {
+                                    $s->whereNull('due_date')
+                                        ->where('billing_period', '<=', $currentPeriod);
+                                });
+                        });
                 })
                 ->get();
 

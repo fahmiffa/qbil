@@ -108,11 +108,11 @@
                     <tr>
                         <td class="py-6">
                             <div class="font-bold text-slate-800 dark:text-slate-200">{{ $invoice->package->name ?? 'Internet' }}</div>
-                            @if($invoice->package)
+                            {{-- @if($invoice->package)
                                 <div class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-mono">
                                     Speed: {{ $invoice->package->speed_download ?? '-' }} / {{ $invoice->package->speed_upload ?? '-' }}
                                 </div>
-                            @endif
+                            @endif --}}
                         </td>
                         <td class="py-6 text-right font-mono font-bold text-slate-900 dark:text-white">
                             {{ number_format($invoice->amount, 0, ',', '.') }}
