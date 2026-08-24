@@ -4,6 +4,12 @@ use Illuminate\Support\Facades\Route;
 
 // Route::get('/', \App\Livewire\LandingPage::class)->name('home');
 
+Route::get('/clear', function () {
+    Artisan::call('optimize:clear');
+        File::put(storage_path('logs/laravel.log'), '');
+        return 'Log cleared';
+});
+
 Route::get('dashboard', \App\Livewire\DashboardReport::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
