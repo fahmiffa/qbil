@@ -36,9 +36,10 @@ class IsolateCustomerJob implements ShouldQueue
             // Pengecekan: Jika pelanggan sudah membayar tagihan bulan ini, batalkan isolir
             $currentPeriod = now()->format('Y-m');
             $hasUnpaid = $this->customer->invoices()
-                ->where('billing_period', $currentPeriod)
+                // ->where('billing_period', $currentPeriod)
                 ->where('status', 'unpaid')
-                ->exists();
+                ->first();
+            $currentPeriod = $hasUnpaid->billing_period;
 
             if (!$hasUnpaid) {
                 Log::info("Isolir dibatalkan untuk {$this->customer->name} karena tagihan periode {$currentPeriod} sudah dibayar.");
