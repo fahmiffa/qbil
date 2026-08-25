@@ -91,26 +91,29 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $shouldSend = false;
             $reminderType = null;
 
-            // Logika Notifikasi Pertama
-            $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days);
+            $dueDay = min((int) $dueDate->format('d'), $now->daysInMonth);
+            $currentMonthBase = $now->copy()->startOfMonth()->setDay($dueDay);
+
+            // Logika Notifikasi Pertama (Dihitung dari siklus bulan berjalan)
+            $r1Date = $currentMonthBase->copy()->addDays((int) $appSetting->reminder_1_days);
             $r1TimeParsed = Carbon::parse($appSetting->reminder_1_time);
             $r1DateTime = $r1Date->copy()->setTime($r1TimeParsed->hour, $r1TimeParsed->minute, 0);
 
             if ($now->isSameDay($r1Date) && $now->greaterThanOrEqualTo($r1DateTime)) {
-                if (!$invoice->reminder_1_sent_at || !$invoice->reminder_1_sent_at->isSameDay($now)) {
+                if (!$invoice->reminder_1_sent_at || $invoice->reminder_1_sent_at->format('Y-m') !== $now->format('Y-m')) {
                     $shouldSend = true;
                     $reminderType = 1;
                 }
             }
 
-            // Logika Notifikasi Kedua
+            // Logika Notifikasi Kedua (Dihitung dari siklus bulan berjalan)
             if (!$shouldSend) {
-                $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days);
+                $r2Date = $currentMonthBase->copy()->addDays((int) $appSetting->reminder_2_days);
                 $r2TimeParsed = Carbon::parse($appSetting->reminder_2_time);
                 $r2DateTime = $r2Date->copy()->setTime($r2TimeParsed->hour, $r2TimeParsed->minute, 0);
 
                 if ($now->isSameDay($r2Date) && $now->greaterThanOrEqualTo($r2DateTime)) {
-                    if (!$invoice->reminder_2_sent_at || !$invoice->reminder_2_sent_at->isSameDay($now)) {
+                    if (!$invoice->reminder_2_sent_at || $invoice->reminder_2_sent_at->format('Y-m') !== $now->format('Y-m')) {
                         $shouldSend = true;
                         $reminderType = 2;
                     }
