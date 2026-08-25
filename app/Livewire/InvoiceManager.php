@@ -592,32 +592,6 @@ class InvoiceManager extends Component
             }
         }
 
-        // Sinkronisasi Isolir: Ambil pelanggan aktif yang memiliki tagihan unpaid dengan due_date <= hari ini
-        $syncIsolationCustomers = Customer::where('user_id', auth()->id())
-            ->where('status', 'active')
-            ->whereHas('invoices', function ($q) {
-                $q->where('status', 'unpaid')
-                    ->where(function ($sub) {
-                        $sub->whereDate('due_date', '<=', now()->toDateString())
-                            ->orWhere(function ($s) {
-                                $s->whereNull('due_date')
-                                    ->where('billing_period', '<=', now()->format('Y-m'));
-                            });
-                    });
-            })
-            ->with(['invoices' => function ($q) {
-                $q->where('status', 'unpaid')
-                    ->where(function ($sub) {
-                        $sub->whereDate('due_date', '<=', now()->toDateString())
-                            ->orWhere(function ($s) {
-                                $s->whereNull('due_date')
-                                    ->where('billing_period', '<=', now()->format('Y-m'));
-                            });
-                    })
-                    ->orderBy('billing_period', 'asc');
-            }, 'package'])
-            ->get();
-
         $availableServiceTypes = Customer::where('user_id', auth()->id())
             ->whereNotNull('service_type')
             ->where('service_type', '!=', '')
@@ -628,7 +602,7 @@ class InvoiceManager extends Component
         $routers = \App\Models\Router::where('user_id', auth()->id())->orderBy('id')->get();
         $user_payment_methods = \App\Models\MethodPayment::where('user_id', auth()->id())->get();
 
-        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'syncIsolationCustomers', 'availableServiceTypes', 'routers', 'user_payment_methods'))
+        return view('livewire.invoice-manager', compact('invoices', 'modalCustomers', 'selectedCustomerObjects', 'customersToIsolate', 'isolationTimeRemaining', 'isBeforeIsolation', 'availableServiceTypes', 'routers', 'user_payment_methods'))
             ->layout('layouts.app', ['header' => 'Daftar Invoice']);
     }
 }
