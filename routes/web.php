@@ -4,10 +4,17 @@ use Illuminate\Support\Facades\Route;
 
 // Route::get('/', \App\Livewire\LandingPage::class)->name('home');
 
-Route::get('/clear', function () {
+Route::get('/up', function () {
+    Artisan::call('up');
     Artisan::call('optimize:clear');
         File::put(storage_path('logs/laravel.log'), '');
         return 'Log cleared';
+});
+
+
+Route::get('/down', function () {
+    Artisan::call('down');
+    return 'Application is now in maintenance mode.';
 });
 
 Route::get('dashboard', \App\Livewire\DashboardReport::class)
