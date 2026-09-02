@@ -201,6 +201,7 @@ class InvoiceManager extends Component
             // Logika Reset/Advance Due Date (Dynamic Subscription)
             $paymentDate = now()->startOfDay();
             $lastDueDate = $customer->due_date ? Carbon::parse($customer->due_date)->startOfDay() : null;
+            $dueDateReset = false;
 
             if ($oldStatus === 'suspended') {
                 // Jika bayar <= jatuh tempo + 1 hari, pertahankan tanggal jatuh tempo
@@ -209,6 +210,7 @@ class InvoiceManager extends Component
                 } else {
                     // Jika lebih dari H+1, reset siklus dari hari bayar (hari ini)
                     $newDueDate = now()->addMonth();
+                    $dueDateReset = true;
                 }
             } else {
                 // Jika pembayaran rutin, majukan 1 bulan dari tgl jatuh tempo sebelumnya
@@ -228,9 +230,14 @@ class InvoiceManager extends Component
                     'status' => $oldStatus
                 ]);
 
-                // GENERATE INVOICE SUSULAN (Jika jadwal reguler sudah terlewat)
-                $invoiceService = new \App\Services\InvoiceService();
-                $invoiceService->generateFollowUpIfOverdue($customer);
+                // GENERATE INVOICE SUSULAN hanya jika siklus jatuh tempo TIDAK direset.
+                // Jika due_date direset (bayar lebih dari H+1), tagihan bulan berikutnya
+                // akan digenerate oleh cron job reguler (GenerateMonthlyInvoicesJob)
+                // sesuai siklus jatuh tempo yang baru.
+                if (!$dueDateReset) {
+                    $invoiceService = new \App\Services\InvoiceService();
+                    $invoiceService->generateFollowUpIfOverdue($customer);
+                }
             }
         });
 

@@ -192,17 +192,27 @@ class CustomerDetail extends Component
         ]);
 
         $invoiceService = new \App\Services\InvoiceService();
+        $paidCount = 0;
+        $skippedPeriods = [];
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($invoiceService) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($invoiceService, &$paidCount, &$skippedPeriods) {
             foreach ($this->selected_months as $monthStr) {
                 $period = $monthStr; // Y-m format
 
-                $invoice = \App\Models\Invoice::where('customer_id', $this->customer->id)
+                // Skip jika sudah ada tagihan di table invoice untuk periode ini
+                $exists = \App\Models\Invoice::where('customer_id', $this->customer->id)
                     ->where('billing_period', $period)
-                    ->first();
+                    ->exists();
+
+                if ($exists) {
+                    $skippedPeriods[] = $period;
+                    continue;
+                }
+
+                // Generate invoice baru dan langsung tandai lunas
+                $invoice = $invoiceService->generateForCustomer($this->customer, $period);
 
                 if ($invoice) {
-                    // Update status lunas tanpa kode unik
                     $invoice->update([
                         'amount' => $this->amount_per_month,
                         'unique_code' => 0,
@@ -213,32 +223,62 @@ class CustomerDetail extends Component
                         'payment_method' => $this->selected_payment_method ?: null,
                         'notes' => $this->notes ?: null,
                     ]);
-                } else {
-                    // Generate baru dan langsung lunas tanpa kode unik
-                    $invoice = $invoiceService->generateForCustomer($this->customer, $period);
 
-                    if ($invoice) {
-                        $invoice->update([
-                            'amount' => $this->amount_per_month,
-                            'unique_code' => 0,
-                            'total_amount' => ($this->amount_per_month - ($this->discount / $this->months_count)),
-                            'discount' => ($this->discount / $this->months_count),
-                            'status' => 'paid',
-                            'paid_at' => $this->payment_date,
-                            'payment_method' => $this->selected_payment_method ?: null,
-                            'notes' => $this->notes ?: null,
-                        ]);
+                    // Kirim notifikasi WA (Job)
+                    \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, null, false);
+                    $paidCount++;
+                }
+            }
+
+            // Majukan jatuh tempo dan aktifkan pelanggan sesuai jumlah bulan yang dibayar
+            if ($paidCount > 0) {
+                $customer = $this->customer;
+                $oldStatus = $customer->status;
+                $paymentDate = \Carbon\Carbon::parse($this->payment_date)->startOfDay();
+                $lastDueDate = $customer->due_date ? \Carbon\Carbon::parse($customer->due_date)->startOfDay() : null;
+
+                if ($oldStatus === 'suspended') {
+                    if ($lastDueDate && $paymentDate->lessThanOrEqualTo($lastDueDate->copy()->addDay())) {
+                        $newDueDate = $lastDueDate->copy()->addMonths($paidCount);
+                    } else {
+                        $newDueDate = \Carbon\Carbon::parse($this->payment_date)->addMonths($paidCount);
                     }
+                } else {
+                    $newDueDate = ($customer->due_date ? \Carbon\Carbon::parse($customer->due_date) : \Carbon\Carbon::parse($this->payment_date))->addMonths($paidCount);
                 }
 
-                // Kirim notifikasi WA (Job) - Mark as automatic/non-manual for verification check
-                if ($invoice) {
-                    \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, null, false);
+                $customer->update([
+                    'status' => 'active',
+                    'isolated_at' => null,
+                    'due_date' => $newDueDate,
+                    'activated_at' => $customer->activated_at ?? now(),
+                ]);
+
+                // Buka isolir jika sebelumnya suspended
+                if ($oldStatus === 'suspended') {
+                    \App\Jobs\ProvisionCustomerJob::dispatch($customer, 'update', [
+                        'status' => $oldStatus
+                    ]);
                 }
             }
         });
 
-        session()->flash('message', 'Pembayaran berhasil diverifikasi dan notifikasi dikirim.');
+        // Log Activity
+        if ($paidCount > 0) {
+            \App\Models\ActivityLog::create([
+                'user_id' => auth()->id(),
+                'title' => 'PEMBAYARAN MANUAL',
+                'message' => "Pembayaran manual {$paidCount} periode untuk pelanggan: {$this->customer->name}",
+                'type' => 'invoice_crud'
+            ]);
+        }
+
+        $msg = "Pembayaran {$paidCount} periode berhasil diverifikasi.";
+        if (!empty($skippedPeriods)) {
+            $msg .= ' Dilewati (sudah ada tagihan): ' . implode(', ', $skippedPeriods);
+        }
+
+        session()->flash('message', $msg);
         $this->closeModal();
     }
 
