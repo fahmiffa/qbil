@@ -506,7 +506,19 @@ class CustomerManager extends Component
 
         SyncAllCustomersJob::dispatch(auth()->user());
 
-        $this->dispatch('toast', type: 'success', message: 'Sinkronisasi seluruh pelanggan telah dijadwalkan ke antrean.');
+        $this->dispatch('toast', type: 'success', message: 'Sinkronisasi seluruh pelanggan ke MikroTik telah dijadwalkan ke antrean.');
+    }
+
+    public function syncStatusFromMikrotik()
+    {
+        if (!auth()->user()->hasFeature('mikrotik')) {
+            $this->dispatch('toast', type: 'error', message: 'Fitur MikroTik tidak aktif untuk akun Anda.');
+            return;
+        }
+
+        \App\Jobs\SyncStatusFromMikrotikJob::dispatch(auth()->user());
+
+        $this->dispatch('toast', type: 'success', message: 'Sinkronisasi status dari MikroTik ke Aplikasi telah dijadwalkan ke antrean.');
     }
 
     public function openSyncModal()
