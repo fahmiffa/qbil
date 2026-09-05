@@ -483,6 +483,8 @@ class CustomerManager extends Component
                     'type' => 'customer_create',
                     'data' => ['customer_id' => $customer->id]
                 ]);
+
+                \App\Jobs\SendRegistrationWhatsappJob::dispatch($customer);
                 
                 // Refresh table (kembali ke halaman 1 agar pelanggan baru yang diurutkan 'latest' terlihat)
                 $this->resetPage();
