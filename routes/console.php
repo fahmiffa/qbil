@@ -10,4 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('invoice:generate')->everyMinute();
 Schedule::command('invoice:remind')->everyMinute();
-// Schedule::command('billing:check-due')->everyMinute();
+Schedule::command('billing:check-due')->monthlyOn(21, '00:00');

@@ -31,22 +31,33 @@ class CheckDueInvoices extends Command
     {
         $now = now();
         
-        // Proteksi tambahan: Pastikan skrip ini hanya akan berjalan jika hari ini adalah tanggal 21
-        if ($now->format('d') !== '21') {
-            $this->info("Hari ini bukan tanggal 21. Tidak ada proses isolir massal.");
-            return;
-        }
+        // Log::info("[CheckDueInvoices] Memulai pengecekan isolir otomatis...");
+        // $this->info("Memulai pengecekan isolir otomatis...");
 
         $users = \App\Models\User::with('appSetting')->get();
+
         $currentPeriod = $now->format('Y-m');
 
         foreach ($users as $user) {
             if (!$user->hasFeature('mikrotik')) continue;
             
-            // Abaikan setting waktu/jam & grace period dari appSetting
-            // Langsung ambil SEMUA pelanggan yang statusnya active dan punya tagihan belum dibayar (unpaid)
+            $setting = $user->appSetting;
+            if (!$setting) continue;
+
+            // Cek waktu eksekusi (Jam & Menit)
+            $configTime = Carbon::parse($setting->isolate_time)->format('H:i');
+            if ($now->format('H:i') !== $configTime) continue;
+
+            $offsetDays = (int) $setting->isolate_days;
+            $targetDate = $now->copy()->subDays($offsetDays);
+
+            // Cari pelanggan yang due_date-nya sudah mencapai ambang batas isolir
+            // Dan statusnya masih aktif (belum isolir)
+            // SERTA memiliki invoice bulan ini yang belum lunas (unpaid)
             $customers = Customer::where('user_id', $user->id)
                 ->where('status', 'active')
+                ->whereNotNull('due_date')
+                ->whereDate('due_date', '=', $targetDate)
                 ->whereHas('invoices', function($query) use ($currentPeriod) {
                     $query->where('status', 'unpaid')
                         ->where('billing_period', $currentPeriod);
@@ -58,10 +69,12 @@ class CheckDueInvoices extends Command
             }
 
             foreach ($customers as $customer) {
-                // Proses Isolir dikirim ke Background Job
+                // Tambahan: Pastikan memang belum bayar tagihan di periode jatuh tempo tersebut
+                // Jika sudah bayar, status biasanya tetap active dan tidak masuk kriteria isolir.
+                
                 IsolateCustomerJob::dispatch($customer);
                 
-                $msg = "[CheckDueInvoices] Dispatching isolir massal (Tgl 21): {$customer->name} (User: {$user->name})";
+                $msg = "[CheckDueInvoices] Dispatching isolir: {$customer->name} (User: {$user->name})";
                 $this->line(" - " . $msg);
                 Log::info($msg);
 
@@ -72,5 +85,8 @@ class CheckDueInvoices extends Command
                 ])->info("PELANGGAN TERISOLIR: {$customer->name} | ID: {$customer->id_pelanggan} | Username: {$customer->username} | User Admin: {$user->name}");
             }
         }
+
+        // Log::info("[CheckDueInvoices] Selesai.");
+        // $this->info("Selesai.");
     }
 }

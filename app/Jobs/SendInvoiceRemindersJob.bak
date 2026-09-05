@@ -79,12 +79,11 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            // PERUBAHAN 1: Gunakan due_date dari tabel customer (bukan invoice)
-            if (!$customer->due_date) {
+            if (!$invoice->due_date) {
                 continue;
             }
 
-            $dueDate = Carbon::parse($customer->due_date);
+            $dueDate = Carbon::parse($invoice->due_date);
             $shouldSend = false;
             $reminderType = null;
 
@@ -92,7 +91,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days)->startOfDay();
             $r1Time = Carbon::parse($appSetting->reminder_1_time)->format('H:i');
             
-            // Berikan toleransi 7 hari jika sebelumnya terkena limit harian / server mati
+            // Berikan toleransi 7 hari jika sebelumnya terkena limit harian
             if ($now->startOfDay()->between($r1Date, $r1Date->copy()->addDays(7)) && $now->format('H:i') === $r1Time) {
                 // Cek apakah belum pernah dikirim
                 if (!$invoice->reminder_1_sent_at) {
@@ -106,7 +105,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days)->startOfDay();
                 $r2Time = Carbon::parse($appSetting->reminder_2_time)->format('H:i');
                 
-                // Berikan toleransi 7 hari jika sebelumnya terkena limit harian / server mati
+                // Berikan toleransi 7 hari jika sebelumnya terkena limit harian
                 if ($now->startOfDay()->between($r2Date, $r2Date->copy()->addDays(7)) && $now->format('H:i') === $r2Time) {
                     // Cek apakah belum pernah dikirim
                     if (!$invoice->reminder_2_sent_at) {
@@ -120,10 +119,19 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            // PERUBAHAN 2: Menghilangkan proteksi Cache harian pengiriman pesan (30 per hari dihapus)
-            // Sistem akan langsung mengirimkan pesan sebanyak apapun tagihan yang jatuh tempo.
+            $senderPhone = $user->phone ?? 'default';
+            $cacheKey = 'wa_daily_limit_' . preg_replace('/[^0-9]/', '', $senderPhone) . '_' . $now->format('Y-m-d');
+            $currentCount = Cache::get($cacheKey, 0);
+            
+            // Jika pengingat ke-2 dan ada nomor customer kedua, akan butuh 2 kuota
+            $neededQuota = ($reminderType === 2 && !empty($customer->phone2)) ? 2 : 1;
 
-            // Update tracking agar tidak terkirim dua kali (di invoice yang sama)
+            if ($currentCount + $neededQuota > 30) {
+                Log::warning("[SendInvoiceRemindersJob] Limit harian (30) WA tercapai untuk pengirim {$senderPhone}. Mengabaikan pengingat untuk {$customer->name}.");
+                continue;
+            }
+
+            // Update tracking agar tidak terkirim dua kali
             if ($reminderType === 1) {
                 $invoice->update(['reminder_1_sent_at' => now()]);
             } elseif ($reminderType === 2) {
@@ -146,7 +154,7 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 'unique_code'    => $invoice->unique_code,
                 'total_amount'   => $invoice->total_amount,
                 'period'         => \Carbon\Carbon::parse($invoice->billing_period)->translatedFormat('F Y'),
-                'due_date'       => \Carbon\Carbon::parse($customer->due_date)->translatedFormat('d F Y'), // PERUBAHAN: due_date diganti ke customer
+                'due_date'       => $invoice->due_date->translatedFormat('d F Y'),
                 'package'        => $customer->package->name ?? '-',
                 'id_pelanggan'   => $customer->id_pelanggan ?? '-',
                 'address'        => $customer->address ?? '-',
@@ -171,6 +179,9 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                     $message
                 )->delay(now()->addSeconds($sentCount * 10));
             }
+
+            // Simpan jumlah yang sudah dikirim hari ini ke Cache (berlaku hingga akhir hari)
+            Cache::put($cacheKey, $currentCount + $neededQuota, now()->endOfDay());
 
             $userId = $user->id;
             if (!isset($userSentCounts[$userId])) {

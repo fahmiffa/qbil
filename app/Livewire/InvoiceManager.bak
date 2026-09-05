@@ -155,8 +155,14 @@ class InvoiceManager extends Component
             $customer = $invoice->customer;
             $oldStatus = $customer->status;
 
-            // Logika Perpanjang Jatuh Tempo (Selalu tambah 1 bulan dari due_date sebelumnya)
-            $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
+            // Logika Reset/Advance Due Date (Dynamic Subscription)
+            if ($oldStatus === 'suspended') {
+                // Jika dari suspend (baru/vaku), reset siklus dari hari ini
+                $newDueDate = now()->addMonth();
+            } else {
+                // Jika pembayaran rutin, majukan 1 bulan dari tgl jatuh tempo sebelumnya
+                $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
+            }
 
             $customer->update([
                 'status' => 'active',
@@ -219,8 +225,12 @@ class InvoiceManager extends Component
             $customer = $invoice->customer;
             $oldStatus = $customer->status;
 
-            // Logika Perpanjang Jatuh Tempo Piutang (Selalu tambah 1 bulan dari due_date sebelumnya)
-            $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
+            // Reset/Advance Due Date even for Piutang
+            if ($oldStatus === 'suspended') {
+                $newDueDate = now()->addMonth();
+            } else {
+                $newDueDate = ($customer->due_date ? Carbon::parse($customer->due_date) : now())->addMonth();
+            }
 
             $customer->update([
                 'status' => 'active',
