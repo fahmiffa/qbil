@@ -88,31 +88,15 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
             $shouldSend = false;
             $reminderType = null;
 
-            // Logika Notifikasi Pertama
+            // Logika Notifikasi Pertama (Satu-satunya pengingat)
             $r1Date = $dueDate->copy()->addDays((int) $appSetting->reminder_1_days)->startOfDay();
             $r1Time = Carbon::parse($appSetting->reminder_1_time)->format('H:i');
             
-            // Berikan toleransi 7 hari jika sebelumnya terkena limit harian / server mati
+            // Berikan toleransi 7 hari jika sebelumnya server mati / gagal kirim
             if ($now->startOfDay()->between($r1Date, $r1Date->copy()->addDays(7)) && $now->format('H:i') === $r1Time) {
                 // Cek apakah belum pernah dikirim
                 if (!$invoice->reminder_1_sent_at) {
                     $shouldSend = true;
-                    $reminderType = 1;
-                }
-            }
-
-            // Logika Notifikasi Kedua
-            if (!$shouldSend) {
-                $r2Date = $dueDate->copy()->addDays((int) $appSetting->reminder_2_days)->startOfDay();
-                $r2Time = Carbon::parse($appSetting->reminder_2_time)->format('H:i');
-                
-                // Berikan toleransi 7 hari jika sebelumnya terkena limit harian / server mati
-                if ($now->startOfDay()->between($r2Date, $r2Date->copy()->addDays(7)) && $now->format('H:i') === $r2Time) {
-                    // Cek apakah belum pernah dikirim
-                    if (!$invoice->reminder_2_sent_at) {
-                        $shouldSend = true;
-                        $reminderType = 2;
-                    }
                 }
             }
 
@@ -120,33 +104,21 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            // PERUBAHAN 2: Menghilangkan proteksi Cache harian pengiriman pesan (30 per hari dihapus)
-            // Sistem akan langsung mengirimkan pesan sebanyak apapun tagihan yang jatuh tempo.
-
             // Update tracking agar tidak terkirim dua kali (di invoice yang sama)
-            if ($reminderType === 1) {
-                $invoice->update(['reminder_1_sent_at' => now()]);
-            } elseif ($reminderType === 2) {
-                $invoice->update(['reminder_2_sent_at' => now()]);
-            }
+            $invoice->update(['reminder_1_sent_at' => now()]);
 
             Log::info("[SendInvoiceRemindersJob] Mengirim pengingat untuk {$customer->name}...");
 
             $publicUrl = route('public.invoice', ['invoice' => $invoice->id]);
 
-            // Pilih template berdasarkan jenis pengingat
-            $selectedTemplate = ($reminderType === 2 && !empty($appSetting->template_2)) 
-                ? $appSetting->template_2 
-                : $appSetting->template;
-
-            $message = $whatsappService->formatMessage($selectedTemplate, [
+            $message = $whatsappService->formatMessage($appSetting->template, [
                 'name'           => $customer->name,
                 'invoice_number' => $invoice->invoice_number,
                 'amount'         => $invoice->amount,
                 'unique_code'    => $invoice->unique_code,
                 'total_amount'   => $invoice->total_amount,
                 'period'         => \Carbon\Carbon::parse($invoice->billing_period)->translatedFormat('F Y'),
-                'due_date'       => \Carbon\Carbon::parse($customer->due_date)->translatedFormat('d F Y'), // PERUBAHAN: due_date diganti ke customer
+                'due_date'       => \Carbon\Carbon::parse($customer->due_date)->translatedFormat('d F Y'),
                 'package'        => $customer->package->name ?? '-',
                 'id_pelanggan'   => $customer->id_pelanggan ?? '-',
                 'address'        => $customer->address ?? '-',
@@ -161,16 +133,6 @@ class SendInvoiceRemindersJob implements ShouldQueue, ShouldBeUnique
                 $customer->phone,
                 $message
             )->delay(now()->addSeconds($sentCount * 10));
-
-            // Jika pengingat ke-2 dan ada nomor kedua, kirim juga ke nomor kedua
-            if ($reminderType === 2 && !empty($customer->phone2)) {
-                $sentCount++;
-                SendWhatsAppMessageJob::dispatch(
-                    $user->phone ?? '',
-                    $customer->phone2,
-                    $message
-                )->delay(now()->addSeconds($sentCount * 10));
-            }
 
             $userId = $user->id;
             if (!isset($userSentCounts[$userId])) {
