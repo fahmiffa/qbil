@@ -18,6 +18,19 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3 w-full sm:w-auto">
+                        <!-- Filter Kategori -->
+                        <div class="relative w-full sm:w-48">
+                            <select wire:model.live="filterCategory" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
+                                <option value="">Semua Kategori</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+
                         <!-- Show per page -->
                         <div class="relative w-full sm:w-32">
                             <select wire:model.live="perPage" class="w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-slate-300 transition-colors">
@@ -99,6 +112,18 @@
                                             @endif
                                         </div>
 
+                                        <!-- Parent Asset -->
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Asset Induk (Parent)</label>
+                                            <select wire:model="parent_id" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors @error('parent_id') border-red-400 @enderror">
+                                                <option value="">-- Tanpa Parent (Root Asset) --</option>
+                                                @foreach($parentOptions as $parent)
+                                                    <option value="{{ $parent->id }}">{{ $parent->name }} ({{ $parent->category ?? 'Lainnya' }})</option>
+                                                @endforeach
+                                            </select>
+                                            @error('parent_id') <p class="text-red-500 text-[10px] mt-1 font-semibold">{{ $message }}</p> @enderror
+                                        </div>
+
                                         <!-- Alamat Lengkap -->
                                         <div>
                                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Alamat / Lokasi Pemasangan</label>
@@ -149,6 +174,7 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest w-24">ID</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Kategori</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nama Asset</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Parent / Induk</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest w-48">Aksi</th>
                             </tr>
                         </thead>
@@ -170,6 +196,16 @@
                                         <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{{ $asset->address }}</p>
                                     @endif
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @if($asset->parent)
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/60 dark:text-slate-200">
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                            {{ $asset->parent->name }}
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-slate-400 italic">-</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
                                     <a href="{{ route('assets.detail', $asset->id) }}" wire:navigate class="inline-flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-all shadow-sm text-xs font-semibold">
                                         Detail
@@ -184,12 +220,10 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data asset.</td>
+                                <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-slate-500 italic">Belum ada data asset.</td>
                             </tr>
                             @endforelse
                         </tbody>
-                    </table>
-                </div>
                     </table>
                 </div>
 

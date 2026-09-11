@@ -13,13 +13,14 @@ class AssetManager extends Component
 
     public $search = '';
     public $perPage = 10;
+    public $filterCategory = '';
     
-    public $asset_id, $name;
+    public $asset_id, $name, $parent_id;
     public $isOpen = false;
     public $category_mode = 'old'; // 'old' or 'new'
     public $selected_category, $new_category, $latitude, $longitude, $address;
 
-    protected $queryString = ['search', 'perPage'];
+    protected $queryString = ['search', 'perPage', 'filterCategory'];
 
     public function create()
     {
@@ -29,8 +30,9 @@ class AssetManager extends Component
 
     public function edit($id)
     {
-        $asset = Asset::findOrFail($id);
+        $asset = Asset::where('user_id', auth()->id())->findOrFail($id);
         $this->asset_id = $id;
+        $this->parent_id = $asset->parent_id;
         $this->name = $asset->name;
         $this->selected_category = $asset->category;
         $this->latitude = $asset->latitude;
@@ -44,6 +46,15 @@ class AssetManager extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
+            'parent_id' => [
+                'nullable',
+                'exists:assets,id',
+                function ($attribute, $value, $fail) {
+                    if ($value && $this->asset_id && (int) $value === (int) $this->asset_id) {
+                        $fail('Asset tidak dapat menjadi induk bagi dirinya sendiri.');
+                    }
+                },
+            ],
             'category_mode' => 'required|in:old,new',
             'new_category' => 'required_if:category_mode,new|max:255',
             'selected_category' => 'required_if:category_mode,old|max:255',
@@ -59,6 +70,7 @@ class AssetManager extends Component
                 ['id' => $this->asset_id],
                 [
                     'user_id' => auth()->id(),
+                    'parent_id' => !empty($this->parent_id) ? $this->parent_id : null,
                     'name' => $this->name,
                     'category' => $category,
                     'latitude' => $this->latitude === '' ? null : $this->latitude,
@@ -87,7 +99,7 @@ class AssetManager extends Component
     public function delete($id)
     {
         try {
-            $asset = Asset::findOrFail($id);
+            $asset = Asset::where('user_id', auth()->id())->findOrFail($id);
             $assetName = $asset->name;
             $asset->delete();
             $this->dispatch('toast', type: 'success', message: 'Asset berhasil dihapus');
@@ -107,6 +119,7 @@ class AssetManager extends Component
     private function resetInputFields()
     {
         $this->asset_id = null;
+        $this->parent_id = null;
         $this->name = '';
         $this->selected_category = '';
         $this->new_category = '';
@@ -133,14 +146,26 @@ class AssetManager extends Component
         $this->resetPage();
     }
 
+    public function updatingFilterCategory()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $query = Asset::where('user_id', auth()->id());
+        $query = Asset::where('user_id', auth()->id())->with('parent');
+
+        if ($this->filterCategory) {
+            $query->where('category', $this->filterCategory);
+        }
 
         if ($this->search) {
             $query->where(function($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('category', 'like', '%' . $this->search . '%');
+                  ->orWhere('category', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('parent', function($pq) {
+                      $pq->where('name', 'like', '%' . $this->search . '%');
+                  });
             });
         }
 
@@ -151,10 +176,17 @@ class AssetManager extends Component
 
         $categories = Asset::where('user_id', auth()->id())
             ->whereNotNull('category')
+            ->where('category', '!=', '')
             ->distinct()
+            ->orderBy('category')
             ->pluck('category');
 
-        return view('livewire.asset-manager', compact('assets', 'categories'))
+        $parentOptions = Asset::where('user_id', auth()->id())
+            ->when($this->asset_id, fn($q) => $q->where('id', '!=', $this->asset_id))
+            ->orderBy('name')
+            ->get();
+
+        return view('livewire.asset-manager', compact('assets', 'categories', 'parentOptions'))
             ->layout('layouts.app', ['header' => 'Master Asset']);
     }
 }

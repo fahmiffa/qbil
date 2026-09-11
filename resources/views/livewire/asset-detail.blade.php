@@ -37,6 +37,33 @@
                                     <span class="font-mono text-blue-500">#{{ $asset->id }}</span>
                                 </div>
 
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-xs text-slate-500">Asset Induk (Parent)</span>
+                                    <div>
+                                        @if($asset->parent)
+                                            <a href="{{ route('assets.detail', $asset->parent->id) }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                                {{ $asset->parent->name }}
+                                            </a>
+                                        @else
+                                            <span class="text-xs text-slate-400 italic">- (Root Asset)</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if($asset->children->count() > 0)
+                                <div class="flex flex-col gap-1.5 pt-2">
+                                    <span class="text-xs text-slate-500">Sub-Asset (Turunan: {{ $asset->children->count() }})</span>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach($asset->children as $child)
+                                            <a href="{{ route('assets.detail', $child->id) }}" wire:navigate class="px-2 py-0.5 rounded-lg text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                                                {{ $child->name }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endif
+
                                 <div class="pt-4 border-t border-slate-100 dark:border-slate-700">
                                     <span class="text-xs text-slate-500 block mb-1">Alamat Lokasi</span>
                                     <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">

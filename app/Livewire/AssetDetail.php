@@ -20,7 +20,7 @@ class AssetDetail extends Component
             abort(403);
         }
 
-        $this->asset = $asset->load('customers');
+        $this->asset = $asset->load(['customers', 'parent', 'children']);
     }
 
     public function render()
