@@ -41,15 +41,27 @@
                 </div>
                 @endif
             </div>
-            {{-- Button OLT -> buka modal OLT --}}
-            <button onclick="document.getElementById('olt-modal').classList.remove('hidden')"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                OLT
-            </button>
+            <div class="flex items-center gap-2">
+                {{-- Button Mass Reboot ONU --}}
+                @if($allOlts->isNotEmpty())
+                <button id="btn-mass-reboot"
+                    class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Reboot Semua ONU
+                </button>
+                @endif
+                {{-- Button OLT -> buka modal OLT --}}
+                <button onclick="document.getElementById('olt-modal').classList.remove('hidden')"
+                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    OLT
+                </button>
+            </div>
         </div>
 
         {{-- Stats Summary (populated by SSE) --}}
@@ -101,8 +113,24 @@
                     class="border border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 w-60 transition-all">
             </div>
 
+            {{-- No OLT State (no devices configured at all) --}}
+            @if($allOlts->isEmpty())
+            <div id="onu-no-olt" class="py-20 text-center">
+                <svg class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Belum ada perangkat OLT</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Tambahkan perangkat OLT terlebih dahulu untuk mulai memonitor ONU.</p>
+                <button onclick="document.getElementById('olt-modal').classList.remove('hidden')"
+                    class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    Tambah OLT
+                </button>
+            </div>
+            @endif
+
             {{-- Empty State --}}
-            <div id="onu-empty" class="py-20 text-center">
+            <div id="onu-empty" class="{{ $allOlts->isEmpty() ? 'hidden' : '' }} py-20 text-center">
                 <svg class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.143 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                 </svg>
@@ -687,12 +715,87 @@
                 .replace(/"/g, '&quot;');
         }
 
+        // ---- Mass Reboot All ONU ----
+        const btnMassReboot = document.getElementById('btn-mass-reboot');
+        if (btnMassReboot) {
+            btnMassReboot.addEventListener('click', function() {
+                const oltId = oltSelector ? oltSelector.value : '';
+                if (!oltId) {
+                    Swal.fire('Error', 'Pilih OLT terlebih dahulu.', 'error');
+                    return;
+                }
+
+                const oltName = oltSelector ? oltSelector.options[oltSelector.selectedIndex].text : 'OLT';
+                const totalOnu = allRows.length;
+
+                Swal.fire({
+                    title: 'Reboot Semua ONU?',
+                    html: `<div class="text-left text-sm space-y-2">
+                        <p>Anda akan mereboot <strong>semua ONU</strong> dari:</p>
+                        <p class="font-mono bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">${oltName}</p>
+                        ${totalOnu > 0 ? `<p class="text-red-600 font-bold">⚠️ ${totalOnu} ONU akan di-reboot secara bertahap via antrian.</p>` : ''}
+                        <p class="text-gray-500 text-xs">Proses ini berjalan di latar belakang dan tidak dapat dibatalkan.</p>
+                    </div>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Reboot Semua!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    btnMassReboot.disabled = true;
+                    const originalHtml = btnMassReboot.innerHTML;
+                    btnMassReboot.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Memproses...`;
+
+                    fetch('{{ route("olts.mass-reboot") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ olt_id: oltId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Berhasil!', data.message, 'success');
+                        } else {
+                            Swal.fire('Gagal!', data.message, 'error');
+                        }
+                    })
+                    .catch(err => {
+                        Swal.fire('Error!', 'Terjadi kesalahan saat memproses permintaan.', 'error');
+                        console.error(err);
+                    })
+                    .finally(() => {
+                        btnMassReboot.disabled = false;
+                        btnMassReboot.innerHTML = originalHtml;
+                    });
+                });
+            });
+        }
+
         // ---- Search filter ----
-        searchInput.addEventListener('input', function() {
-            if (allRows.length > 0) {
-                renderTable(this.value.trim().toLowerCase());
-            }
-        });
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                if (allRows.length > 0) {
+                    renderTable(this.value.trim().toLowerCase());
+                }
+            });
+        }
+
+        // ---- Guard: skip SSE entirely when no OLTs are configured ----
+        const hasOlts = {{ $allOlts->isNotEmpty() ? 'true' : 'false' }};
+
+        if (!hasOlts) {
+            // Hide SSE indicator & search since there's nothing to monitor
+            const sseIndicator = document.getElementById('sse-indicator');
+            if (sseIndicator) sseIndicator.classList.add('hidden');
+            if (searchInput) searchInput.closest('.flex')?.classList.add('hidden');
+            return; // Stop here — no SSE connection
+        }
 
         // ---- OLT selector change → reconnect SSE ----
         if (oltSelector) {

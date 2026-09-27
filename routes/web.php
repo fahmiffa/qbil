@@ -37,6 +37,7 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('olts', \App\Livewire\OltManager::class)->name('olts');
     Route::get('olts/onu-stream', [App\Http\Controllers\OltSseController::class, 'stream'])->name('olts.onu-stream');
     Route::post('olts/reboot-onu', [App\Http\Controllers\OltSseController::class, 'rebootOnu'])->name('olts.reboot-onu');
+    Route::post('olts/mass-reboot', [App\Http\Controllers\OltSseController::class, 'massReboot'])->name('olts.mass-reboot');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)

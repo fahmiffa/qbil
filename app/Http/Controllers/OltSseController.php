@@ -95,4 +95,37 @@ class OltSseController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Perintah reboot telah dikirim dan sedang diproses di latar belakang.']);
     }
+
+    /**
+     * Dispatch Job to mass reboot all ONUs from selected OLT.
+     */
+    public function massReboot(Request $request)
+    {
+        $request->validate([
+            'olt_id' => 'required|integer',
+        ]);
+
+        $olt = \App\Models\Olt::where('id', $request->olt_id)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$olt) {
+            return response()->json(['success' => false, 'message' => 'Perangkat OLT tidak ditemukan atau bukan milik Anda.'], 404);
+        }
+
+        \App\Jobs\ProcessOltRebootJob::dispatch($olt);
+
+        // Log Activity
+        \App\Models\ActivityLog::create([
+            'user_id' => auth()->id(),
+            'title'   => 'MASS REBOOT ONU',
+            'message' => "Mengirim perintah reboot massal semua ONU dari OLT: {$olt->name} ({$olt->ip})",
+            'type'    => 'olt_reboot',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Perintah reboot massal untuk semua ONU di OLT {$olt->name} telah dikirim ke antrian dan sedang diproses.",
+        ]);
+    }
 }
