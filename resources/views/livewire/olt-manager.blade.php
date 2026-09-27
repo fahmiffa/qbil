@@ -730,11 +730,11 @@
 
                 Swal.fire({
                     title: 'Reboot Semua ONU?',
-                    html: `<div class="text-left text-sm space-y-2">
+                    html: `<div class="text-left text-sm space-y-2 text-slate-700 dark:text-slate-300">
                         <p>Anda akan mereboot <strong>semua ONU</strong> dari:</p>
-                        <p class="font-mono bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">${oltName}</p>
-                        ${totalOnu > 0 ? `<p class="text-red-600 font-bold">⚠️ ${totalOnu} ONU akan di-reboot secara bertahap via antrian.</p>` : ''}
-                        <p class="text-gray-500 text-xs">Proses ini berjalan di latar belakang dan tidak dapat dibatalkan.</p>
+                        <p class="font-mono text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-2 rounded-lg">${oltName}</p>
+                        ${totalOnu > 0 ? `<p class="text-red-600 dark:text-red-400 font-bold">⚠️ ${totalOnu} ONU akan di-reboot secara bertahap via antrian.</p>` : ''}
+                        <p class="text-slate-500 dark:text-slate-400 text-xs">Proses ini berjalan di latar belakang dan tidak dapat dibatalkan.</p>
                     </div>`,
                     icon: 'warning',
                     showCancelButton: true,
