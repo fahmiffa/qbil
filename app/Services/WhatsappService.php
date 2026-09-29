@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    protected string $defaultUrl = 'https://broadcast.qlabcode.com/api';
+    protected string $defaultUrl = 'https://gowa.qlabcode.com';
 
     /**
      * Check if a number is registered on WhatsApp.
@@ -18,6 +18,8 @@ class WhatsappService
      */
     public function checkNumber(string $senderPhone, string $targetPhone): bool
     {
+        // GoWA usually has an endpoint for check number, but we'll leave this as is or adapt if needed.
+        // For now, retaining the old logic for backward compatibility.
         $baseApiUrl = $this->defaultUrl;
 
         $user = \App\Models\User::where('phone', $senderPhone)->with('whatsappServer')->first();
@@ -27,7 +29,6 @@ class WhatsappService
 
         $apiUrl = rtrim($baseApiUrl, '/') . '/number';
 
-        // Format target phone (replace leading 0 with 62)
         if (str_starts_with($targetPhone, '0')) {
             $targetPhone = '62' . substr($targetPhone, 1);
         }
@@ -47,15 +48,9 @@ class WhatsappService
 
     /**
      * Send WhatsApp message.
-     *
-     * @param string $senderPhone The sender (user) phone number
-     * @param string $receiverPhone The receiver (customer) phone number
-     * @param string $message The message content
-     * @return bool
      */
     public function sendMessage(string $senderPhone, string $receiverPhone, string $message): bool
     {
-        // Resolve dynamic Base URL from User's assigned WhatsApp Server
         $baseApiUrl = $this->defaultUrl;
 
         $user = \App\Models\User::where('phone', $senderPhone)->with('whatsappServer')->first();
@@ -63,20 +58,27 @@ class WhatsappService
             $baseApiUrl = $user->whatsappServer->api_url;
         }
 
-        // Hardcode endpoint /send on top of base URL
-        $apiUrl = rtrim($baseApiUrl, '/') . '/send';
+        $apiUrl = rtrim($baseApiUrl, '/') . '/send/message';
 
         // Format receiver phone (replace leading 0 with 62)
         if (str_starts_with($receiverPhone, '0')) {
             $receiverPhone = '62' . substr($receiverPhone, 1);
         }
 
+        // Add the whatsapp suffix required by GoWA
+        if (!str_ends_with($receiverPhone, '@s.whatsapp.net')) {
+            $receiverPhone = $receiverPhone . '@s.whatsapp.net';
+        }
+
         try {
-            $response = Http::post($apiUrl, [
-                'number' => $senderPhone,
-                'message' => $message,
-                'to' => $receiverPhone,
-            ]);
+            $response = Http::withBasicAuth('ffa', 'qqffa')
+                ->withHeaders([
+                    'X-Device-Id' => $senderPhone,
+                ])
+                ->post($apiUrl, [
+                    'phone' => $receiverPhone,
+                    'message' => $message,
+                ]);
 
             if ($response->successful()) {
                 return true;
@@ -90,13 +92,6 @@ class WhatsappService
         }
     }
 
-    /**
-     * Replace placeholders in template.
-     *
-     * @param string $template
-     * @param array $data
-     * @return string
-     */
     public function formatMessage(string $template, array $data): string
     {
         $placeholders = [
@@ -116,5 +111,52 @@ class WhatsappService
         ];
 
         return str_replace(array_keys($placeholders), array_values($placeholders), $template);
+    }
+
+    // --- GoWA API Integration ---
+
+    /**
+     * Get Device Status
+     */
+    public function getDeviceStatus($deviceId)
+    {
+        try {
+            return Http::withBasicAuth('ffa', 'qqffa')
+                ->withHeaders(['X-Device-Id' => $deviceId])
+                ->get('https://gowa.qlabcode.com/app/status');
+        } catch (\Exception $e) {
+            Log::error("[WhatsappService] getDeviceStatus Exception: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Create Device
+     */
+    public function createDevice($deviceId)
+    {
+        try {
+            return Http::withBasicAuth('ffa', 'qqffa')
+                ->post('https://gowa.qlabcode.com/devices', [
+                    'device_id' => $deviceId
+                ]);
+        } catch (\Exception $e) {
+            Log::error("[WhatsappService] createDevice Exception: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Login / Get QR Code
+     */
+    public function loginDevice($deviceId)
+    {
+        try {
+            return Http::withBasicAuth('ffa', 'qqffa')
+                ->get("https://gowa.qlabcode.com/devices/{$deviceId}/login");
+        } catch (\Exception $e) {
+            Log::error("[WhatsappService] loginDevice Exception: " . $e->getMessage());
+            return null;
+        }
     }
 }
