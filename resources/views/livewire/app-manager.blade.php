@@ -163,16 +163,24 @@
                     </div>
 
                     <!-- OTHER TEMPLATES -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {{-- Pendaftaran --}}
                         <div class="space-y-3">
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">WhatsApp: Pendaftaran Baru</label>
                             <textarea wire:model="registration_template" rows="6" class="w-full bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-700 rounded-2xl text-xs px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500"></textarea>
+                            @error('registration_template') <span class="text-[10px] text-red-500 mt-1 font-bold">{{ $message }}</span> @enderror
                         </div>
                         {{-- Pembayaran --}}
                         <div class="space-y-3">
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">WhatsApp: Kwitansi Pembayaran</label>
                             <textarea wire:model="payment_template" rows="6" class="w-full bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-700 rounded-2xl text-xs px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500"></textarea>
+                            @error('payment_template') <span class="text-[10px] text-red-500 mt-1 font-bold">{{ $message }}</span> @enderror
+                        </div>
+                        {{-- Suspend --}}
+                        <div class="space-y-3">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">WhatsApp: Notifikasi Suspend</label>
+                            <textarea wire:model="template_suspend" rows="6" class="w-full bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-700 rounded-2xl text-xs px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500" placeholder="Template pesan suspend..."></textarea>
+                            @error('template_suspend') <span class="text-[10px] text-red-500 mt-1 font-bold">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
