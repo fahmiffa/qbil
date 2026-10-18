@@ -58,6 +58,7 @@ class InvoiceManager extends Component
     public $showPhoneSelectionModal = false;
     public $customerPhones = [];
     public $phoneSelectionInvoiceId = null;
+    public $phoneSelectionType = 'default';
 
     public function mount()
     {
@@ -373,6 +374,7 @@ class InvoiceManager extends Component
                 'phone2' => $customer->phone2
             ];
             $this->phoneSelectionInvoiceId = $invoiceId;
+            $this->phoneSelectionType = 'default';
             $this->showPhoneSelectionModal = true;
             return;
         }
@@ -383,13 +385,48 @@ class InvoiceManager extends Component
         $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} sedang diproses di latar belakang.");
     }
 
+    public function sendSuspendWhatsappNotification($invoiceId)
+    {
+        if ($this->checkDemoMode()) return;
+
+        $invoice = Invoice::with('customer')->findOrFail($invoiceId);
+
+        // Khusus pelanggan yang belum bayar
+        if ($invoice->status !== 'unpaid' || $invoice->paid_at) {
+            $this->dispatch('toast', type: 'warning', message: "Pesan suspend hanya dapat dikirim untuk invoice yang belum dibayar.");
+            return;
+        }
+
+        $customer = $invoice->customer;
+
+        if ($customer->phone && $customer->phone2) {
+            $this->customerPhones = [
+                'phone' => $customer->phone,
+                'phone2' => $customer->phone2
+            ];
+            $this->phoneSelectionInvoiceId = $invoiceId;
+            $this->phoneSelectionType = 'suspend';
+            $this->showPhoneSelectionModal = true;
+            return;
+        }
+
+        // Dispatch job ke antrean dengan phone default (phone1)
+        \App\Jobs\SendSuspendWhatsappJob::dispatch($invoice, null, true);
+
+        $this->dispatch('toast', type: 'success', message: "Pesan suspend WhatsApp untuk Invoice {$invoice->invoice_number} sedang diproses di latar belakang.");
+    }
+
     public function confirmSendWhatsapp($phone)
     {
         $invoice = Invoice::findOrFail($this->phoneSelectionInvoiceId);
 
-        \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, $phone, true);
-
-        $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} dikirim ke nomor {$phone}.");
+        if ($this->phoneSelectionType === 'suspend') {
+            \App\Jobs\SendSuspendWhatsappJob::dispatch($invoice, $phone, true);
+            $this->dispatch('toast', type: 'success', message: "Pesan suspend WhatsApp untuk Invoice {$invoice->invoice_number} dikirim ke nomor {$phone}.");
+        } else {
+            \App\Jobs\SendManualInvoiceWhatsappJob::dispatch($invoice, $phone, true);
+            $this->dispatch('toast', type: 'success', message: "Notifikasi WhatsApp untuk Invoice {$invoice->invoice_number} dikirim ke nomor {$phone}.");
+        }
 
         $this->closePhoneSelectionModal();
     }
@@ -399,6 +436,7 @@ class InvoiceManager extends Component
         $this->showPhoneSelectionModal = false;
         $this->customerPhones = [];
         $this->phoneSelectionInvoiceId = null;
+        $this->phoneSelectionType = 'default';
     }
 
     public function regenerateInvoice($invoiceId)
