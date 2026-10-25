@@ -7,38 +7,157 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    protected string $baseUrl = 'https://broadcast.qlabcode.com/api/send';
+    protected string $baseUrl;
+    protected string $apiKey;
+
+    public function __construct(?string $baseUrl = null, ?string $apiKey = null)
+    {
+        $this->baseUrl = rtrim($baseUrl ?? config('services.whatsapp.url', env('WHATSAPP_API_URL', 'https://wagate.qlabcode.com')), '/');
+        $this->apiKey = $apiKey ?? config('services.whatsapp.api_key', env('WHATSAPP_API_KEY', 'wag_mRqnmGTR4uVOAqbPSheP3kLhxlJelNVn'));
+    }
+
+    /**
+     * Get WhatsApp connection status.
+     *
+     * @return array
+     */
+    public function getStatus(): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'X-API-Key' => $this->apiKey,
+                'Accept' => 'application/json',
+            ])->timeout(15)->get("{$this->baseUrl}/api/whatsapp/status");
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Whatsapp getStatus API failed (' . $response->status() . '): ' . $response->body());
+            return [
+                'success' => false,
+                'status' => $response->status(),
+                'data' => [
+                    'code' => 'ERROR',
+                    'message' => 'Gagal mengambil status koneksi WhatsApp (' . $response->status() . ').',
+                    'results' => [
+                        'device_id' => '',
+                        'is_connected' => false,
+                        'is_logged_in' => false,
+                        'jid' => '',
+                    ],
+                ],
+            ];
+        } catch (\Exception $e) {
+            Log::error('Whatsapp getStatus Exception: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'status' => 500,
+                'data' => [
+                    'code' => 'EXCEPTION',
+                    'message' => $e->getMessage(),
+                    'results' => [
+                        'device_id' => '',
+                        'is_connected' => false,
+                        'is_logged_in' => false,
+                        'jid' => '',
+                    ],
+                ],
+            ];
+        }
+    }
+
+    /**
+     * Request QR Code for login.
+     *
+     * @return array
+     */
+    public function getLoginQr(): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'X-API-Key' => $this->apiKey,
+                'Accept' => 'application/json',
+            ])->timeout(20)->get("{$this->baseUrl}/api/whatsapp/login");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                // Adjust qr_link protocol if needed
+                if (!empty($data['data']['results']['qr_link']) && request()->isSecure()) {
+                    $data['data']['results']['qr_link'] = str_replace('http://', 'https://', $data['data']['results']['qr_link']);
+                }
+
+                return $data;
+            }
+
+            Log::error('Whatsapp getLoginQr API failed (' . $response->status() . '): ' . $response->body());
+            return [
+                'success' => false,
+                'status' => $response->status(),
+                'data' => [
+                    'code' => 'ERROR',
+                    'message' => 'Gagal meminta QR login: ' . $response->status(),
+                ],
+            ];
+        } catch (\Exception $e) {
+            Log::error('Whatsapp getLoginQr Exception: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'status' => 500,
+                'data' => [
+                    'code' => 'EXCEPTION',
+                    'message' => $e->getMessage(),
+                ],
+            ];
+        }
+    }
 
     /**
      * Send WhatsApp message.
+     * Compatible with both:
+     * - sendMessage(string $senderPhone, string $receiverPhone, string $message): bool
+     * - sendMessage(string $receiverPhone, string $message): bool
      *
-     * @param string $senderPhone The sender (user) phone number
-     * @param string $receiverPhone The receiver (customer) phone number
-     * @param string $message The message content
+     * @param string|null $senderOrReceiver
+     * @param string $receiverOrMessage
+     * @param string|null $message
      * @return bool
      */
-    public function sendMessage(string $senderPhone, string $receiverPhone, string $message): bool
+    public function sendMessage(?string $senderOrReceiver, string $receiverOrMessage, ?string $message = null): bool
     {
-        // Format receiver phone (replace leading 0 with 62)
-        if (str_starts_with($receiverPhone, '0')) {
-            $receiverPhone = '62' . substr($receiverPhone, 1);
+        if ($message === null) {
+            $receiverPhone = (string) $senderOrReceiver;
+            $messageText = $receiverOrMessage;
+        } else {
+            $receiverPhone = $receiverOrMessage;
+            $messageText = $message;
         }
 
+        // Clean receiver phone
+        $receiverPhone = trim($receiverPhone);
+
         try {
-            $response = Http::post($this->baseUrl, [
-                'number' => $senderPhone,
-                'message' => $message,
-                'to' => $receiverPhone,
+            $response = Http::withHeaders([
+                'X-API-Key' => $this->apiKey,
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->timeout(20)->post("{$this->baseUrl}/api/whatsapp/send", [
+                'phone' => $receiverPhone,
+                'message' => $messageText,
             ]);
 
             if ($response->successful()) {
-                return true;
+                $body = $response->json();
+                if (($body['success'] ?? false) === true || ($body['status'] ?? 0) === 200) {
+                    return true;
+                }
             }
 
-            Log::error('Whatsapp API failed: ' . $response->body());
+            Log::error('Whatsapp Send API failed (' . $response->status() . '): ' . $response->body());
             return false;
         } catch (\Exception $e) {
-            Log::error('Whatsapp Service Exception: ' . $e->getMessage());
+            Log::error('Whatsapp Service Send Exception: ' . $e->getMessage());
             return false;
         }
     }

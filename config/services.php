@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'url' => env('WHATSAPP_API_URL', 'https://wagate.qlabcode.com'),
+        'api_key' => env('WHATSAPP_API_KEY', 'wag_mRqnmGTR4uVOAqbPSheP3kLhxlJelNVn'),
+    ],
+
 ];
