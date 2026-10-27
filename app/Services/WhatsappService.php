@@ -53,10 +53,10 @@ class WhatsappService
     {
         $baseApiUrl = $this->defaultUrl;
 
-        $user = \App\Models\User::where('phone', $senderPhone)->with('whatsappServer')->first();
-        if ($user && $user->whatsappServer && !empty($user->whatsappServer->api_url)) {
-            $baseApiUrl = $user->whatsappServer->api_url;
-        }
+        // $user = \App\Models\User::where('phone', $senderPhone)->with('whatsappServer')->first();
+        // if ($user && $user->whatsappServer && !empty($user->whatsappServer->api_url)) {
+        //     $baseApiUrl = $user->whatsappServer->api_url;
+        // }
 
         $apiUrl = rtrim($baseApiUrl, '/') . '/send/message';
 
