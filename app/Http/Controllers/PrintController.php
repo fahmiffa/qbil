@@ -163,6 +163,51 @@ class PrintController extends Controller
             'invoice' => $invoice
         ]);
     }
+
+    public function reports(Request $request)
+    {
+        app()->setLocale('id');
+        $userId = auth()->id();
+        $startDate = $request->start_date ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = $request->end_date ?? \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d');
+        $type = $request->type ?? 'income';
+        $paymentMethod = $request->payment_method;
+        $serviceType = $request->service_type;
+
+        $baseQuery = \App\Models\Transaction::where('user_id', $userId)
+            ->whereDate('transaction_date', '>=', $startDate)
+            ->whereDate('transaction_date', '<=', $endDate)
+            ->where('type', $type);
+
+        if ($paymentMethod) {
+            if ($paymentMethod === 'none') {
+                $baseQuery->where(function ($q) {
+                    $q->whereNull('payment_method')->orWhere('payment_method', '');
+                });
+            } else {
+                $baseQuery->where('payment_method', $paymentMethod);
+            }
+        }
+
+        if ($serviceType) {
+            $baseQuery->where('service_type', $serviceType);
+        }
+
+        $transactions = $baseQuery->orderBy('transaction_date', 'asc')->get();
+        $totalAmount = $transactions->sum('amount');
+
+        $user = \App\Models\User::with('appSetting')->find($userId);
+
+        return view('print.reports', [
+            'transactions' => $transactions,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'type' => $type,
+            'totalAmount' => $totalAmount,
+            'appSetting' => $user->appSetting ?? null,
+            'user' => $user
+        ]);
+    }
 }
 
 

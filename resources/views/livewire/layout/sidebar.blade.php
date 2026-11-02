@@ -75,6 +75,14 @@ new class extends Component
                 Piutang
             </x-sidebar-link>
 
+            <x-sidebar-link :href="route('finance')" :active="request()->routeIs('finance')" icon="wallet">
+                Buku Kas
+            </x-sidebar-link>
+
+            <x-sidebar-link :href="route('reports')" :active="request()->routeIs('reports')" icon="chart">
+                Laporan
+            </x-sidebar-link>
+
             @if(auth()->user()->hasFeature('voucher'))
             <x-sidebar-link :href="route('vouchers')" :active="request()->routeIs('vouchers')" icon="voucher">
                 Voucher

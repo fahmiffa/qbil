@@ -37,6 +37,8 @@ Route::middleware(['auth', 'check.router'])->group(function () {
     Route::get('piutangs', \App\Livewire\PiutangManager::class)->name('piutangs');
     Route::get('activities', \App\Livewire\Activities\ActivityLog::class)->name('activities');
     Route::get('vouchers', \App\Livewire\VoucherManager::class)->name('vouchers');
+    Route::get('finance', \App\Livewire\FinanceManager::class)->name('finance');
+    Route::get('reports', \App\Livewire\ReportManager::class)->name('reports');
 });
 
 Route::get('router', \App\Livewire\RouterConfig::class)
@@ -55,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('print/invoice/{invoice}', [App\Http\Controllers\PrintController::class, 'invoice'])->name('print.invoice');
     Route::get('print/piutang/{piutang}', [App\Http\Controllers\PrintController::class, 'piutang'])->name('print.piutang');
     Route::get('print/hotspot-vouchers', [App\Http\Controllers\PrintController::class, 'hotspotVouchers'])->name('hotspot.print-vouchers');
+    Route::get('print/reports', [App\Http\Controllers\PrintController::class, 'reports'])->name('print.reports');
 });
 
 
