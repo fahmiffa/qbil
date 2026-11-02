@@ -93,10 +93,10 @@
         @endif
 
         <div class="border-solid uppercase" style="font-size: 11px;">
-            ID Pel : {{ $invoice->customer->id_pelanggan }}<br>
-            Nama   : {{ $invoice->customer->name }}<br>
-            Inv    : {{ $invoice->invoice_number }}<br>
-            Tgl    : {{ $invoice->created_at->translatedFormat('d/m/y H:i') }}
+            ID Pel  : {{ $invoice->customer->id_pelanggan }}<br>
+            Nama    : {{ $invoice->customer->name }}<br>
+            Inv     : {{ $invoice->invoice_number }}<br>
+            Periode : {{ $invoice->billing_period }}<br>
         </div>
 
         <table class="border-solid">
@@ -270,10 +270,11 @@
                     '\x1B' + '\x21' + '\x00' + // Reset
                     lineStr +
                     '\x1B' + '\x61' + '\x00' + // Left
-                    'ID PEL : {{ $invoice->customer->id_pelanggan }}\n' +
-                    'NAMA   : {{ $invoice->customer->name }}\n' +
-                    'INV    : {{ $invoice->invoice_number }}\n' +
-                    'TGL    : {{ $invoice->created_at->translatedFormat("d/m/y H:i") }}\n' +
+                    'ID PEL     : {{ $invoice->customer->id_pelanggan }}\n' +
+                    'NAMA       : {{ $invoice->customer->name }}\n' +
+                    'INV        : {{ $invoice->invoice_number }}\n' +
+                    'Periode    : {{ $invoice->billing_period }}\n' +
+                    'TGL CETAK  : {{ date('Y-m-d H:s:i') }}\n' +
                     lineStr +
                     formatRow('LAYANAN', 'TOTAL', paperWidthChars) + '\n' +
                     lineStr +
@@ -308,6 +309,7 @@
                     wrapText('{{ str_replace(["\r\n", "\r", "\n"], " ", $invoice->customer->user->appSetting->payment_instruction) }}', paperWidthChars) + '\n' +
                     '\n\n\n\n' +
                     '\x1B' + '\x69';           // Cut
+                    
 
                 // Kirim ke Go Service
                 const response = await fetch(`${SERVICE_URL}/print`, {
