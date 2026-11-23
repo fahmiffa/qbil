@@ -26,6 +26,31 @@ new class extends Component
 }; ?>
 
 <div class="flex items-center space-x-2 sm:space-x-4">
+    <!-- PWA Install Button (Desktop & Mobile) -->
+    <div x-data="{
+            canInstall: false,
+            isInstalled: window.PWA?.isInstalled || false,
+            init() {
+                if (this.isInstalled) return;
+                window.addEventListener('pwa-installable', () => { this.canInstall = true; });
+                window.addEventListener('pwa-installed', () => { this.canInstall = false; this.isInstalled = true; });
+                if (window.PWA?.isIos && !this.isInstalled) {
+                    this.canInstall = true;
+                }
+            }
+         }"
+         x-show="canInstall && !isInstalled"
+         style="display: none;">
+        <button @click="window.triggerPwaInstall()"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 rounded-lg text-xs font-bold transition-all shadow-sm"
+                title="Install Aplikasi QBIL">
+            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span class="hidden sm:inline">Install App</span>
+        </button>
+    </div>
+
     <!-- Notifications -->
     <livewire:layout.notification-bell />
 

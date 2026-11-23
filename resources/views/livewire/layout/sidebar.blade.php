@@ -283,8 +283,43 @@ new class extends Component
             @endif
         </nav>
 
-        <!-- Sidebar Footer (Logout) -->
+        <!-- Sidebar Footer (PWA Install & Logout) -->
         <div class="p-4 border-t border-gray-100 dark:border-slate-800">
+            <!-- Install PWA Button -->
+            <div x-data="{
+                    canInstall: false,
+                    isInstalled: window.PWA?.isInstalled || false,
+                    init() {
+                        if (this.isInstalled) return;
+                        window.addEventListener('pwa-installable', () => { this.canInstall = true; });
+                        window.addEventListener('pwa-installed', () => { this.canInstall = false; this.isInstalled = true; });
+                        if (window.PWA?.isIos && !this.isInstalled) { this.canInstall = true; }
+                    }
+                 }"
+                 x-show="canInstall && !isInstalled"
+                 class="mb-2"
+                 style="display: none;">
+                <button @click="window.triggerPwaInstall()"
+                    class="group relative flex items-center gap-3 w-full px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all font-semibold">
+                    <div class="shrink-0 w-6 h-6">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    </div>
+                    <span x-show="sidebarOpen" class="font-medium whitespace-nowrap text-xs">Install Aplikasi</span>
+
+                    <!-- Tooltip -->
+                    <div x-show="!sidebarOpen"
+                        x-data="{ top: 0, left: 0 }"
+                        @mouseenter="let rect = $el.parentElement.getBoundingClientRect(); top = rect.top + (rect.height/2); left = rect.right + 10"
+                        class="fixed px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-[100] shadow-2xl pointer-events-none transform translate-x-2 group-hover:translate-x-0"
+                        :style="'top: ' + top + 'px; left: ' + left + 'px; transform: translateY(-50%)'">
+                        Install Aplikasi
+                        <div class="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-blue-600"></div>
+                    </div>
+                </button>
+            </div>
+
             <button
                 x-on:click="
                     Swal.fire({

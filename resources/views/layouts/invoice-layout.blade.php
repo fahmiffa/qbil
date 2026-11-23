@@ -15,6 +15,8 @@
             body { font-family: 'Plus Jakarta Sans', sans-serif; }
         </style>
 
+        <x-pwa-meta />
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
